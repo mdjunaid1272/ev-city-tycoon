@@ -1,0 +1,781 @@
+{
+  "wash": {
+    "label": "Car Wash Center",
+    "icon": "🧽",
+    "dept": "wash",
+    "revenueKey": "car wash",
+    "buildCost": 3000,
+    "minRep": 8,
+    "maxBays": 3,
+    "bayCosts": [
+      0,
+      3000,
+      4500
+    ],
+    "tunnelCost": 6000,
+    "tunnelMinEquipment": 2,
+    "tunnelStartSeconds": 3,
+    "tunnelSpeedBonus": 1.35,
+    "suppliesPerWash": 1.5,
+    "upkeepPerBayPerDay": 35,
+    "arrivalSeconds": [
+      24,
+      42
+    ],
+    "referralChance": 0.4,
+    "maxQueue": 2,
+    "customerTypes": [
+      "regular",
+      "premium",
+      "impatient",
+      "fleet",
+      "vip"
+    ],
+    "equipment": [
+      {
+        "level": 1,
+        "name": "Basic brushes & hose",
+        "cost": 0,
+        "speed": 1,
+        "clean": 0,
+        "packages": [
+          "basic",
+          "foam"
+        ]
+      },
+      {
+        "level": 2,
+        "name": "Pro foam & dryers",
+        "cost": 4000,
+        "speed": 1.2,
+        "clean": 0.04,
+        "packages": [
+          "basic",
+          "foam",
+          "premium",
+          "interior"
+        ]
+      },
+      {
+        "level": 3,
+        "name": "Detailing suite",
+        "cost": 8000,
+        "speed": 1.4,
+        "clean": 0.08,
+        "packages": [
+          "basic",
+          "foam",
+          "premium",
+          "interior",
+          "detailing"
+        ]
+      }
+    ],
+    "packages": {
+      "basic": {
+        "label": "Basic Wash",
+        "icon": "💦",
+        "price": 15,
+        "seconds": 12,
+        "clean": 0.55,
+        "exterior": true,
+        "stages": [
+          "spray",
+          "rinse"
+        ]
+      },
+      "foam": {
+        "label": "Foam Wash",
+        "icon": "🫧",
+        "price": 22,
+        "seconds": 18,
+        "clean": 0.78,
+        "exterior": true,
+        "stages": [
+          "spray",
+          "foam",
+          "brush",
+          "rinse"
+        ]
+      },
+      "premium": {
+        "label": "Premium Wash",
+        "icon": "✨",
+        "price": 35,
+        "seconds": 24,
+        "clean": 0.92,
+        "exterior": true,
+        "stages": [
+          "spray",
+          "foam",
+          "brush",
+          "rinse",
+          "dry"
+        ]
+      },
+      "interior": {
+        "label": "Interior Cleaning",
+        "icon": "🧹",
+        "price": 18,
+        "seconds": 16,
+        "clean": 0,
+        "exterior": false,
+        "stages": [
+          "interior"
+        ]
+      },
+      "detailing": {
+        "label": "Full Detailing",
+        "icon": "💎",
+        "price": 75,
+        "seconds": 40,
+        "clean": 1,
+        "exterior": true,
+        "stages": [
+          "spray",
+          "foam",
+          "brush",
+          "rinse",
+          "dry",
+          "polish"
+        ]
+      }
+    },
+    "demand": {
+      "regular": {
+        "basic": 5,
+        "foam": 3
+      },
+      "impatient": {
+        "basic": 4
+      },
+      "fleet": {
+        "basic": 4
+      },
+      "premium": {
+        "foam": 2,
+        "premium": 4,
+        "interior": 2,
+        "detailing": 1
+      },
+      "vip": {
+        "detailing": 4,
+        "premium": 2
+      }
+    },
+    "stage": 2,
+    "tunnelStage": 3
+  },
+  "garage": {
+    "label": "EV Garage",
+    "icon": "🔧",
+    "dept": "garage",
+    "revenueKey": "garage",
+    "buildCost": 5000,
+    "minRep": 20,
+    "maxBays": 3,
+    "bayCosts": [
+      0,
+      4500,
+      6500
+    ],
+    "upkeepPerBayPerDay": 45,
+    "arrivalSeconds": [
+      34,
+      60
+    ],
+    "referralChance": 0.18,
+    "maxQueue": 2,
+    "diagnosticFee": 15,
+    "customerTypes": [
+      "regular",
+      "premium",
+      "impatient",
+      "fleet",
+      "vip",
+      "emergency"
+    ],
+    "scanner": [
+      {
+        "level": 1,
+        "name": "Basic scanner",
+        "cost": 0,
+        "diagSpeed": 1
+      },
+      {
+        "level": 2,
+        "name": "Pro scanner",
+        "cost": 3500,
+        "diagSpeed": 1.4
+      },
+      {
+        "level": 3,
+        "name": "AI diagnostics",
+        "cost": 7000,
+        "diagSpeed": 1.8
+      }
+    ],
+    "tools": [
+      {
+        "level": 1,
+        "name": "Standard toolkit",
+        "cost": 0,
+        "speed": 1
+      },
+      {
+        "level": 2,
+        "name": "Power tools",
+        "cost": 3000,
+        "speed": 1.2
+      },
+      {
+        "level": 3,
+        "name": "Pro tool station",
+        "cost": 6000,
+        "speed": 1.4
+      }
+    ],
+    "batteryStationCost": 6000,
+    "services": {
+      "battery_diag": {
+        "label": "Battery diagnostics",
+        "icon": "🔋",
+        "price": 35,
+        "diag": 10,
+        "repair": 0,
+        "parts": {},
+        "scanner": 1,
+        "skill": 1,
+        "repairs": null,
+        "weight": 3
+      },
+      "brake_check": {
+        "label": "Brake inspection",
+        "icon": "🛑",
+        "price": 55,
+        "diag": 8,
+        "repair": 14,
+        "parts": {
+          "brake_pads": 1
+        },
+        "scanner": 1,
+        "skill": 1,
+        "repairs": "brakes",
+        "weight": 3
+      },
+      "general_maint": {
+        "label": "General maintenance",
+        "icon": "🛠️",
+        "price": 70,
+        "diag": 8,
+        "repair": 18,
+        "parts": {
+          "fluids": 1
+        },
+        "scanner": 1,
+        "skill": 1,
+        "repairs": "general",
+        "weight": 4
+      },
+      "tyre_replace": {
+        "label": "Tyre replacement",
+        "icon": "🛞",
+        "price": 130,
+        "diag": 6,
+        "repair": 26,
+        "parts": {
+          "tyres": 1
+        },
+        "scanner": 1,
+        "skill": 1,
+        "repairs": "tyres",
+        "weight": 3
+      },
+      "motor_service": {
+        "label": "Motor servicing",
+        "icon": "⚙️",
+        "price": 190,
+        "diag": 10,
+        "repair": 34,
+        "parts": {
+          "motor_kit": 1
+        },
+        "scanner": 2,
+        "skill": 3,
+        "repairs": "motor",
+        "weight": 1.5
+      },
+      "battery_replace": {
+        "label": "Battery replacement",
+        "icon": "🔋",
+        "price": 480,
+        "diag": 8,
+        "repair": 40,
+        "parts": {
+          "battery": 1
+        },
+        "scanner": 1,
+        "skill": 3,
+        "repairs": "battery",
+        "weight": 1,
+        "needsBatteryStation": true
+      }
+    },
+    "parts": {
+      "brake_pads": {
+        "label": "Brake pads",
+        "cost": 18,
+        "stock": 3,
+        "max": 12
+      },
+      "tyres": {
+        "label": "Tyre set",
+        "cost": 60,
+        "stock": 2,
+        "max": 10
+      },
+      "fluids": {
+        "label": "Service kit",
+        "cost": 10,
+        "stock": 4,
+        "max": 15
+      },
+      "motor_kit": {
+        "label": "Motor kit",
+        "cost": 70,
+        "stock": 1,
+        "max": 6
+      },
+      "battery": {
+        "label": "Battery pack",
+        "cost": 260,
+        "stock": 0,
+        "max": 3
+      }
+    },
+    "stage": 3
+  },
+  "hub": {
+    "store": {
+      "label": "Convenience Store",
+      "icon": "🛒",
+      "cost": 4000,
+      "feature": "store",
+      "chance": 0.38,
+      "spend": [
+        4,
+        12
+      ],
+      "blurb": "Snacks and essentials: waiting customers spend money while they charge."
+    },
+    "coffee": {
+      "label": "Coffee Shop",
+      "icon": "☕",
+      "cost": 3500,
+      "feature": "coffee",
+      "chance": 0.32,
+      "spend": [
+        3,
+        6
+      ],
+      "satisfaction": 5,
+      "blurb": "Coffee while you wait: extra spending and happier customers."
+    },
+    "lounge": {
+      "label": "Customer Lounge",
+      "icon": "🛋️",
+      "cost": 2500,
+      "feature": "lounge",
+      "patienceMult": 1.25,
+      "satisfaction": 4,
+      "blurb": "Comfortable seating: customers wait 25% longer and rate you higher."
+    }
+  },
+  "districts": {
+    "downtown": {
+      "name": "Downtown",
+      "icon": "🏙️",
+      "cost": 0,
+      "stage": 1,
+      "color": "#9aa6b2",
+      "blurb": "Your starting district."
+    },
+    "residential": {
+      "name": "Residential District",
+      "icon": "🏘️",
+      "cost": 1500,
+      "stage": 1,
+      "color": "#80d06c",
+      "blurb": "Neighbourhood drivers: small charging lots with steady regular customers."
+    },
+    "commercial": {
+      "name": "Commercial District",
+      "icon": "🏬",
+      "cost": 8000,
+      "stage": 2,
+      "color": "#4cc9f0",
+      "blurb": "Offices and the mall: premium demand and retail opportunities."
+    },
+    "industrial": {
+      "name": "Industrial District",
+      "icon": "🏭",
+      "cost": 12000,
+      "stage": 2,
+      "color": "#f4a259",
+      "blurb": "Delivery vans and fleets that need cheap, reliable charging."
+    },
+    "highway": {
+      "name": "Highway Zone",
+      "icon": "🛣️",
+      "cost": 25000,
+      "stage": 3,
+      "color": "#b06cff",
+      "blurb": "Long-distance traffic: large ultra-fast charging hubs."
+    }
+  },
+  "properties": [
+    {
+      "id": "wash",
+      "ix": -1,
+      "iz": 0,
+      "kind": "facility",
+      "name": "Car wash site",
+      "category": "Medium service lot",
+      "district": "downtown"
+    },
+    {
+      "id": "garage",
+      "ix": 0,
+      "iz": -1,
+      "kind": "facility",
+      "name": "EV garage site",
+      "category": "Industrial garage lot",
+      "district": "downtown"
+    },
+    {
+      "id": "hub_small",
+      "ix": -2,
+      "iz": 1,
+      "kind": "hub",
+      "hub": "small",
+      "district": "residential"
+    },
+    {
+      "id": "hub_commercial",
+      "ix": 1,
+      "iz": 1,
+      "kind": "hub",
+      "hub": "commercial",
+      "district": "commercial"
+    },
+    {
+      "id": "hub_industrial",
+      "ix": 0,
+      "iz": 2,
+      "kind": "hub",
+      "hub": "industrial",
+      "district": "industrial"
+    },
+    {
+      "id": "hub_highway",
+      "ix": 2,
+      "iz": 0,
+      "kind": "hub",
+      "hub": "highway",
+      "district": "highway"
+    }
+  ],
+  "hubs": {
+    "small": {
+      "dept": null,
+      "minRep": 0,
+      "maxBays": 3,
+      "maxQueue": 2,
+      "buildCategory": "property",
+      "taxPerDay": 0.0015,
+      "bayCosts": [
+        0,
+        0,
+        3000
+      ],
+      "chargerLevels": null,
+      "label": "Small Charging Lot",
+      "icon": "🔌",
+      "category": "Small charging lot",
+      "price": 8000,
+      "stage": 2,
+      "startBays": 2,
+      "upkeepPerBayPerDay": 25,
+      "pricePerKwh": 0.5,
+      "arrivalSeconds": [
+        28,
+        48
+      ],
+      "revenueKey": "small lot",
+      "accent": 3116287,
+      "building": 3116287,
+      "sign": "EV CHARGE",
+      "customerTypes": [
+        "regular",
+        "impatient",
+        "taxi"
+      ],
+      "demandTypes": {
+        "regular": 5,
+        "impatient": 2,
+        "taxi": 1
+      },
+      "chargers": [
+        {
+          "name": "Standard AC",
+          "kw": 22,
+          "kind": "ac",
+          "cost": 0,
+          "stage": 1,
+          "connectors": [
+            "type2",
+            "ccs"
+          ]
+        },
+        {
+          "name": "DC Fast",
+          "kw": 60,
+          "kind": "dc",
+          "cost": 4000,
+          "stage": 2,
+          "connectors": [
+            "type2",
+            "ccs",
+            "chademo"
+          ]
+        }
+      ],
+      "blurb": "Cheap neighbourhood lot with two AC chargers. A steady trickle of regular drivers."
+    },
+    "commercial": {
+      "dept": null,
+      "minRep": 0,
+      "maxBays": 3,
+      "maxQueue": 2,
+      "buildCategory": "property",
+      "taxPerDay": 0.0015,
+      "bayCosts": [
+        0,
+        0,
+        0
+      ],
+      "chargerLevels": null,
+      "label": "Commercial Charging Hub",
+      "icon": "🏬",
+      "category": "Commercial business lot",
+      "price": 40000,
+      "stage": 3,
+      "startBays": 3,
+      "upkeepPerBayPerDay": 40,
+      "pricePerKwh": 0.62,
+      "arrivalSeconds": [
+        22,
+        38
+      ],
+      "revenueKey": "commercial hub",
+      "accent": 5032432,
+      "building": 5032432,
+      "sign": "CITY CHARGE",
+      "retail": {
+        "chance": 0.5,
+        "spend": [
+          5,
+          14
+        ],
+        "key": "hub shop"
+      },
+      "customerTypes": [
+        "regular",
+        "premium",
+        "impatient",
+        "taxi",
+        "vip"
+      ],
+      "demandTypes": {
+        "regular": 4,
+        "premium": 4,
+        "impatient": 2,
+        "taxi": 2,
+        "vip": 1
+      },
+      "chargers": [
+        {
+          "name": "DC Fast",
+          "kw": 60,
+          "kind": "dc",
+          "cost": 0,
+          "stage": 2,
+          "connectors": [
+            "type2",
+            "ccs",
+            "chademo"
+          ]
+        },
+        {
+          "name": "Ultra-Fast",
+          "kw": 150,
+          "kind": "ultra",
+          "cost": 9000,
+          "stage": 3,
+          "connectors": [
+            "type2",
+            "ccs",
+            "chademo"
+          ]
+        }
+      ],
+      "blurb": "DC fast charging next to the mall. Premium drivers and shop sales while they charge."
+    },
+    "industrial": {
+      "dept": null,
+      "minRep": 0,
+      "maxBays": 3,
+      "maxQueue": 2,
+      "buildCategory": "property",
+      "taxPerDay": 0.0015,
+      "bayCosts": [
+        0,
+        0,
+        0
+      ],
+      "chargerLevels": null,
+      "label": "Fleet Depot",
+      "icon": "🏭",
+      "category": "Industrial fleet depot",
+      "price": 55000,
+      "stage": 3,
+      "startBays": 3,
+      "upkeepPerBayPerDay": 45,
+      "pricePerKwh": 0.45,
+      "arrivalSeconds": [
+        20,
+        34
+      ],
+      "revenueKey": "fleet depot",
+      "accent": 16032345,
+      "building": 16032345,
+      "sign": "FLEET DEPOT",
+      "customerTypes": [
+        "fleet",
+        "regular",
+        "taxi"
+      ],
+      "demandTypes": {
+        "fleet": 7,
+        "regular": 1,
+        "taxi": 2
+      },
+      "chargers": [
+        {
+          "name": "DC Fast",
+          "kw": 60,
+          "kind": "dc",
+          "cost": 0,
+          "stage": 2,
+          "connectors": [
+            "type2",
+            "ccs",
+            "chademo"
+          ]
+        },
+        {
+          "name": "Ultra-Fast",
+          "kw": 150,
+          "kind": "ultra",
+          "cost": 9000,
+          "stage": 3,
+          "connectors": [
+            "type2",
+            "ccs",
+            "chademo"
+          ]
+        }
+      ],
+      "blurb": "Delivery vans and taxi fleets on a tight margin. Fleet contracts love this place."
+    },
+    "highway": {
+      "dept": null,
+      "minRep": 0,
+      "maxBays": 3,
+      "maxQueue": 2,
+      "buildCategory": "property",
+      "taxPerDay": 0.0015,
+      "bayCosts": [
+        0,
+        0,
+        0
+      ],
+      "chargerLevels": null,
+      "label": "Highway Charging Hub",
+      "icon": "🛣️",
+      "category": "Highway charging lot",
+      "price": 120000,
+      "stage": 4,
+      "startBays": 3,
+      "upkeepPerBayPerDay": 70,
+      "pricePerKwh": 0.85,
+      "arrivalSeconds": [
+        15,
+        26
+      ],
+      "revenueKey": "highway hub",
+      "accent": 11562239,
+      "building": 11562239,
+      "sign": "HIGHWAY HUB",
+      "retail": {
+        "chance": 0.35,
+        "spend": [
+          6,
+          18
+        ],
+        "key": "hub shop"
+      },
+      "customerTypes": [
+        "premium",
+        "vip",
+        "emergency",
+        "regular",
+        "impatient"
+      ],
+      "demandTypes": {
+        "premium": 4,
+        "vip": 3,
+        "emergency": 2,
+        "regular": 1,
+        "impatient": 1
+      },
+      "chargers": [
+        {
+          "name": "Ultra-Fast",
+          "kw": 150,
+          "kind": "ultra",
+          "cost": 0,
+          "stage": 3,
+          "connectors": [
+            "type2",
+            "ccs",
+            "chademo"
+          ]
+        },
+        {
+          "name": "Megacharger",
+          "kw": 250,
+          "kind": "ultra",
+          "cost": 22000,
+          "stage": 4,
+          "connectors": [
+            "type2",
+            "ccs",
+            "chademo"
+          ]
+        }
+      ],
+      "blurb": "Large ultra-fast hub for long-distance drivers who pay for speed."
+    }
+  }
+}

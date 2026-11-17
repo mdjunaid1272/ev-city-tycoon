@@ -1,0 +1,43 @@
+﻿{
+  "startingCash": 10000,
+  "startingGems": 25,
+  "simTimeScale": 120,
+  "electricityCostPerKwh": 0.18,
+  "chargerEfficiency": 0.92,
+  "defaultPricePerKwh": 0.55,
+  "minPrice": 0.2,
+  "maxPrice": 1.5,
+  "bayCost": 2000,
+  "tariff": { "offpeak": 0.10, "normal": 0.18, "peak": 0.30 },
+  "chargerLevels": [
+    { "level": 1, "name": "Standard AC", "kw": 22, "kind": "ac", "cost": 0, "stage": 1, "connectors": ["type2", "ccs"] },
+    { "level": 2, "name": "DC Fast", "kw": 60, "kind": "dc", "cost": 3500, "stage": 2, "connectors": ["type2", "ccs", "chademo"] },
+    { "level": 3, "name": "Ultra-Fast", "kw": 150, "kind": "ultra", "cost": 9000, "stage": 3, "connectors": ["type2", "ccs", "chademo"] }
+  ],
+  "power": {
+    "grid": [
+      { "level": 0, "name": "Standard grid connection", "kw": 60, "cost": 0, "stage": 1 },
+      { "level": 1, "name": "Upgraded transformer", "kw": 120, "cost": 3000, "stage": 1 },
+      { "level": 2, "name": "Power distribution unit", "kw": 250, "cost": 8000, "stage": 2 },
+      { "level": 3, "name": "High-voltage substation", "kw": 500, "cost": 18000, "stage": 3 }
+    ],
+    "efficiency": [
+      { "level": 0, "name": "Standard electronics", "eff": 0.92, "cost": 0, "stage": 1 },
+      { "level": 1, "name": "Efficient converters", "eff": 0.95, "cost": 2500, "stage": 1 },
+      { "level": 2, "name": "Smart charging", "eff": 0.975, "cost": 6000, "stage": 2 }
+    ],
+    "solar": [
+      { "level": 0, "name": "No solar", "kw": 0, "cost": 0, "stage": 3 },
+      { "level": 1, "name": "Solar canopy (20 kWp)", "kw": 20, "cost": 6000, "stage": 3 },
+      { "level": 2, "name": "Extended solar array (50 kWp)", "kw": 50, "cost": 13000, "stage": 3 },
+      { "level": 3, "name": "Solar farm (100 kWp)", "kw": 100, "cost": 26000, "stage": 3 }
+    ],
+    "storage": [
+      { "level": 0, "name": "No storage", "kwh": 0, "maxKw": 0, "cost": 0, "stage": 3 },
+      { "level": 1, "name": "Battery container (60 kWh)", "kwh": 60, "maxKw": 40, "cost": 7000, "stage": 3 },
+      { "level": 2, "name": "Large battery (150 kWh)", "kwh": 150, "maxKw": 80, "cost": 15000, "stage": 3 },
+      { "level": 3, "name": "Grid battery (400 kWh)", "kwh": 400, "maxKw": 160, "cost": 32000, "stage": 3 }
+    ]
+  },
+  "offlineCapHours": 4
+}

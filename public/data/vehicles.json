@@ -1,0 +1,92 @@
+{
+  "vehicles": {
+    "compact": {
+      "label": "Compact EV",
+      "capacityKwh": 42,
+      "maxChargeKw": 100,
+      "connectors": {
+        "type2": 3,
+        "ccs": 1
+      },
+      "colors": [
+        "0x35c28a",
+        "0x2f8cff",
+        "0xff8fb1",
+        "0xffc43d"
+      ],
+      "weight": 4
+    },
+    "suv": {
+      "label": "Electric SUV",
+      "capacityKwh": 75,
+      "maxChargeKw": 150,
+      "connectors": {
+        "ccs": 3,
+        "type2": 1
+      },
+      "colors": [
+        "0xf4f7fa",
+        "0xff7a59",
+        "0x4cc9f0"
+      ],
+      "weight": 3
+    },
+    "sports": {
+      "label": "Sports EV",
+      "capacityKwh": 90,
+      "maxChargeKw": 250,
+      "connectors": {
+        "ccs": 1
+      },
+      "colors": [
+        "0xe8483f",
+        "0xb06cff",
+        "0xffc43d"
+      ],
+      "weight": 1.5
+    },
+    "van": {
+      "label": "Delivery Van",
+      "capacityKwh": 80,
+      "maxChargeKw": 110,
+      "connectors": {
+        "ccs": 1,
+        "chademo": 1
+      },
+      "colors": [
+        "0xf4f7fa",
+        "0xffc43d",
+        "0x2f8cff"
+      ],
+      "weight": 2
+    },
+    "taxi": {
+      "label": "Electric Taxi",
+      "capacityKwh": 60,
+      "maxChargeKw": 120,
+      "connectors": {
+        "ccs": 2,
+        "type2": 1
+      },
+      "colors": [
+        "0xffc43d",
+        "0xffd84a"
+      ],
+      "weight": 1.5
+    },
+    "sedan": {
+      "label": "Luxury Sedan",
+      "capacityKwh": 100,
+      "maxChargeKw": 200,
+      "connectors": {
+        "ccs": 1
+      },
+      "colors": [
+        "0x20262d",
+        "0xdfe5ec",
+        "0x7a3bff"
+      ],
+      "weight": 1
+    }
+  }
+}

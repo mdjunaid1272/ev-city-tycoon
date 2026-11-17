@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#1b6ef3" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>EV City Tycoon</title>
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="./src/style.css" />
+</head>
+<body>
+  <canvas id="c"></canvas>
+
+  <div id="loading">
+    <div class="load-card">
+      <div class="logo">⚡ EV CITY <b>TYCOON</b></div>
+      <div class="bar"><i id="load-fill"></i></div>
+      <div id="load-text">Loading…</div>
+    </div>
+  </div>
+
+  <div id="hud" class="hidden">
+    <div id="top-left">
+      <div class="pill cash" id="pill-cash"><span class="ic">💵</span><b id="v-cash">$0</b></div>
+      <div class="pill gems"><span class="ic">💎</span><b id="v-gems">0</b></div>
+      <div class="pill rep"><span class="ic">⭐</span><b id="v-rep">0</b></div>
+      <div id="floaters"></div>
+    </div>
+
+    <div id="top-center">
+      <div class="pill time"><span class="ic" id="v-sun">☀️</span><b id="v-day">Day 1</b><span id="v-time">09:30</span></div>
+      <div class="loc" id="v-loc">Downtown</div>
+    </div>
+
+    <div id="top-right">
+      <button class="round" id="btn-map" title="City map">🗺️</button>
+      <button class="round" id="btn-pause" title="Menu (Esc)">⚙️</button>
+    </div>
+
+    <div id="mission" class="card">
+      <div class="m-head"><span>🎯 Mission</span><span id="m-reward"></span></div>
+      <div id="m-title">—</div>
+      <div id="m-desc"></div>
+      <div class="prog"><i id="m-fill"></i><em id="m-count"></em></div>
+    </div>
+
+    <div id="shortcuts">
+      <button class="sc" data-open="business" title="Businesses"><span>🏢</span><small>Business</small></button>
+      <button class="sc" data-open="staff" title="Staff"><span>👥</span><small>Staff</small></button>
+      <button class="sc" data-open="finance" title="Finance"><span>💰</span><small>Finance</small></button>
+      <button class="sc" data-open="missions" title="Missions"><span>🏁</span><small>Missions</small></button>
+      <button class="sc primary" id="btn-mgmt" title="Management camera (M)"><span>🏗️</span><small id="mgmt-label">Manage</small></button>
+    </div>
+
+    <div id="prompt" class="hidden"><kbd>E</kbd><span id="prompt-text"></span></div>
+    <div id="mgmt-hint" class="hidden">Isometric view · Drag / WASD: pan · Wheel / pinch: zoom · Q / R: rotate 90° · Click: select · <b>M</b>: back to street</div>
+
+    <div id="selection" class="card hidden"></div>
+
+    <button class="btn-decor" id="btn-decor" title="Decorate your lots">🎨 Decorate</button>
+    <div id="decor-bar" class="card hidden"></div>
+
+    <div id="rot-btns">
+      <button class="round" id="btn-rot-l" title="Rotate view (Q)">&#8634;</button>
+      <button class="round" id="btn-rot-r" title="Rotate view (R)">&#8635;</button>
+    </div>
+
+    <div id="touch">
+      <div id="joy-zone"><div id="joy-base"><div id="joy-knob"></div></div></div>
+      <button class="act" id="btn-interact" hidden>E</button>
+      <button class="act small" id="btn-sprint">⏩</button>
+    </div>
+
+    <div id="toasts"></div>
+  </div>
+
+  <div id="modal" class="hidden"><div id="modal-card" class="card"></div></div>
+
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>

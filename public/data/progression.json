@@ -1,0 +1,254 @@
+{
+  "stages": [
+    {
+      "stage": 1,
+      "name": "Small EV Station",
+      "blurb": "Two charging bays, one attendant and a dream.",
+      "goals": [],
+      "reward": {}
+    },
+    {
+      "stage": 2,
+      "name": "EV Service Center",
+      "blurb": "More bays, DC fast chargers, the car wash and a customer lounge.",
+      "goals": [
+        {
+          "id": "rep",
+          "label": "Reach reputation 10",
+          "type": "reputation",
+          "target": 10
+        },
+        {
+          "id": "rev",
+          "label": "Earn $2,500 in total revenue",
+          "type": "revenue",
+          "target": 2500
+        },
+        {
+          "id": "bays",
+          "label": "Build 3 charging bays",
+          "type": "bays",
+          "target": 3
+        },
+        {
+          "id": "emp",
+          "label": "Hire an employee",
+          "type": "employees",
+          "target": 1
+        }
+      ],
+      "reward": {
+        "cash": 2000,
+        "gems": 10
+      },
+      "unlocks": [
+        "Car wash",
+        "Customer lounge",
+        "DC fast chargers",
+        "Bigger grid connection"
+      ]
+    },
+    {
+      "stage": 3,
+      "name": "Automotive Business Hub",
+      "blurb": "Ultra-fast charging, the garage, a store and coffee shop, fleet contracts, solar and storage.",
+      "goals": [
+        {
+          "id": "rep",
+          "label": "Reach reputation 40",
+          "type": "reputation",
+          "target": 40
+        },
+        {
+          "id": "wash",
+          "label": "Build the car wash",
+          "type": "built",
+          "key": "wash",
+          "target": 1
+        },
+        {
+          "id": "served",
+          "label": "Serve 60 customers",
+          "type": "served",
+          "target": 60
+        },
+        {
+          "id": "emp",
+          "label": "Employ 3 people",
+          "type": "employees",
+          "target": 3
+        }
+      ],
+      "reward": {
+        "cash": 6000,
+        "gems": 25
+      },
+      "unlocks": [
+        "EV garage",
+        "Convenience store",
+        "Coffee shop",
+        "Fleet contracts",
+        "Ultra-fast chargers",
+        "Automatic wash tunnels",
+        "Solar & battery storage"
+      ]
+    },
+    {
+      "stage": 4,
+      "name": "City EV Empire",
+      "blurb": "VIP customers, premium hubs and a large workforce.",
+      "goals": [
+        {
+          "id": "rep",
+          "label": "Reach reputation 120",
+          "type": "reputation",
+          "target": 120
+        },
+        {
+          "id": "garage",
+          "label": "Build the EV garage",
+          "type": "built",
+          "key": "garage",
+          "target": 1
+        },
+        {
+          "id": "rev",
+          "label": "Earn $50,000 in total revenue",
+          "type": "revenue",
+          "target": 50000
+        },
+        {
+          "id": "contract",
+          "label": "Complete a fleet contract",
+          "type": "contractsDone",
+          "target": 1
+        },
+        {
+          "id": "prop",
+          "label": "Own 2 additional properties",
+          "type": "properties",
+          "target": 2
+        }
+      ],
+      "reward": {
+        "cash": 20000,
+        "gems": 50
+      },
+      "unlocks": [
+        "VIP customers",
+        "Premium charging hubs (property in Milestone 7)"
+      ]
+    }
+  ],
+  "features": {
+    "wash": 2,
+    "lounge": 2,
+    "chargerDC": 2,
+    "chargerUltra": 3,
+    "garage": 3,
+    "store": 3,
+    "coffee": 3,
+    "tunnel": 3,
+    "contracts": 3,
+    "solar": 3,
+    "storage": 3,
+    "vip": 4,
+    "hubSmall": 2,
+    "hubCommercial": 3,
+    "hubIndustrial": 3,
+    "hubHighway": 4,
+    "decor": 1
+  },
+  "contracts": {
+    "maxActive": 2,
+    "offersPerDay": 2,
+    "failRep": 5,
+    "templates": [
+      {
+        "kind": "charge",
+        "label": "Fleet charging",
+        "unit": "vehicles",
+        "count": [
+          5,
+          10
+        ],
+        "days": [
+          2,
+          4
+        ],
+        "perUnit": [
+          55,
+          80
+        ],
+        "rep": 6
+      },
+      {
+        "kind": "wash",
+        "label": "Fleet washing",
+        "unit": "washes",
+        "count": [
+          4,
+          9
+        ],
+        "days": [
+          2,
+          4
+        ],
+        "perUnit": [
+          45,
+          65
+        ],
+        "rep": 5,
+        "requires": "wash"
+      },
+      {
+        "kind": "garage",
+        "label": "Fleet maintenance",
+        "unit": "jobs",
+        "count": [
+          3,
+          6
+        ],
+        "days": [
+          3,
+          5
+        ],
+        "perUnit": [
+          130,
+          180
+        ],
+        "rep": 8,
+        "requires": "garage"
+      }
+    ]
+  },
+  "login": {
+    "rewards": [
+      {
+        "cash": 500
+      },
+      {
+        "cash": 750,
+        "gems": 3
+      },
+      {
+        "cash": 1000
+      },
+      {
+        "cash": 1250,
+        "gems": 5
+      },
+      {
+        "cash": 1500
+      },
+      {
+        "cash": 2000,
+        "gems": 8
+      },
+      {
+        "cash": 3000,
+        "gems": 15
+      }
+    ]
+  }
+}

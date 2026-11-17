@@ -1,0 +1,74 @@
+{
+  "maxComfort": 8,
+  "maxAppeal": 0.15,
+  "refund": 0.5,
+  "items": {
+    "tree": {
+      "label": "Tree",
+      "icon": "🌳",
+      "cost": 100,
+      "size": [
+        1,
+        1
+      ],
+      "appeal": 0.012,
+      "blurb": "Greenery makes the lot more attractive."
+    },
+    "planter": {
+      "label": "Flower planter",
+      "icon": "🌷",
+      "cost": 150,
+      "size": [
+        2,
+        1
+      ],
+      "appeal": 0.018,
+      "blurb": "Colourful planter: a little more footfall."
+    },
+    "bench": {
+      "label": "Bench",
+      "icon": "🪑",
+      "cost": 220,
+      "size": [
+        2,
+        1
+      ],
+      "comfort": 1.2,
+      "blurb": "Somewhere to wait: waiting customers are happier."
+    },
+    "picnic": {
+      "label": "Picnic table",
+      "icon": "🍽️",
+      "cost": 420,
+      "size": [
+        2,
+        2
+      ],
+      "comfort": 2.2,
+      "appeal": 0.01,
+      "blurb": "Big comfort boost for customers who wait."
+    },
+    "lamp": {
+      "label": "Street lamp",
+      "icon": "💡",
+      "cost": 180,
+      "size": [
+        1,
+        1
+      ],
+      "night": 0.03,
+      "blurb": "Lit lots attract more night-time customers."
+    },
+    "banner": {
+      "label": "EV banner",
+      "icon": "🚩",
+      "cost": 300,
+      "size": [
+        1,
+        1
+      ],
+      "appeal": 0.025,
+      "blurb": "Eye-catching banner: noticeably more arrivals."
+    }
+  }
+}

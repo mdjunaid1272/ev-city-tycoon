@@ -1,0 +1,335 @@
+{
+  "dailyCount": 3,
+  "dailyBonus": {
+    "gems": 5,
+    "cash": 500
+  },
+  "weeklyCount": 3,
+  "weeklyDays": 7,
+  "daily": [
+    {
+      "id": "d_charge",
+      "title": "Charge {n} vehicles",
+      "stat": "charged",
+      "min": 3,
+      "max": 8,
+      "cashPer": 70
+    },
+    {
+      "id": "d_earn",
+      "title": "Earn ${n} in revenue",
+      "stat": "revenue",
+      "min": 150,
+      "max": 600,
+      "step": 50,
+      "cashPer": 1,
+      "cashMult": 0.7
+    },
+    {
+      "id": "d_happy",
+      "title": "Make {n} customers happy (80%+)",
+      "stat": "happy",
+      "min": 2,
+      "max": 6,
+      "cashPer": 90
+    },
+    {
+      "id": "d_wash",
+      "title": "Wash {n} cars",
+      "stat": "washed",
+      "min": 2,
+      "max": 6,
+      "cashPer": 80,
+      "requires": "wash"
+    },
+    {
+      "id": "d_repair",
+      "title": "Complete {n} garage jobs",
+      "stat": "repaired",
+      "min": 1,
+      "max": 4,
+      "cashPer": 160,
+      "requires": "garage"
+    },
+    {
+      "id": "d_tasks",
+      "title": "Let your team complete {n} tasks",
+      "stat": "tasks",
+      "min": 6,
+      "max": 16,
+      "cashPer": 40,
+      "requires": "employee"
+    },
+    {
+      "id": "d_premium",
+      "title": "Serve {n} Premium or VIP customer",
+      "stat": "premiumServed",
+      "min": 1,
+      "max": 3,
+      "cashPer": 180,
+      "requires": "rep10"
+    },
+    {
+      "id": "d_tips",
+      "title": "Earn ${n} in tips",
+      "stat": "tips",
+      "min": 10,
+      "max": 40,
+      "step": 5,
+      "cashPer": 6,
+      "cashMult": 1
+    }
+  ],
+  "weekly": [
+    {
+      "id": "w_serve",
+      "title": "Serve {n} customers across all businesses",
+      "stat": "served",
+      "min": 40,
+      "max": 90,
+      "cashPer": 45,
+      "gems": 10
+    },
+    {
+      "id": "w_revenue",
+      "title": "Earn ${n} in revenue this week",
+      "stat": "revenue",
+      "min": 3000,
+      "max": 9000,
+      "step": 500,
+      "cashPer": 0.45,
+      "gems": 12
+    },
+    {
+      "id": "w_cross",
+      "title": "Wash {n} cars and complete {m} garage jobs",
+      "stat": "washed",
+      "min": 12,
+      "max": 25,
+      "stat2": "repaired",
+      "min2": 6,
+      "max2": 12,
+      "cashPer": 90,
+      "gems": 15,
+      "requires": "garage"
+    },
+    {
+      "id": "w_happy",
+      "title": "Make {n} customers happy (80%+)",
+      "stat": "happy",
+      "min": 25,
+      "max": 50,
+      "cashPer": 60,
+      "gems": 10
+    },
+    {
+      "id": "w_contract",
+      "title": "Complete {n} fleet contract",
+      "stat": "contractsDone",
+      "min": 1,
+      "max": 2,
+      "cashPer": 900,
+      "gems": 20,
+      "requires": "contracts"
+    },
+    {
+      "id": "w_tasks",
+      "title": "Let your employees complete {n} tasks",
+      "stat": "tasks",
+      "min": 50,
+      "max": 120,
+      "cashPer": 18,
+      "gems": 8,
+      "requires": "employee"
+    }
+  ],
+  "achievements": [
+    {
+      "id": "a_serve100",
+      "title": "Busy Station",
+      "desc": "Serve 100 customers in total",
+      "stat": "served",
+      "target": 100,
+      "reward": {
+        "gems": 10
+      }
+    },
+    {
+      "id": "a_serve500",
+      "title": "City Favourite",
+      "desc": "Serve 500 customers",
+      "stat": "served",
+      "target": 500,
+      "reward": {
+        "gems": 30,
+        "cash": 5000
+      }
+    },
+    {
+      "id": "a_rev10k",
+      "title": "First Ten Thousand",
+      "desc": "Earn $10,000 in total revenue",
+      "stat": "revenue",
+      "target": 10000,
+      "reward": {
+        "gems": 10,
+        "cash": 1000
+      }
+    },
+    {
+      "id": "a_rev100k",
+      "title": "Six Figures",
+      "desc": "Earn $100,000 in total revenue",
+      "stat": "revenue",
+      "target": 100000,
+      "reward": {
+        "gems": 40,
+        "cash": 10000
+      }
+    },
+    {
+      "id": "a_wash50",
+      "title": "Squeaky Clean",
+      "desc": "Wash 50 cars",
+      "stat": "washed",
+      "target": 50,
+      "reward": {
+        "gems": 10
+      }
+    },
+    {
+      "id": "a_repair25",
+      "title": "Master Mechanic",
+      "desc": "Complete 25 garage jobs",
+      "stat": "repaired",
+      "target": 25,
+      "reward": {
+        "gems": 15
+      }
+    },
+    {
+      "id": "a_happy50",
+      "title": "Customer Delight",
+      "desc": "Make 50 customers happy",
+      "stat": "happy",
+      "target": 50,
+      "reward": {
+        "gems": 10
+      }
+    },
+    {
+      "id": "a_vip5",
+      "title": "Red Carpet",
+      "desc": "Serve 5 VIP customers",
+      "stat": "vipServed",
+      "target": 5,
+      "reward": {
+        "gems": 15,
+        "cash": 2000
+      }
+    },
+    {
+      "id": "a_team5",
+      "title": "Growing Team",
+      "desc": "Hire 5 employees",
+      "stat": "hired",
+      "target": 5,
+      "reward": {
+        "gems": 8
+      }
+    },
+    {
+      "id": "a_tasks200",
+      "title": "Well-Oiled Machine",
+      "desc": "Employees complete 200 tasks",
+      "stat": "tasks",
+      "target": 200,
+      "reward": {
+        "gems": 12
+      }
+    },
+    {
+      "id": "a_contract",
+      "title": "Reliable Partner",
+      "desc": "Complete a fleet contract",
+      "stat": "contractsDone",
+      "target": 1,
+      "reward": {
+        "gems": 15
+      }
+    },
+    {
+      "id": "a_tips",
+      "title": "Generous Tippers",
+      "desc": "Earn $500 in tips",
+      "stat": "tips",
+      "target": 500,
+      "reward": {
+        "gems": 10
+      }
+    },
+    {
+      "id": "a_days10",
+      "title": "Seasoned Owner",
+      "desc": "Run the business for 10 days",
+      "stat": "days",
+      "target": 10,
+      "reward": {
+        "gems": 8
+      }
+    },
+    {
+      "id": "a_upgrades10",
+      "title": "Always Improving",
+      "desc": "Buy 10 equipment upgrades",
+      "stat": "upgrades",
+      "target": 10,
+      "reward": {
+        "gems": 12
+      }
+    },
+    {
+      "id": "a_stage4",
+      "title": "City EV Empire",
+      "desc": "Reach progression stage 4",
+      "stat": "stage",
+      "target": 4,
+      "reward": {
+        "gems": 50,
+        "cash": 10000
+      }
+    },
+    {
+      "id": "a_prop2",
+      "title": "Property Investor",
+      "desc": "Own 2 additional properties",
+      "stat": "properties",
+      "target": 2,
+      "reward": {
+        "gems": 15,
+        "cash": 3000
+      }
+    },
+    {
+      "id": "a_prop4",
+      "title": "City Landlord",
+      "desc": "Own 4 additional properties",
+      "stat": "properties",
+      "target": 4,
+      "reward": {
+        "gems": 30,
+        "cash": 15000
+      }
+    },
+    {
+      "id": "a_decor10",
+      "title": "Interior Designer",
+      "desc": "Place 10 decorations",
+      "stat": "decor",
+      "target": 10,
+      "reward": {
+        "gems": 10
+      }
+    }
+  ]
+}

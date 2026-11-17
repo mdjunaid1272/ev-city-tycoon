@@ -1,0 +1,168 @@
+{
+  "fairPricePerKwh": 0.55,
+  "maxQueue": 3,
+  "maxActiveCustomers": 7,
+  "baseArrivalSeconds": [
+    11,
+    20
+  ],
+  "types": {
+    "regular": {
+      "label": "Regular",
+      "icon": "🙂",
+      "weight": 50,
+      "minRep": 0,
+      "patience": 75,
+      "priceTolerance": 0.8,
+      "minKw": 0,
+      "payMult": 1,
+      "priority": 1,
+      "socMin": 0.08,
+      "socMax": 0.45,
+      "target": [
+        0.88,
+        1
+      ],
+      "repGain": 1,
+      "vehicles": {
+        "compact": 4,
+        "suv": 3,
+        "van": 1,
+        "taxi": 0.5
+      }
+    },
+    "premium": {
+      "label": "Premium",
+      "icon": "😎",
+      "weight": 16,
+      "minRep": 10,
+      "patience": 60,
+      "priceTolerance": 1,
+      "minKw": 50,
+      "payMult": 1.25,
+      "priority": 2,
+      "socMin": 0.1,
+      "socMax": 0.4,
+      "target": [
+        0.95,
+        1
+      ],
+      "repGain": 1,
+      "vehicles": {
+        "suv": 3,
+        "sports": 2,
+        "sedan": 3
+      }
+    },
+    "impatient": {
+      "label": "Impatient",
+      "icon": "😤",
+      "weight": 15,
+      "minRep": 0,
+      "patience": 28,
+      "priceTolerance": 0.75,
+      "minKw": 0,
+      "payMult": 1.05,
+      "priority": 1,
+      "socMin": 0.15,
+      "socMax": 0.5,
+      "target": [
+        0.8,
+        0.95
+      ],
+      "repGain": 1,
+      "vehicles": {
+        "compact": 3,
+        "suv": 2,
+        "sports": 1
+      }
+    },
+    "fleet": {
+      "label": "Fleet",
+      "icon": "🚐",
+      "weight": 9,
+      "minRep": 15,
+      "patience": 110,
+      "priceTolerance": 0.65,
+      "minKw": 0,
+      "payMult": 0.9,
+      "priority": 1,
+      "socMin": 0.1,
+      "socMax": 0.35,
+      "target": [
+        0.9,
+        1
+      ],
+      "repGain": 1,
+      "vehicles": {
+        "van": 1
+      }
+    },
+    "vip": {
+      "label": "VIP",
+      "icon": "👑",
+      "weight": 5,
+      "minRep": 30,
+      "patience": 90,
+      "priceTolerance": 1.35,
+      "minKw": 50,
+      "payMult": 1.6,
+      "priority": 3,
+      "socMin": 0.15,
+      "socMax": 0.4,
+      "target": [
+        1,
+        1
+      ],
+      "repGain": 3,
+      "vehicles": {
+        "sports": 1,
+        "sedan": 2
+      }
+    },
+    "emergency": {
+      "label": "Emergency",
+      "icon": "🚨",
+      "weight": 5,
+      "minRep": 5,
+      "patience": 45,
+      "priceTolerance": 1.5,
+      "minKw": 0,
+      "payMult": 1.5,
+      "priority": 4,
+      "socMin": 0.02,
+      "socMax": 0.06,
+      "target": [
+        0.35,
+        0.5
+      ],
+      "repGain": 2,
+      "vehicles": {
+        "compact": 2,
+        "suv": 1,
+        "van": 1
+      }
+    },
+    "taxi": {
+      "label": "Taxi driver",
+      "icon": "🚕",
+      "weight": 9,
+      "minRep": 12,
+      "patience": 38,
+      "priceTolerance": 0.7,
+      "minKw": 0,
+      "payMult": 0.95,
+      "priority": 1,
+      "socMin": 0.05,
+      "socMax": 0.3,
+      "target": [
+        0.85,
+        1
+      ],
+      "repGain": 1,
+      "vehicles": {
+        "taxi": 1
+      }
+    }
+  }
+}
