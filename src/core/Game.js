@@ -391,6 +391,23 @@ export class Game {
     this.ui.showSelection(o.userData.select);
   }
 
+  /** Street view, mouse: hold the left button and drag — the character keeps walking towards the cursor; release to stop. */
+  dragMove() {
+    const p = !this.camera.inManagement && !this.camera.transitioning && !this.decor.active ? this.input.mouseHold() : null;
+    if (!p) {
+      if (this.holdMoving) { this.holdMoving = false; this.player.target = null; }
+      return;
+    }
+    const ndc = new THREE.Vector2((p.x / innerWidth) * 2 - 1, -(p.y / innerHeight) * 2 + 1);
+    this.raycaster.setFromCamera(ndc, this.sm.camera);
+    const hit = new THREE.Vector3();
+    if (!this.raycaster.ray.intersectPlane(this.groundPlane, hit)) return;
+    this.holdMoving = true;
+    this.player.target = { x: THREE.MathUtils.clamp(hit.x, -150, 150), z: THREE.MathUtils.clamp(hit.z, -150, 150) };
+    this.moveMarker.position.set(this.player.target.x, 0.4, this.player.target.z);
+    this.moveMarker.visible = true;
+  }
+
   setPaused(p) {
     this.paused = p;
     this.input.enabled = !p;
@@ -432,6 +449,7 @@ export class Game {
       this.employeeView.update(dt);
       this.stationView.mgFactor = this.camera.mg.dist / 120;
       this.stationView.update(dt, this.player.pos);
+      this.dragMove();
       this.player.update(dt, this.camera.moveYaw);
       this.traffic.update(dt, this.camera.focusPoint);
       this.lights.update();

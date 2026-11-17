@@ -70,6 +70,16 @@ export class Input {
     if (this.pointers.size === 2) this.pinch = this.pinchState();
   }
 
+  /** Mouse "drag to move": the held left-button pointer once it has been dragged or held for a moment, else null. */
+  mouseHold() {
+    if (!this.enabled) return null;
+    for (const p of this.pointers.values()) {
+      if (p.touch || p.button !== 0) continue;
+      if (p.moved > 6 || performance.now() - p.t > 250) return p;
+    }
+    return null;
+  }
+
   pinchState() {
     const [a, b] = [...this.pointers.values()];
     return { d: Math.hypot(a.x - b.x, a.y - b.y), a: Math.atan2(b.y - a.y, b.x - a.x) };

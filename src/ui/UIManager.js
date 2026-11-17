@@ -857,7 +857,7 @@ export class UIManager {
       <label class="opt">Camera sensitivity<input id="set-sens" type="range" min="0.4" max="2.2" step="0.1" value="${s.sensitivity}"></label>
       <label class="opt">Invert camera Y<input id="set-invert" type="checkbox" ${s.invertY ? 'checked' : ''}></label>
       <div class="sect">Controls</div>
-      <div class="help"><kbd>WASD</kbd>/arrows or click the ground: move · <kbd>Shift</kbd> sprint · wheel: zoom · stand at a charger to connect automatically (or <kbd>E</kbd>) · <kbd>M</kbd> isometric management view · <kbd>Esc</kbd> menu.<br>
+      <div class="help"><kbd>WASD</kbd>/arrows, click the ground, or hold the mouse button and drag: move · <kbd>Shift</kbd> sprint · wheel: zoom · stand at a charger to connect automatically (or <kbd>E</kbd>) · <kbd>M</kbd> isometric management view · <kbd>Esc</kbd> menu.<br>
       Management view: drag to pan, wheel to zoom, <kbd>Q</kbd>/<kbd>R</kbd> rotate 90°, click equipment to select.<br>Touch: joystick or tap the ground to move, pinch to zoom.</div>
       <div class="sect">Data</div>
       <button class="btn ghost" data-pause="reset">Reset save…</button>`;
