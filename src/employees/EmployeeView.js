@@ -64,10 +64,13 @@ export class EmployeeView {
     const tc = m.trainCost(e);
     return {
       title: `${def.icon} ${e.name}`, subtitle: def.label, rows,
+      // only real actions: skill training, workplace change (when the role can work elsewhere), duty, staff board, fire (confirmed)
       actions: [
-        ...(e.skill < m.cfg.maxSkill ? [{ label: `Train → skill ${e.skill + 1} · ${$(tc)}`, disabled: !this.economy.canAfford(tc), cb: () => m.train(e.id) }] : []),
-        { label: e.dept === 'off' ? 'Put on duty' : 'Send off duty', cb: () => m.assign(e.id, e.dept === 'off' ? m.homeOf(e) : 'off') },
-        { label: 'Fire', cb: () => m.fire(e.id) },
+        ...(e.skill < m.cfg.maxSkill ? [{ label: `Upgrade skill → ${e.skill + 1} · ${$(tc)}`, disabled: !this.economy.canAfford(tc), cb: () => m.train(e.id) }] : []),
+        ...(m.eligibleDepts(e).length > 1 ? [{ label: `Change workplace · ${m.facilities[m.homeOf(e)]?.label || m.homeOf(e)} ▸`, kind: 'secondary', cb: () => m.transfer(e.id) }] : []),
+        { label: e.dept === 'off' ? 'Put on duty' : 'Send off duty', kind: 'secondary', cb: () => m.assign(e.id, e.dept === 'off' ? m.homeOf(e) : 'off') },
+        { label: 'Open Staff board', kind: 'secondary', cb: () => this.bus.emit('ui:open', 'staff') },
+        { label: 'Fire', kind: 'danger', cb: () => this.bus.emit('ui:fire', e.id) },
       ],
     };
   }

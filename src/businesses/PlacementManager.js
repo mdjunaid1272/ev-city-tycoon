@@ -25,6 +25,8 @@ export class PlacementManager {
     this.lots = new Map(); // id -> { id, label, built(), forbidden, blocked(wx,wz), toWorld(lx,lz), toLocal(wx,wz) }
     this.placed = saved?.placed || [];
     this.totalPlaced = saved?.totalPlaced || this.placed.length;
+    this.undoStack = [];
+    this.redoStack = [];
   }
 
   registerLot(spec) {
@@ -76,19 +78,68 @@ export class PlacementManager {
     const p = { uid: `d${++seq}_${Date.now().toString(36)}`, lot: lotId, item: itemId, x, z, rot };
     this.placed.push(p);
     this.totalPlaced++;
+    this.record({ t: 'place', p });
     this.bus.emit('decor:placed', { placement: p });
     this.bus.emit('decor:changed');
     return { ok: true, placement: p };
   }
 
-  remove(uid) {
+  remove(uid, record = true) {
     const i = this.placed.findIndex((p) => p.uid === uid);
     if (i < 0) return false;
     const [p] = this.placed.splice(i, 1);
     this.economy.grant({ cash: Math.floor(this.items[p.item].cost * this.cfg.refund) });
+    if (record) this.record({ t: 'remove', p });
     this.bus.emit('decor:removed', { placement: p });
     this.bus.emit('decor:changed');
     return true;
+  }
+
+  // ----- undo / redo (build-mode session history; not saved) -----
+  record(a) {
+    this.undoStack.push(a);
+    if (this.undoStack.length > 50) this.undoStack.shift();
+    this.redoStack.length = 0;
+  }
+  clearHistory() { this.undoStack.length = 0; this.redoStack.length = 0; this.bus.emit('decor:changed'); }
+  get canUndo() { return this.undoStack.length > 0; }
+  get canRedo() { return this.redoStack.length > 0; }
+
+  /** Undo the last placement (full refund) or the last removal (takes the refund back). */
+  undo() {
+    const a = this.undoStack.pop();
+    if (!a) return { ok: false, reason: 'Nothing to undo' };
+    const { p } = a, it = this.items[p.item];
+    if (a.t === 'place') {
+      const i = this.placed.findIndex((x) => x.uid === p.uid);
+      if (i >= 0) { this.placed.splice(i, 1); this.economy.grant({ cash: it.cost }); }
+    } else {
+      const v = this.validate(p.lot, p.item, p.x, p.z, p.rot);
+      if (!v.ok && v.reason !== 'Not enough cash') { this.undoStack.push(a); return v; }
+      if (!this.economy.spend(Math.floor(it.cost * this.cfg.refund), 'decor')) { this.undoStack.push(a); return { ok: false, reason: 'Not enough cash' }; }
+      this.placed.push(p);
+    }
+    this.redoStack.push(a);
+    this.bus.emit('decor:changed');
+    return { ok: true, what: a.t === 'place' ? 'Placement undone (refunded)' : 'Removal undone' };
+  }
+
+  redo() {
+    const a = this.redoStack.pop();
+    if (!a) return { ok: false, reason: 'Nothing to redo' };
+    const { p } = a, it = this.items[p.item];
+    if (a.t === 'place') {
+      const v = this.validate(p.lot, p.item, p.x, p.z, p.rot);
+      if (!v.ok) { this.redoStack.push(a); return v; }
+      if (!this.economy.spend(it.cost, 'decor')) { this.redoStack.push(a); return { ok: false, reason: 'Not enough cash' }; }
+      this.placed.push(p);
+    } else {
+      const i = this.placed.findIndex((x) => x.uid === p.uid);
+      if (i >= 0) { this.placed.splice(i, 1); this.economy.grant({ cash: Math.floor(it.cost * this.cfg.refund) }); }
+    }
+    this.undoStack.push(a);
+    this.bus.emit('decor:changed');
+    return { ok: true, what: a.t === 'place' ? 'Placement redone' : 'Removal redone' };
   }
 
   find(lotId, x, z) {

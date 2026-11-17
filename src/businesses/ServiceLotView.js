@@ -196,7 +196,11 @@ export class ServiceLotView {
     t.userData.select = () => ({
       title: `${this.biz.cfg.icon} ${this.biz.cfg.label}`, subtitle: 'Business control point',
       rows: [['Bays', `${this.biz.unlockedBays}/${this.biz.bays.length}`], ['Queue', `${this.biz.queue.length}/${this.biz.maxQueue}`]],
-      actions: [{ label: `Open ${this.biz.cfg.label} manager`, cb: () => this.bus.emit('ui:open', this.id) }],
+      actions: [
+        { label: 'Manage', cb: () => this.bus.emit('ui:open', this.id) },
+        { label: 'Staff', kind: 'secondary', cb: () => this.bus.emit('ui:open', 'staff') },
+        { label: 'Upgrade', kind: 'secondary', cb: () => this.bus.emit('ui:open', 'upgrades') },
+      ],
     });
     const tw = this.W(this.terminalLocal.x, this.terminalLocal.z);
     t.userData.focus = new THREE.Vector3(tw.x, 0, tw.z);

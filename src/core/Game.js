@@ -506,6 +506,7 @@ export class Game {
 
   save() {
     if (this.resetting) return Promise.resolve();
+    this.lastSaved = Date.now();
     return this.saver.save(this.collect());
   }
 

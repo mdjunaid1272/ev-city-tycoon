@@ -104,6 +104,16 @@ export class CameraManager {
     }
   }
 
+  /** Back to the default framing of the current mode (zoom, and in management view the focus on the player). */
+  reset() {
+    if (this.mode === 'third') this.tp.dist = 20;
+    else {
+      this.mg.dist = 175;
+      this.mg.focus.set(this.player.pos.x, 0, this.player.pos.z);
+      this.mg.yawTarget = Math.round((this.mg.yawTarget - ISO_YAW) / (Math.PI / 2)) * (Math.PI / 2) + ISO_YAW;
+    }
+  }
+
   onZoom(z) {
     if (!this.enabled) return;
     if (this.mode === 'third') this.tp.dist = clamp(this.tp.dist + z * 2, 11, 36);

@@ -3,11 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
-  <meta name="theme-color" content="#1b6ef3" />
+  <meta name="theme-color" content="#142B42" />
   <meta name="mobile-web-app-capable" content="yes" />
   <title>EV City Tycoon</title>
   <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
   <link rel="stylesheet" href="./src/style.css" />
+  <link rel="stylesheet" href="./src/ui-system.css" />
 </head>
 <body>
   <canvas id="c"></canvas>
@@ -21,55 +22,79 @@
   </div>
 
   <div id="hud" class="hidden">
-    <div id="top-left">
-      <div class="pill cash" id="pill-cash"><span class="ic">💵</span><b id="v-cash">$0</b></div>
-      <div class="pill gems"><span class="ic">💎</span><b id="v-gems">0</b></div>
-      <div class="pill rep"><span class="ic">⭐</span><b id="v-rep">0</b></div>
-      <div id="floaters"></div>
+    <!-- 1. TOP BAR: resources · day / time / place · map + pause -->
+    <header id="topbar">
+      <div id="top-left">
+        <div class="pill cash" id="pill-cash" title="Cash"><span class="ic" data-icon="cash" data-size="18"></span><b id="v-cash">$0</b></div>
+        <div class="pill gems" title="Gems"><span class="ic" data-icon="gem" data-size="18"></span><b id="v-gems">0</b></div>
+        <div class="pill rep" title="Reputation stars"><span class="ic" data-icon="star" data-size="18"></span><b id="v-rep">0</b></div>
+        <div id="floaters"></div>
+      </div>
+      <div id="top-center">
+        <div class="pill time"><span class="ic" id="v-sun" data-icon="sun" data-size="18"></span><b id="v-day">Day 1</b><span id="v-time">09:30</span></div>
+        <div class="loc" id="v-loc">Downtown</div>
+      </div>
+      <div id="top-right">
+        <button class="ibtn" id="btn-map" title="City map" aria-label="City map" data-icon="map"></button>
+        <button class="ibtn" id="btn-pause" title="Pause (Esc)" aria-label="Pause" data-icon="pause"></button>
+      </div>
+    </header>
+
+    <!-- 2. DAILY OVERVIEW (top-left, under the bar) -->
+    <section id="daily" class="panel">
+      <div class="d-stats">
+        <div class="d-stat"><span class="ic" data-icon="cash" data-size="16"></span><small>Today</small><b id="d-rev">$0</b></div>
+        <div class="d-stat"><span class="ic" data-icon="users" data-size="16"></span><small>Customers</small><b id="d-cust">0</b></div>
+        <div class="d-stat"><span class="ic" data-icon="star" data-size="16"></span><small>Satisfied</small><b id="d-sat">—</b></div>
+      </div>
+      <div id="mission" role="button" tabindex="0" aria-expanded="false" title="Show objective details">
+        <div class="m-head"><span>Objective</span><span id="m-reward"></span><span class="chev" data-icon="chevron" data-size="16"></span></div>
+        <div id="m-title">—</div>
+        <div class="prog"><i id="m-fill"></i><em id="m-count"></em></div>
+        <div id="m-desc"></div>
+      </div>
+    </section>
+
+    <!-- camera toolbar -->
+    <div id="cam-bar" role="toolbar" aria-label="Camera">
+      <button class="ibtn" id="btn-zoom-in" title="Zoom in (wheel)" aria-label="Zoom in" data-icon="zoomIn"></button>
+      <button class="ibtn" id="btn-zoom-out" title="Zoom out (wheel)" aria-label="Zoom out" data-icon="zoomOut"></button>
+      <button class="ibtn mg-only" id="btn-rot-l" title="Rotate left (Q)" aria-label="Rotate left" data-icon="rotL"></button>
+      <button class="ibtn mg-only" id="btn-rot-r" title="Rotate right (R)" aria-label="Rotate right" data-icon="rotR"></button>
+      <button class="ibtn" id="btn-cam-reset" title="Reset camera" aria-label="Reset camera" data-icon="reset"></button>
+      <button class="ibtn sel-able" id="btn-mgmt" title="Management camera (M)" aria-label="Toggle management camera" aria-pressed="false"><span data-icon="layers"></span><small id="mgmt-label">Manage</small></button>
     </div>
 
-    <div id="top-center">
-      <div class="pill time"><span class="ic" id="v-sun">☀️</span><b id="v-day">Day 1</b><span id="v-time">09:30</span></div>
-      <div class="loc" id="v-loc">Downtown</div>
-    </div>
-
-    <div id="top-right">
-      <button class="round" id="btn-map" title="City map">🗺️</button>
-      <button class="round" id="btn-pause" title="Menu (Esc)">⚙️</button>
-    </div>
-
-    <div id="mission" class="card">
-      <div class="m-head"><span>🎯 Mission</span><span id="m-reward"></span></div>
-      <div id="m-title">—</div>
-      <div id="m-desc"></div>
-      <div class="prog"><i id="m-fill"></i><em id="m-count"></em></div>
-    </div>
-
-    <div id="shortcuts">
-      <button class="sc" data-open="business" title="Businesses"><span>🏢</span><small>Business</small></button>
-      <button class="sc" data-open="staff" title="Staff"><span>👥</span><small>Staff</small></button>
-      <button class="sc" data-open="finance" title="Finance"><span>💰</span><small>Finance</small></button>
-      <button class="sc" data-open="missions" title="Missions"><span>🏁</span><small>Missions</small></button>
-      <button class="sc primary" id="btn-mgmt" title="Management camera (M)"><span>🏗️</span><small id="mgmt-label">Manage</small></button>
+    <!-- 3. BOTTOM NAVIGATION -->
+    <nav id="shortcuts" aria-label="Main navigation">
+      <button class="sc" data-open="business" title="Businesses"><span data-icon="business"></span><small>Business</small></button>
+      <button class="sc" data-open="staff" title="Staff"><span data-icon="staff"></span><small>Staff</small></button>
+      <button class="sc" data-open="finance" title="Finance"><span data-icon="finance"></span><small>Finance</small></button>
+      <button class="sc" data-open="missions" title="Missions"><span data-icon="missions"></span><small>Missions</small></button>
+      <button class="sc" id="btn-more" title="More" aria-haspopup="true" aria-expanded="false"><span data-icon="more"></span><small>More</small></button>
+    </nav>
+    <div id="more-menu" class="panel hidden" role="menu">
+      <button class="mi" data-more="settings" role="menuitem"><span data-icon="settings" data-size="20"></span>Settings</button>
+      <button class="mi" data-more="stats" role="menuitem"><span data-icon="stats" data-size="20"></span>Statistics</button>
+      <button class="mi" data-more="help" role="menuitem"><span data-icon="help" data-size="20"></span>Help</button>
+      <button class="mi" data-more="tutorial" role="menuitem"><span data-icon="tutorial" data-size="20"></span>Replay tutorial</button>
+      <button class="mi" data-more="save" role="menuitem"><span data-icon="save" data-size="20"></span>Save information</button>
     </div>
 
     <div id="prompt" class="hidden"><kbd>E</kbd><span id="prompt-text"></span></div>
-    <div id="mgmt-hint" class="hidden">Isometric view · Drag / WASD: pan · Wheel / pinch: zoom · Q / R: rotate 90° · Click: select · <b>M</b>: back to street</div>
+    <div id="mgmt-hint" class="hidden">Drag / WASD: pan · Wheel / pinch: zoom · Q / R: rotate · Click: select · <b>M</b>: back to street</div>
 
-    <div id="selection" class="card hidden"></div>
+    <!-- contextual action panel (selected object) -->
+    <aside id="selection" class="panel hidden" aria-live="polite"></aside>
 
-    <button class="btn-decor" id="btn-decor" title="Decorate your lots">🎨 Decorate</button>
-    <div id="decor-bar" class="card hidden"></div>
-
-    <div id="rot-btns">
-      <button class="round" id="btn-rot-l" title="Rotate view (Q)">&#8634;</button>
-      <button class="round" id="btn-rot-r" title="Rotate view (R)">&#8635;</button>
-    </div>
+    <!-- build mode toolbar -->
+    <button class="btn-decor" id="btn-decor" title="Build mode: decorate your lots"><span data-icon="build" data-size="20"></span>Build</button>
+    <div id="decor-bar" class="panel hidden"></div>
 
     <div id="touch">
       <div id="joy-zone"><div id="joy-base"><div id="joy-knob"></div></div></div>
       <button class="act" id="btn-interact" hidden>E</button>
-      <button class="act small" id="btn-sprint">⏩</button>
+      <button class="act small" id="btn-sprint" aria-label="Sprint" data-icon="sprint"></button>
     </div>
 
     <div id="tutorial" class="hidden" role="status" aria-live="polite">
@@ -84,10 +109,11 @@
     </div>
     <div id="tut-hint" class="hidden"></div>
 
-    <div id="toasts"></div>
+    <div id="toasts" aria-live="polite"></div>
   </div>
 
   <div id="modal" class="hidden"><div id="modal-card" class="card"></div></div>
+  <div id="confirm" class="hidden" role="alertdialog" aria-modal="true"><div id="confirm-card" class="panel"></div></div>
 
   <script type="module" src="./src/main.js"></script>
 </body>

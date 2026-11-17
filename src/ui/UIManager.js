@@ -1,7 +1,12 @@
 import { QUALITY } from '../core/Settings.js';
 import { districtOfBlock } from '../world/DistrictManager.js';
+import { icon, hydrateIcons } from './icons.js';
 
 const $ = (id) => document.getElementById(id);
+const CONFIRM_COST = 10000; // purchases at or above this price ask for confirmation
+const NAV_MODALS = ['business', 'staff', 'finance', 'missions'];
+const MORE_MODALS = ['settings', 'stats', 'help', 'save', 'pause'];
+const DECOR_CATS = { Greenery: ['tree', 'planter'], Seating: ['bench', 'picnic'], Lighting: ['lamp'], Signs: ['banner'] };
 export const money = (n, dec = 0) => `${n < 0 ? '-' : ''}$${Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: dec, maximumFractionDigits: dec })}`;
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
@@ -13,6 +18,8 @@ export class UIManager {
     this.tab = { business: 'overview', missions: 'main' };
     this.selectionFn = null;
     this.shownCash = this.economy.cash;
+    this.decorCat = 'Greenery';
+    hydrateIcons();
     this.bindHud();
     this.bindEvents();
     this.refreshMission(this.missions.snapshot());
@@ -26,7 +33,16 @@ export class UIManager {
     $('btn-decor').onclick = () => this.openDecor();
     $('btn-rot-l').onclick = () => this.camera.rotateIso(1);
     $('btn-rot-r').onclick = () => this.camera.rotateIso(-1);
-    document.querySelectorAll('[data-open]').forEach((b) => (b.onclick = () => this.open(b.dataset.open)));
+    $('btn-zoom-in').onclick = () => this.camera.onZoom(-1.5);
+    $('btn-zoom-out').onclick = () => this.camera.onZoom(1.5);
+    $('btn-cam-reset').onclick = () => { this.camera.reset(); this.toast('Camera reset', 'info'); };
+    // bottom navigation: tapping the open section again closes it
+    document.querySelectorAll('[data-open]').forEach((b) => (b.onclick = () => { this.closeMore(); if (this.modal === b.dataset.open) this.closeModal(); else this.open(b.dataset.open); }));
+    $('btn-more').onclick = (e) => { e.stopPropagation(); this.toggleMore(); };
+    document.querySelectorAll('[data-more]').forEach((b) => (b.onclick = () => this.moreAction(b.dataset.more)));
+    addEventListener('pointerdown', (e) => { if (this.moreOpen && !e.target.closest('#more-menu, #btn-more')) this.closeMore(); }, true);
+    $('mission').onclick = () => this.toggleObjective();
+    $('mission').onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); this.toggleObjective(); } };
     $('btn-interact').onclick = () => this.game.interaction.interact();
     const sp = $('btn-sprint');
     sp.onclick = () => { this.game.input.sprintToggle = !this.game.input.sprintToggle; sp.classList.toggle('on', this.game.input.sprintToggle); };
@@ -89,13 +105,17 @@ export class UIManager {
     b.on('station:upgraded', () => this.toast(`Chargers upgraded to ${this.station.charger.name}`, 'good'));
     b.on('day:report', (r) => this.showDayReport(r));
     b.on('ui:open', (name) => this.open(name));
+    b.on('ui:fire', (id) => this.confirmFire(id));
     b.on('station:changed', () => { if (this.modal === 'station') this.renderModal(); this.refreshSelection(); });
     b.on('economy:changed', () => { if (this.modal === 'finance') this.renderModal(); });
     b.on('toast', ({ text, kind }) => this.toast(text, kind));
     b.on('input:key', (code) => {
       if (code === 'Escape') {
-        if (this.decorOpen) this.closeDecor();
+        if (this.confirmOpen) this.resolveConfirm(false);
+        else if (this.moreOpen) this.closeMore();
         else if (this.modal && !['pause', 'offline', 'login'].includes(this.modal)) this.closeModal();
+        else if (this.selectionFn) this.clearSelection();
+        else if (this.decorOpen) this.closeDecor();
         else this.togglePause();
       }
     });
@@ -120,7 +140,10 @@ export class UIManager {
     $('v-rep').textContent = this.economy.reputation;
     $('v-day').textContent = `Day ${this.day.day}`;
     $('v-time').textContent = this.day.timeString;
-    $('v-sun').textContent = this.day.night > 0.5 ? '🌙' : this.day.hour < 8 || this.day.hour > 17.5 ? '🌇' : '☀️';
+    const sun = this.day.night > 0.5 ? 'moon' : this.day.hour < 8 || this.day.hour > 17.5 ? 'dusk' : 'sun';
+    if ($('v-sun').dataset.icon !== sun) { $('v-sun').dataset.icon = sun; hydrateIcons($('topbar')); }
+    this._dt = (this._dt || 0) + dt;
+    if (this._dt > 0.4) { this._dt = 0; this.updateDaily(); }
     if (['station', 'finance', 'staff', 'wash', 'garage', 'business', 'map'].includes(this.modal) || String(this.modal).startsWith('hub_')) {
       this._mt = (this._mt || 0) + dt;
       if (this._mt > 0.4) { this._mt = 0; this.renderModal(); }
@@ -129,6 +152,55 @@ export class UIManager {
       this._st = (this._st || 0) + dt;
       if (this._st > 0.3) { this._st = 0; this.refreshSelection(); }
     }
+  }
+
+  /** Daily overview: revenue today, customers on site, satisfaction. */
+  updateDaily() {
+    const sizeOf = (x) => (x && x.customers ? x.customers.size : 0);
+    const active = sizeOf(this.customers) + (this.customers.queue?.length || 0) + sizeOf(this.wash) + sizeOf(this.garage) + Object.values(this.hubs || {}).reduce((s, h) => s + sizeOf(h), 0);
+    const sat = this.customers.avgSatisfaction;
+    $('d-rev').textContent = money(Math.round(this.economy.todayRevenue));
+    $('d-cust').textContent = active;
+    $('d-sat').textContent = sat === null || sat === undefined ? '—' : `${Math.round(sat)}%`;
+  }
+
+  toggleObjective(force) {
+    const el = $('mission'), open = force ?? !el.classList.contains('open');
+    el.classList.toggle('open', open);
+    el.setAttribute('aria-expanded', String(open));
+  }
+
+  // ---------- "More" menu ----------
+  toggleMore() { this.moreOpen ? this.closeMore() : this.openMore(); }
+  openMore() {
+    const menu = $('more-menu'), btn = $('btn-more').getBoundingClientRect();
+    this.moreOpen = true;
+    menu.classList.remove('hidden');
+    $('btn-more').setAttribute('aria-expanded', 'true');
+    if (!document.body.classList.contains('touch') && innerWidth > 760) {
+      const w = menu.offsetWidth || 220;
+      menu.style.left = `${Math.max(8, Math.min(innerWidth - w - 8, btn.right - w))}px`;
+    } else menu.style.left = '';
+    this.syncNav();
+  }
+  closeMore() {
+    if (!this.moreOpen) return;
+    this.moreOpen = false;
+    $('more-menu').classList.add('hidden');
+    $('btn-more').setAttribute('aria-expanded', 'false');
+    this.syncNav();
+  }
+  moreAction(a) {
+    this.closeMore();
+    if (a === 'tutorial') { if (this.modal) this.closeModal(); this.game.tutorial?.restart(); return; }
+    this.open(a);
+  }
+
+  /** Selected state of the bottom navigation. */
+  syncNav() {
+    document.body.classList.toggle('nav-over', !!this.modal && !['pause', 'offline', 'login', 'stageup', 'report'].includes(this.modal));
+    document.querySelectorAll('.sc[data-open]').forEach((b) => b.classList.toggle('on', this.modal === b.dataset.open));
+    $('btn-more').classList.toggle('on', !!this.moreOpen || MORE_MODALS.includes(this.modal));
   }
 
   setLocation(name) {
@@ -143,9 +215,13 @@ export class UIManager {
   }
 
   onMode(m) {
-    document.body.classList.toggle('mgmt', m === 'management');
-    $('mgmt-label').textContent = m === 'management' ? 'Street' : 'Manage';
-    $('mgmt-hint').classList.toggle('hidden', m !== 'management');
+    const mg = m === 'management';
+    document.body.classList.toggle('mgmt', mg);
+    $('mgmt-label').textContent = mg ? 'Street' : 'Manage';
+    $('btn-mgmt').setAttribute('aria-pressed', String(mg));
+    $('btn-mgmt').title = mg ? 'Back to street view (M)' : 'Management camera (M)';
+    const mi = $('btn-mgmt').querySelector('[data-icon]'); mi.dataset.icon = mg ? 'street' : 'layers'; hydrateIcons($('btn-mgmt'));
+    $('mgmt-hint').classList.toggle('hidden', !mg);
     if (m !== 'management') { this.clearSelection(); if (this.decorOpen) this.closeDecor(); }
   }
 
@@ -157,13 +233,22 @@ export class UIManager {
     $('m-reward').textContent = s.done ? '' : this.rewardText(s.reward);
   }
 
+  /** Toast kinds: good (success) · warn · error · info. Untyped messages are classified from their text. */
+  toastKind(text) {
+    if (/not enough|insufficient|no (available|free)|\bfull\b|capacity|too expensive|limit|out of parts|left|unhappy|quit|failed|reputation −/i.test(text)) return 'warn';
+    if (/cannot|can't|could not|couldn't|invalid|unavailable|refused|unlocks at|permit first|already|no .* connector|not available|missing|in the way|occupied|outside|keep driveways|you do not own/i.test(text)) return 'error';
+    return 'info';
+  }
   toast(text, kind = '') {
+    if (!kind) kind = this.toastKind(String(text));
+    const ic = { good: 'check', warn: 'warn', error: 'error', info: 'info' }[kind] || 'info';
     const t = document.createElement('div');
     t.className = `toast ${kind}`;
-    t.textContent = text;
+    t.innerHTML = `<span class="ti">${icon(ic, 18)}</span><span class="tt"></span>`;
+    t.querySelector('.tt').textContent = text;
     $('toasts').appendChild(t);
     while ($('toasts').children.length > 3) $('toasts').firstChild.remove();
-    setTimeout(() => t.remove(), 3100);
+    setTimeout(() => t.remove(), 3500);
   }
 
   floater(text) {
@@ -181,31 +266,44 @@ export class UIManager {
   }
   clearSelection() {
     this.selectionFn = null;
+    this._selKey = null;
     $('selection').classList.add('hidden');
+    document.body.classList.remove('sel-open');
     this.game.selectionRing.visible = false;
   }
+  /** Contextual panel for the selected 3D object. Actions come from the object's real state; `kind` picks the button style. */
   refreshSelection() {
     const el = $('selection');
     if (!this.selectionFn) return;
     const info = this.selectionFn();
     if (!info) return this.clearSelection();
-    const key = JSON.stringify([info.title, info.rows, info.actions.map((a) => [a.label, !!a.disabled])]);
+    const key = JSON.stringify([info.title, info.rows, info.actions.map((a) => [a.label, !!a.disabled, a.kind || ''])]);
     if (key === this._selKey) return;
     this._selKey = key;
     el.classList.remove('hidden');
-    el.innerHTML = `<button class="x">✕</button><h3>${esc(info.title)}</h3><div class="sub">${esc(info.subtitle || '')}</div>
-      <div class="rows">${info.rows.map(([k, v]) => `<span>${esc(k)}</span><span>${esc(v)}</span>`).join('')}</div>
-      ${info.actions.map((a, i) => `<button class="btn" data-a="${i}" ${a.disabled ? 'disabled' : ''}>${esc(a.label)}</button>`).join('')}`;
-    el.querySelector('.x').onclick = () => this.clearSelection();
-    el.querySelectorAll('[data-a]').forEach((b) => (b.onclick = () => { info.actions[b.dataset.a].cb(); this._selKey = null; this.refreshSelection(); }));
+    document.body.classList.add('sel-open');
+    el.innerHTML = `<div class="sel-head"><div><h3>${esc(info.title)}</h3><div class="sub">${esc(info.subtitle || '')}</div></div><button class="x" data-sel-close title="Close" aria-label="Close">${icon('close', 16)}</button></div>
+      ${info.rows.length ? `<div class="rows">${info.rows.map(([k, v]) => `<span>${esc(k)}</span><span>${esc(v)}</span>`).join('')}</div>` : ''}
+      <div class="sel-actions">${info.actions.map((a, i) => `<button class="btn ${a.kind === 'secondary' ? 'ghost' : a.kind === 'danger' ? 'danger' : ''}" data-a="${i}" ${a.disabled ? 'disabled' : ''}>${esc(a.label)}</button>`).join('')}
+        <button class="btn ghost" data-sel-close>Close</button></div>`;
+    el.querySelectorAll('[data-sel-close]').forEach((b) => (b.onclick = () => this.clearSelection()));
+    el.querySelectorAll('[data-a]').forEach((b) => (b.onclick = () => { info.actions[b.dataset.a].cb(); this._selKey = null; if (this.selectionFn) this.refreshSelection(); }));
   }
 
   // ---------- modals ----------
+  /** Opens one management board at a time (opening another replaces it). 'upgrades' is the Business board's Upgrades tab. */
   open(name) {
+    if (name === 'upgrades') { this.tab.business = 'upgrades'; name = 'business'; }
+    this.closeMore();
+    if (this.confirmOpen) this.resolveConfirm(false);
+    if (this.selectionFn) this.clearSelection(); // one panel at a time
+    const keepPaused = this.modal === 'pause' && MORE_MODALS.includes(name); // pause -> settings / help / save stays paused
     this.modal = name;
+    this._pauseRendered = false;
     $('modal').classList.remove('hidden');
-    this.game.setPaused(name === 'pause');
+    this.game.setPaused(name === 'pause' || keepPaused);
     this.renderModal();
+    this.syncNav();
   }
   closeModal() {
     if (this.modal === 'offline' && this.game.pendingOffline) { this.offline.apply(this.game.pendingOffline, 1); this.game.pendingOffline = null; this.toast('Offline earnings collected', 'good'); }
@@ -213,7 +311,35 @@ export class UIManager {
     this.modal = null;
     $('modal').classList.add('hidden');
     this.game.setPaused(false);
+    this.syncNav();
     if (wasOffline && this.dailyReward.status()) this.open('login');
+  }
+
+  // ---------- confirmation dialog (expensive purchases, destructive actions) ----------
+  /** Resolves true/false. `danger` styles the confirm button as destructive. */
+  askConfirm({ title, text, yes = 'Confirm', no = 'Cancel', danger = false }) {
+    if (this.confirmOpen) this.resolveConfirm(false);
+    return new Promise((resolve) => {
+      this.confirmOpen = resolve;
+      $('confirm-card').innerHTML = `<h3>${esc(title)}</h3><p>${esc(text)}</p>
+        <div class="row"><button class="btn ghost" data-cf="no">${esc(no)}</button><button class="btn ${danger ? 'danger solid' : ''}" data-cf="yes">${esc(yes)}</button></div>`;
+      $('confirm').classList.remove('hidden');
+      $('confirm-card').querySelector('[data-cf="no"]').onclick = () => this.resolveConfirm(false);
+      $('confirm-card').querySelector('[data-cf="yes"]').onclick = () => this.resolveConfirm(true);
+      $('confirm').onpointerdown = (e) => { if (e.target === $('confirm')) this.resolveConfirm(false); };
+    });
+  }
+  resolveConfirm(v) {
+    const r = this.confirmOpen;
+    if (!r) return;
+    this.confirmOpen = null;
+    $('confirm').classList.add('hidden');
+    r(v);
+  }
+  /** Run `fn` straight away for cheap actions; ask first when the price reaches CONFIRM_COST. */
+  guard(cost, what, fn) {
+    if (cost < CONFIRM_COST) return fn();
+    this.askConfirm({ title: 'Confirm purchase', text: `${what} for ${money(cost)}?`, yes: `Buy · ${money(cost)}` }).then((ok) => { if (ok) { fn(); if (this.modal) this.renderModal(); } });
   }
   togglePause() {
     if (this.modal === 'pause') this.closeModal();
@@ -226,16 +352,20 @@ export class UIManager {
     if (!m) return;
     const keepScroll = card.scrollTop;
     // avoid rebuilding while the user is dragging a slider / has a select open
-    if (m === 'pause' && this._pauseRendered) return;
-    card.innerHTML = `<button class="x" data-close>✕</button>` + ({
+    if ((m === 'pause' || m === 'settings') && this._pauseRendered) return;
+    card.innerHTML = `<button class="x" data-close title="Close" aria-label="Close">${icon('close', 16)}</button>` + ({
+      settings: () => this.tplSettings(), stats: () => this.tplStats(), help: () => this.tplHelp(), save: () => this.tplSave(),
       station: () => this.tplStation(), staff: () => this.tplStaff(), finance: () => this.tplFinance(),
       business: () => this.tplBusinessTabs(), wash: () => this.tplWash(), garage: () => this.tplGarage(),
       offline: () => this.tplOffline(), login: () => this.tplLogin(), stageup: () => this.tplStageUp(), map: () => this.tplMap(), missions: () => this.tplMissionsTabs(),
       pause: () => this.tplPause(), report: () => this.tplReport(),
     }[m] || (() => (String(m).startsWith('hub_') ? this.tplHub(m.slice(4)) : '')))();
+    // the system uses SVG icons in navigation and controls: drop decorative emoji from board titles
+    const h2 = card.querySelector('h2');
+    if (h2) h2.innerHTML = h2.innerHTML.replace(/^(?:\p{Extended_Pictographic}️?\s*)+/u, '');
     card.scrollTop = keepScroll;
     card.querySelector('[data-close]').onclick = () => this.closeModal();
-    this._pauseRendered = m === 'pause';
+    this._pauseRendered = m === 'pause' || m === 'settings';
     this.bindModal(card);
   }
 
@@ -243,13 +373,13 @@ export class UIManager {
     const st = this.station, eco = this.economy;
     card.querySelectorAll('[data-bay-act]').forEach((b) => (b.onclick = () => {
       const [act, id] = b.dataset.bayAct.split(':'); const i = +id;
-      if (act === 'start') st.startCharging(i); else if (act === 'stop') st.stopCharging(i); else if (act === 'build') st.buyBay(i);
+      if (act === 'start') st.startCharging(i); else if (act === 'stop') st.stopCharging(i); else if (act === 'build') this.guard(st.cfg.bayCost, `Build bay ${i + 1}`, () => st.buyBay(i));
     }));
     const pm = card.querySelector('[data-price="-"]'), pp = card.querySelector('[data-price="+"]');
     if (pm) pm.onclick = () => st.setPrice(st.pricePerKwh - 0.05);
     if (pp) pp.onclick = () => st.setPrice(st.pricePerKwh + 0.05);
     const up = card.querySelector('[data-upgrade]');
-    if (up) up.onclick = () => st.upgradeChargers();
+    if (up) up.onclick = () => { const nx = st.nextChargerUpgrade(); this.guard(nx ? nx.cost : 0, `Upgrade chargers to ${nx?.name}`, () => st.upgradeChargers()); };
     const q = card.querySelector('#set-quality');
     if (q) q.onchange = () => { this.settings.set('quality', q.value); this.game.applyQuality(); };
     const s = card.querySelector('#set-sens');
@@ -264,7 +394,10 @@ export class UIManager {
     card.querySelectorAll('[data-travel]').forEach((b) => (b.onclick = () => this.mapAction('travel', b.dataset.travel)));
     card.querySelectorAll('[data-hub]').forEach((b) => (b.onclick = () => this.hubAction(b.dataset.hub)));
     card.querySelectorAll('[data-tab]').forEach((b) => (b.onclick = () => { const [n, t] = b.dataset.tab.split(':'); this.tab[n] = t; this.renderModal(); }));
-    card.querySelectorAll('[data-up]').forEach((b) => (b.onclick = () => { const r = this.upgrades.buy(b.dataset.up); if (!r.ok && r.reason) this.toast(r.reason); this.renderModal(); }));
+    card.querySelectorAll('[data-up]').forEach((b) => (b.onclick = () => {
+      const it = this.upgrades.list().find((i) => i.id === b.dataset.up);
+      this.guard(it ? it.cost : 0, `Buy ${it?.name}`, () => { const r = this.upgrades.buy(b.dataset.up); if (!r.ok && r.reason) this.toast(r.reason, 'warn'); else if (r.ok) this.toast(`${it?.name} upgraded`, 'good'); this.renderModal(); });
+    }));
     card.querySelectorAll('[data-contract]').forEach((b) => (b.onclick = () => { const [, id] = b.dataset.contract.split(':'); const r = this.contracts.accept(id); this.toast(r.ok ? 'Contract accepted' : r.reason, r.ok ? 'good' : ''); this.renderModal(); }));
     card.querySelectorAll('[data-ret]').forEach((b) => (b.onclick = () => this.retAction(b.dataset.ret)));
     card.querySelectorAll('[data-open-biz]').forEach((b) => (b.onclick = () => this.open(b.dataset.openBiz)));
@@ -285,21 +418,34 @@ export class UIManager {
       const e = m.employees.find((x) => x.id === id);
       if (e) m.assign(id, e.dept === 'off' ? m.homeOf(e) : 'off');
     } else if (act === 'fire') {
-      if (this.fireArm !== id) { this.fireArm = id; this.toast('Tap Fire again to confirm'); return; }
-      this.fireArm = null;
-      m.fire(id);
+      this.confirmFire(id);
+      return;
     } else if (act === 'refresh') {
-      if (!m.refreshCandidates(true)) this.toast('Not enough cash');
+      if (!m.refreshCandidates(true)) this.toast('Not enough cash', 'warn');
     }
     this.renderModal();
+  }
+
+  /** Firing is destructive: always ask. */
+  confirmFire(id) {
+    const e = this.employees.employees.find((x) => x.id === id);
+    if (!e) return;
+    this.askConfirm({ title: `Fire ${e.name}?`, text: 'They leave the team immediately. Hiring a replacement costs money again.', yes: 'Fire', danger: true }).then((ok) => {
+      if (!ok) return;
+      this.employees.fire(id);
+      if (this.modal === 'staff') this.renderModal();
+      if (this.selectionFn) this.clearSelection();
+    });
   }
 
   pauseAction(a) {
     if (a === 'resume') this.closeModal();
     else if (a === 'tutorial') { this.closeModal(); this.game.tutorial?.restart(); }
-    else if (a === 'save') { this.game.save().then(() => this.toast('Game saved', 'good')); }
-    else if (a === 'reset') {
-      if (confirm('Delete your save and restart? This cannot be undone.')) this.game.resetSave();
+    else if (a === 'settings' || a === 'help' || a === 'save') this.open(a);
+    else if (a === 'save-now') {
+      this.game.save().then(() => { this.toast('Game saved', 'good'); if (this.modal === 'save') { this._pauseRendered = false; this.renderModal(); } });
+    } else if (a === 'reset') {
+      this.askConfirm({ title: 'Reset save?', text: 'This deletes your save and restarts the game. It cannot be undone.', yes: 'Delete & restart', danger: true }).then((ok) => { if (ok) this.game.resetSave(); });
     }
   }
 
@@ -342,21 +488,24 @@ export class UIManager {
       const def = cfg.roles[e.role], tc = m.trainCost(e), lv = m.level(e);
       const status = e.dept === 'off' ? '<span class="tag">Off duty</span>' : e.state === 'perform' || e.state === 'move' ? `<span class="tag busy">${esc(stateText[e.state])}</span>` : `<span class="tag on">${esc(stateText[e.state] || e.state)}</span>`;
       const xpPct = ((e.xp % 60) / 60) * 100;
+      const place = e.dept === 'off' ? 'Off duty' : (m.facilities[m.homeOf(e)]?.label || m.homeOf(e));
       return `<div class="emp ${e.dept === 'off' ? 'off' : ''}">
-        <div class="emp-h"><span class="ic">${def.icon}</span><b>${esc(e.name)}</b><small>${esc(def.label)}</small>${status}<span class="stars">${stars(e.skill)}</span></div>
-        <div class="emp-s">Speed <b>x${m.workMult(e).toFixed(2)}</b> · Lv <b>${lv}</b> · <b>${money(e.salary)}</b>/day · <b>${e.tasksDone}</b> tasks${e.unpaidDays ? ' · <b style="color:#d6453d">unpaid!</b>' : ''}</div>
+        <div class="emp-h"><span class="avatar">${def.icon}</span><span class="who"><b>${esc(e.name)}</b><small>${esc(def.label)}</small></span>${status}<span class="stars">${stars(e.skill)}</span></div>
+        <div class="emp-grid"><div>Salary<b>${money(e.salary)}/day</b></div><div>Assignment<b>${esc(place)}</b></div><div>Productivity<b>${Math.round(m.workMult(e) * 100)}%</b></div></div>
+        <div class="emp-s">Level <b>${lv}</b> · <b>${e.tasksDone}</b> tasks done${e.unpaidDays ? ' · <b style="color:var(--err)">salary unpaid!</b>' : ''}</div>
         <div class="prog" style="height:6px;margin-bottom:8px"><i style="width:${lv >= 10 ? 100 : xpPct}%"></i></div>
         <div class="emp-b">
-          ${e.skill < cfg.maxSkill ? `<button class="btn blue" data-emp-act="train:${e.id}" ${eco.canAfford(tc) ? '' : 'disabled'}>Train ${money(tc)}</button>` : ''}
+          ${e.skill < cfg.maxSkill ? `<button class="btn" data-emp-act="train:${e.id}" ${eco.canAfford(tc) ? '' : 'disabled'}>Upgrade skill · ${money(tc)}</button>` : ''}
+          ${m.eligibleDepts(e).length > 1 ? `<button class="btn ghost" data-emp-act="move:${e.id}">Change workplace</button>` : ''}
           <button class="btn ghost" data-emp-act="duty:${e.id}">${e.dept === 'off' ? 'Put on duty' : 'Off duty'}</button>
-          ${m.eligibleDepts(e).length > 1 ? `<button class="btn ghost" data-emp-act="move:${e.id}">📍 ${esc(m.facilities[m.homeOf(e)]?.label || m.homeOf(e))} ▸</button>` : ''}
-          <button class="btn ghost" data-emp-act="fire:${e.id}">${this.fireArm === e.id ? 'Confirm fire?' : 'Fire'}</button>
+          <button class="btn danger" data-emp-act="fire:${e.id}">Fire</button>
         </div></div>`;
     }).join('') || '<div class="sub">No employees yet. You are doing everything by hand: hire an attendant below.</div>';
     const cands = m.candidates.map((c) => {
       const def = cfg.roles[c.role];
-      return `<div class="emp"><div class="emp-h"><span class="ic">${def.icon}</span><b>${esc(c.name)}</b><small>${esc(def.label)}</small><span class="stars">${stars(c.skill)}</span></div>
-        <div class="emp-s">${esc(def.blurb)}<br>Efficiency <b>${Math.round(c.eff * 100)}%</b> · <b>${money(c.salary)}</b>/day</div>
+      return `<div class="emp"><div class="emp-h"><span class="avatar">${def.icon}</span><span class="who"><b>${esc(c.name)}</b><small>${esc(def.label)}</small></span><span class="stars">${stars(c.skill)}</span></div>
+        <div class="emp-grid"><div>Salary<b>${money(c.salary)}/day</b></div><div>Skill<b>${c.skill}/${cfg.maxSkill}</b></div><div>Productivity<b>${Math.round(c.eff * 100)}%</b></div></div>
+        <div class="emp-s">${esc(def.blurb)}</div>
         <div class="emp-b"><button class="btn" data-emp-act="hire:${c.id}" ${eco.canAfford(c.cost) && m.employees.length < m.maxStaff ? '' : 'disabled'}>Hire ${money(c.cost)}</button></div></div>`;
     }).join('');
     const locked = Object.entries(cfg.roles).filter(([k]) => !m.roleAvailable(k)).map(([, r]) => `<div class="emp locked"><div class="emp-h"><span class="ic">${r.icon}</span><b>${esc(r.label)}</b><small>🔒 ${esc(r.unlock)}</small></div></div>`).join('');
@@ -381,14 +530,15 @@ export class UIManager {
           `<button class="btn" data-svc="${key}:build" ${c.ok ? '' : 'disabled'}>${c.ok ? `Build · ${money(cfg.buildCost)}` : esc(c.reason)}</button>`);
       }
       const s = biz.stats;
-      return card(cfg.icon, esc(cfg.label), '<span class="tag on">Open</span>',
-        `${biz.unlockedBays} bays · queue <b>${biz.queue.length}/${biz.maxQueue}</b> · served <b>${s.served}</b> · revenue today <b>${money(rev[cfg.revenueKey] || 0, 2)}</b>`,
-        `<button class="btn blue" data-open-biz="${key}">Open manager</button>`);
+      const lvl = key === 'wash' ? biz.equipLevel + 1 : Math.max(biz.scannerLevel, biz.toolLevel) + 1;
+      return card(cfg.icon, esc(cfg.label), `<span class="tag on">Open</span><span class="tag">Lv ${lvl}</span>`,
+        `${biz.unlockedBays} bays · queue <b>${biz.queue.length}/${biz.maxQueue}</b><br>Customers served <b>${s.served}</b> · revenue today <b>${money(rev[cfg.revenueKey] || 0, 2)}</b>`,
+        `<button class="btn" data-open-biz="${key}">Manage</button>`);
     };
     return `<h2>🏢 Businesses</h2><div class="sub">Reputation ${eco.reputation} · connected services: charging customers may drive on to the wash or garage.</div>
-      ${card('⚡', 'Charging Station', '<span class="tag on">Open</span>', `${st.unlockedCount} bays · ${st.charger.name} ${st.charger.kw} kW · served today <b>${st.todayServed}</b> · revenue today <b>${money(rev.charging || 0, 2)}</b>`, '<button class="btn blue" data-open-biz="station">Open manager</button>')}
+      ${card('⚡', 'Charging Station', `<span class="tag on">Open</span><span class="tag">Lv ${st.chargerLevel}</span>`, `${st.unlockedCount} bays · ${st.charger.name} ${st.charger.kw} kW<br>Customers served today <b>${st.todayServed}</b> · revenue today <b>${money(rev.charging || 0, 2)}</b>`, '<button class="btn" data-open-biz="station">Manage</button>')}
       ${svc(this.wash, 'wash')}${svc(this.garage, 'garage')}
-      ${Object.entries(this.hubs).map(([k, h]) => (h.built ? card(h.cfg.icon, esc(h.cfg.label), '<span class="tag on">Open</span>', `${h.unlockedBays} bays · ${h.charger.kw} kW · served <b>${h.stats.served}</b> · revenue today <b>${money(this.economy.ledger.revenue[h.cfg.revenueKey] || 0, 2)}</b>`, `<button class="btn blue" data-open-biz="hub_${k}">Open manager</button>`) : '')).join('')}
+      ${Object.entries(this.hubs).map(([k, h]) => (h.built ? card(h.cfg.icon, esc(h.cfg.label), `<span class="tag on">Open</span><span class="tag">Lv ${(h.chargerLevel ?? 0) + 1}</span>`, `${h.unlockedBays} bays · ${h.charger.kw} kW<br>Customers served <b>${h.stats.served}</b> · revenue today <b>${money(this.economy.ledger.revenue[h.cfg.revenueKey] || 0, 2)}</b>`, `<button class="btn" data-open-biz="hub_${k}">Manage</button>`) : '')).join('')}
       <button class="btn ghost" onclick="document.getElementById('btn-map').click()">🗺️ Open the city map to buy more properties</button>
       <div class="sect">Today's revenue by source</div>
       ${Object.entries(rev).map(([k, v]) => `<div class="kv"><span style="text-transform:capitalize">${esc(k)}</span><b>${money(v, 2)}</b></div>`).join('') || '<div class="sub">Nothing earned yet today.</div>'}`;
@@ -478,14 +628,19 @@ export class UIManager {
 
   svcAction(a) {
     const p = a.split(':'), biz = p[0] === 'wash' ? this.wash : this.garage;
-    const act = p[1];
-    if (act === 'build') { const r = biz.build(); this.toast(r.ok ? `${biz.cfg.label} built! Hire staff to run it.` : r.reason, r.ok ? 'good' : ''); }
-    else if (act === 'addbay') biz.addBay();
-    else if (act === 'addlift') biz.addLift();
-    else if (act === 'equip') biz.upgradeEquipment();
-    else if (act === 'tunnel') biz.upgradeTunnel(+p[2]);
-    else if (act === 'upgrade') biz.upgrade(p[2]);
-    else if (act === 'part') { if (!biz.buyPart(p[2], +p[3])) this.toast('Cannot buy that part'); }
+    const act = p[1], cfg = biz.cfg;
+    const cost = { build: cfg.buildCost, addbay: biz.nextBayCost?.(), addlift: biz.nextLiftCost?.(), equip: biz.nextEquipment?.()?.cost, tunnel: cfg.tunnelCost,
+      upgrade: p[2] === 'scanner' ? cfg.scanner?.[biz.scannerLevel]?.cost : p[2] === 'tools' ? cfg.tools?.[biz.toolLevel]?.cost : cfg.batteryStationCost }[act] || 0;
+    const run = () => {
+      if (act === 'build') { const r = biz.build(); this.toast(r.ok ? `${cfg.label} built! Hire staff to run it.` : r.reason, r.ok ? 'good' : 'error'); }
+      else if (act === 'addbay') biz.addBay();
+      else if (act === 'addlift') biz.addLift();
+      else if (act === 'equip') biz.upgradeEquipment();
+      else if (act === 'tunnel') biz.upgradeTunnel(+p[2]);
+      else if (act === 'upgrade') biz.upgrade(p[2]);
+    };
+    if (['build', 'addbay', 'addlift', 'equip', 'tunnel', 'upgrade'].includes(act)) { this.guard(cost, `${{ build: 'Build', addbay: 'Build a bay at', addlift: 'Build a lift at', equip: 'Upgrade equipment at', tunnel: 'Install a tunnel at', upgrade: 'Upgrade' }[act]} the ${cfg.label}`, run); this.renderModal(); return; }
+    if (act === 'part') { if (!biz.buyPart(p[2], +p[3])) this.toast('Cannot buy that part'); }
     else if (act === 'price') {
       if (biz === this.wash) biz.setPriceMult(p[2], (biz.priceMult[p[2]] ?? 1) + (p[3] === '+' ? 0.05 : -0.05));
       else biz.setPriceMult(biz.priceMult + (p[2] === '+' ? 0.05 : -0.05));
@@ -735,31 +890,47 @@ export class UIManager {
     const [key, act, dir] = a.split(':'), h = this.hubs[key];
     if (!h) return;
     if (act === 'price') h.setPrice(h.price + (dir === '+' ? 0.05 : -0.05));
-    else if (act === 'addbay') h.addBay();
-    else if (act === 'charger') h.upgradeCharger();
+    else if (act === 'addbay') this.guard(h.nextBayCost() || 0, `Build a bay at ${h.cfg.label}`, () => h.addBay());
+    else if (act === 'charger') this.guard(h.nextCharger()?.cost || 0, `Upgrade chargers at ${h.cfg.label}`, () => h.upgradeCharger());
     this.renderModal();
   }
 
   mapAction(kind, v) {
     if (kind === 'cell') this.mapSel = v;
-    else if (kind === 'district') { if (!this.districts.unlock(v)) this.toast('Cannot unlock that district yet'); }
-    else if (kind === 'prop') { const r = this.properties.buy(v); this.toast(r.ok ? 'Property purchased! Hire attendants and set your prices.' : r.reason, r.ok ? 'good' : ''); }
+    else if (kind === 'district') { this.guard(this.districts.cfg[v]?.cost || 0, `Buy the ${this.districts.cfg[v]?.name} permit`, () => { if (!this.districts.unlock(v)) this.toast('Cannot unlock that district yet', 'error'); }); }
+    else if (kind === 'prop') { const e = this.properties.list().find((p) => p.id === v); this.guard(e?.price || 0, `Buy ${e?.name}`, () => { const r = this.properties.buy(v); this.toast(r.ok ? 'Property purchased! Hire attendants and set your prices.' : r.reason, r.ok ? 'good' : 'error'); }); }
     else if (kind === 'travel') { const [x, z] = v.split(',').map(Number); this.game.travelTo(x, z); this.closeModal(); return; }
     this.renderModal();
   }
 
   // ----- decoration bar (management mode) -----
+  /** Build-mode toolbar: categories, items with cost, info, placement feedback, rotate / undo / redo / remove / confirm / cancel. */
   decorBarHtml(st) {
-    const items = Object.entries(this.placement.items);
-    const msg = st.mode === 'remove' ? 'Click a decoration to remove it (50% refund).' : !st.item ? 'Pick a decoration below.' : !st.pos ? 'Move over one of your lots.' : st.valid?.ok ? `Valid spot${this.game.touch ? ': tap Place ✓' : ': click to buy'} · ${st.pos.lot}` : (st.valid?.reason || '');
+    const pm = this.placement, all = pm.items;
+    const cats = Object.entries(DECOR_CATS).map(([name, ids]) => [name, ids.filter((id) => all[id])]).filter(([, ids]) => ids.length);
+    const known = new Set(cats.flatMap(([, ids]) => ids));
+    const other = Object.keys(all).filter((id) => !known.has(id));
+    if (other.length) cats.push(['Other', other]);
+    const catName = cats.some(([n]) => n === this.decorCat) ? this.decorCat : cats[0][0];
+    const shown = cats.find(([n]) => n === catName)[1];
+    const sel = st.item ? all[st.item] : null;
+    const placing = st.mode === 'place' && st.item;
+    const msg = st.mode === 'remove' ? 'Click a decoration to remove it (50% refund).' : !st.item ? 'Pick something to build.' : !st.pos ? 'Move over one of your lots.' : st.valid?.ok ? `Valid spot${this.game.touch ? ': tap Confirm' : ': click or press Confirm to buy'}` : (st.valid?.reason || '');
     const cls = st.mode === 'place' && st.pos ? (st.valid?.ok ? 'ok' : 'bad') : '';
-    const eff = st.pos ? this.placement.effects(st.pos.lot) : null;
-    return `<div class="db-items">${items.map(([k, it]) => `<button class="db-item ${st.item === k && st.mode === 'place' ? 'on' : ''}" data-decor="item:${k}" title="${esc(it.blurb)}"><span>${it.icon}</span>${esc(it.label)}<small>${money(it.cost)}</small></button>`).join('')}</div>
+    const eff = st.pos ? pm.effects(st.pos.lot) : null;
+    const info = sel && st.mode === 'place' ? `${sel.blurb} · ${money(sel.cost)}${sel.comfort ? ` · comfort +${sel.comfort}` : ''}${sel.appeal ? ` · appeal +${Math.round(sel.appeal * 1000) / 10}%` : ''}${sel.night ? ` · night +${Math.round(sel.night * 100)}%` : ''}` : '';
+    const btn = (a, ic, label, extra = '', dis = false) => `<button class="btn ${extra}" data-decor="${a}" ${dis ? 'disabled' : ''}>${icon(ic, 18)}${label}</button>`;
+    return `<div class="db-head"><div class="db-title">${icon('build', 18)}Build mode</div>
+        <div class="db-cats">${cats.map(([n]) => `<button class="chip ${n === catName ? 'on' : ''}" data-decor="cat:${n}">${esc(n)}</button>`).join('')}</div>
+        <button class="ibtn" data-decor="done" title="Exit build mode" aria-label="Exit build mode">${icon('close', 18)}</button></div>
+      <div class="db-items">${shown.map((k) => { const it = all[k]; return `<button class="db-item ${st.item === k && st.mode === 'place' ? 'on' : ''} ${this.economy.canAfford(it.cost) ? '' : 'poor'}" data-decor="item:${k}" title="${esc(it.blurb)}"><span>${it.icon}</span>${esc(it.label)}<small>${money(it.cost)}</small></button>`; }).join('')}</div>
+      <div class="db-info">${esc(info)}</div>
       <div class="db-ctl">
-        <button class="btn ghost" data-decor="rotate">⟳ Rotate (T)</button>
-        <button class="btn ${st.mode === 'remove' ? 'blue' : 'ghost'}" data-decor="remove">🗑 Remove</button>
-        ${this.game.touch ? '<button class="btn" data-decor="confirm">Place ✓</button>' : ''}
-        <button class="btn ghost" data-decor="done">Done</button>
+        ${btn('rotate', 'rotate', 'Rotate (T)', 'ghost', !placing)}
+        ${pm.canUndo || pm.canRedo ? btn('undo', 'undo', 'Undo', 'ghost', !pm.canUndo) + btn('redo', 'redo', 'Redo', 'ghost', !pm.canRedo) : ''}
+        ${btn('remove', 'trash', 'Remove', st.mode === 'remove' ? '' : 'ghost')}
+        ${placing ? btn('confirm', 'check', 'Confirm', '', !st.pos || !st.valid?.ok) : ''}
+        ${placing || st.mode === 'remove' ? btn('cancel', 'close', 'Cancel', 'ghost') : ''}
       </div>
       <div class="db-msg ${cls}">${esc(msg)}${eff ? ` · this lot: comfort +${eff.comfort.toFixed(1)}, appeal +${Math.round(eff.appeal * 100)}%` : ''}</div>`;
   }
@@ -774,9 +945,12 @@ export class UIManager {
     bar.querySelectorAll('[data-decor]').forEach((b) => (b.onclick = () => {
       const [a, v] = b.dataset.decor.split(':');
       if (a === 'item') this.decor.start(v);
+      else if (a === 'cat') { this.decorCat = v; this.renderDecorBar(); }
       else if (a === 'rotate') this.decor.rotate();
       else if (a === 'remove') this.decor.startRemove();
-      else if (a === 'confirm') this.decor.confirm();
+      else if (a === 'confirm') { const r = this.decor.confirm(); if (r?.ok) this.toast(`${this.placement.items[this.decor.item]?.label || 'Item'} built`, 'good'); }
+      else if (a === 'cancel') { this.decor.cancel(); this.renderDecorBar(); }
+      else if (a === 'undo' || a === 'redo') { const r = this.placement[a](); this.toast(r.ok ? r.what : r.reason, r.ok ? 'info' : 'warn'); this.renderDecorBar(); }
       else if (a === 'done') this.closeDecor();
     }));
   }
@@ -785,11 +959,13 @@ export class UIManager {
     if (this.camera.mode !== 'management') return;
     this.decorOpen = true;
     this.clearSelection();
+    this.placement.clearHistory();
     this.renderDecorBar();
   }
   closeDecor() {
     this.decorOpen = false;
     this.decor.cancel();
+    this.placement.clearHistory();
     this.renderDecorBar();
   }
 
@@ -817,8 +993,18 @@ export class UIManager {
     const eco = this.economy, L = eco.ledger, r = eco.lastReport;
     const lines = (obj) => Object.entries(obj).map(([k, v]) => `<div class="kv"><span style="text-transform:capitalize">${esc(k)}</span><b>${money(v, 2)}</b></div>`).join('') || '<div class="sub">Nothing yet.</div>';
     const net = eco.todayRevenue - eco.todayExpenses;
-    return `<h2>💰 Finance</h2><div class="sub">Day ${this.day.day} so far</div>
-      <div class="kv"><span>Cash on hand</span><b>${money(eco.cash, 2)}</b></div>
+    const revEntries = Object.entries(L.revenue).sort((a, b) => b[1] - a[1]), revMax = Math.max(1, ...revEntries.map(([, v]) => v));
+    const byBiz = revEntries.map(([k, v]) => `<div class="hbar"><span>${esc(k)}</span><div class="track"><i style="width:${(v / revMax) * 100}%"></i></div><b>${money(v, 2)}</b></div>`).join('') || '<div class="sub">Nothing earned yet today.</div>';
+    return `<h2>Finance</h2><div class="sub">Day ${this.day.day} so far · cash on hand <b>${money(eco.cash, 2)}</b></div>
+      <div class="tiles">
+        <div class="tile"><small>Revenue today</small><b class="pos">${money(eco.todayRevenue, 2)}</b></div>
+        <div class="tile"><small>Expenses today</small><b class="neg">${money(eco.todayExpenses, 2)}</b></div>
+        <div class="tile"><small>Net profit</small><b class="${net >= 0 ? 'pos' : 'neg'}">${money(net, 2)}</b></div>
+        <div class="tile"><small>Total revenue (all time)</small><b>${money(eco.totalRevenue)}</b></div>
+        <div class="tile"><small>Electricity today</small><b>${money(L.expenses.electricity || 0, 2)}</b></div>
+        <div class="tile"><small>Salaries (per day)</small><b>${money(this.employees.dailyPayroll, 2)}</b></div>
+      </div>
+      <div class="sect">Revenue by business</div>${byBiz}
       <div class="sect">Revenue today</div>${lines(L.revenue)}
       <div class="sect">Expenses today</div>${lines(L.expenses)}
       <div class="kv" style="border-top:2px solid var(--line);margin-top:6px"><span><b>Net profit</b></span><b class="${net >= 0 ? 'pos' : 'neg'}">${money(net, 2)}</b></div>
@@ -847,19 +1033,63 @@ export class UIManager {
   }
 
   tplPause() {
-    const s = this.settings.data;
-    return `<h2>⏸ Paused</h2><div class="sub">EV City Tycoon · Milestone 1</div>
+    return `<h2>Paused</h2><div class="sub">The game is paused while this menu is open.</div>
       <button class="btn blue" data-pause="resume">Resume</button>
-      <button class="btn ghost" data-pause="save">Save game</button>
+      <button class="btn ghost" data-pause="settings">Settings</button>
+      <button class="btn ghost" data-pause="help">Help &amp; controls</button>
       <button class="btn ghost" data-pause="tutorial">Replay tutorial</button>
-      <div class="sect">Settings</div>
+      <button class="btn ghost" data-pause="save">Save information</button>`;
+  }
+
+  tplSettings() {
+    const s = this.settings.data;
+    return `<h2>Settings</h2><div class="sub">Changes apply immediately and are remembered on this device.</div>
       <label class="opt">Graphics quality<select id="set-quality">${Object.keys(QUALITY).map((k) => `<option ${s.quality === k ? 'selected' : ''}>${k}</option>`).join('')}</select></label>
       <label class="opt">Camera sensitivity<input id="set-sens" type="range" min="0.4" max="2.2" step="0.1" value="${s.sensitivity}"></label>
-      <label class="opt">Invert camera Y<input id="set-invert" type="checkbox" ${s.invertY ? 'checked' : ''}></label>
-      <div class="sect">Controls</div>
-      <div class="help"><kbd>WASD</kbd>/arrows, click the ground, or hold the mouse button and drag: move · <kbd>Shift</kbd> sprint · wheel: zoom · stand at a charger to connect automatically (or <kbd>E</kbd>) · <kbd>M</kbd> isometric management view · <kbd>Esc</kbd> menu.<br>
-      Management view: drag to pan, wheel to zoom, <kbd>Q</kbd>/<kbd>R</kbd> rotate 90°, click equipment to select.<br>Touch: joystick or tap the ground to move, pinch to zoom.</div>
-      <div class="sect">Data</div>
-      <button class="btn ghost" data-pause="reset">Reset save…</button>`;
+      <label class="opt">Invert camera Y<input id="set-invert" type="checkbox" ${s.invertY ? 'checked' : ''}></label>`;
+  }
+
+  tplHelp() {
+    return `<h2>Help</h2><div class="sub">How to play EV City Tycoon.</div>
+      <div class="sect">Moving around</div>
+      <div class="help"><kbd>WASD</kbd> / arrows, click the ground, or hold the mouse button and drag. <kbd>Shift</kbd> sprints. Touch: joystick, or tap the ground.</div>
+      <div class="sect">Running the station</div>
+      <div class="help">Stand beside a bay and a waiting car connects by itself (or press <kbd>E</kbd>). Open the terminal for prices and upgrades. Hire attendants in <b>Staff</b> so cars are connected and billed while you are away.</div>
+      <div class="sect">Camera</div>
+      <div class="help">Wheel / pinch or the zoom buttons: zoom. <kbd>M</kbd>: management view (drag to pan, <kbd>Q</kbd>/<kbd>R</kbd> rotate, click equipment to select). The target button resets the camera.</div>
+      <div class="sect">Building</div>
+      <div class="help">In management view press <b>Build</b> to place decorations on your lots (<kbd>T</kbd> rotates). Buy new lots and district permits on the City map.</div>
+      <button class="btn ghost" data-pause="tutorial">Replay the tutorial</button>`;
+  }
+
+  tplSave() {
+    const last = this.game.lastSaved ? new Date(this.game.lastSaved).toLocaleTimeString() : 'not yet this session';
+    return `<h2>Save information</h2><div class="sub">Your game saves automatically every 15 seconds, when you leave the tab, and when you press Save.</div>
+      <div class="kv"><span>Storage</span><b>This device (browser)</b></div>
+      <div class="kv"><span>Last save</span><b>${esc(last)}</b></div>
+      <div class="kv"><span>Day / Stage</span><b>Day ${this.day.day} · Stage ${this.progression.stage}</b></div>
+      <button class="btn blue" data-pause="save-now">Save now</button>
+      <div class="sect">Danger zone</div>
+      <button class="btn danger" data-pause="reset">Reset save…</button>`;
+  }
+
+  tplStats() {
+    const s = this.stats.total, eco = this.economy, cm = this.customers.stats, sat = this.customers.avgSatisfaction;
+    return `<h2>Statistics</h2><div class="sub">Lifetime numbers for your business.</div>
+      <div class="tiles">
+        <div class="tile"><small>Customers served</small><b>${s.served}</b></div>
+        <div class="tile"><small>Total revenue</small><b class="pos">${money(eco.totalRevenue)}</b></div>
+        <div class="tile"><small>Satisfaction</small><b>${sat === null || sat === undefined ? '—' : Math.round(sat) + '%'}</b></div>
+        <div class="tile"><small>Reputation</small><b>${eco.reputation} ★</b></div>
+      </div>
+      <div class="sect">Services</div>
+      <div class="kv"><span>Charges</span><b>${s.charged}</b></div><div class="kv"><span>Car washes</span><b>${s.washed}</b></div><div class="kv"><span>Repairs</span><b>${s.repaired}</b></div>
+      <div class="kv"><span>Contracts completed</span><b>${s.contractsDone}</b></div>
+      <div class="sect">Customers</div>
+      <div class="kv"><span>Happy / unhappy</span><b>${cm.happy} / ${cm.angry}</b></div>
+      <div class="kv"><span>Tips earned</span><b class="pos">${money(cm.tips, 2)}</b></div>
+      <div class="kv"><span>Lost customers</span><b>${cm.lost}</b></div>
+      <div class="kv"><span>Properties owned</span><b>${this.properties.ownedCount}</b></div>
+      ${this.tplFinance2()}`;
   }
 }

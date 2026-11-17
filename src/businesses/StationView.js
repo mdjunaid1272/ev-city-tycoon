@@ -260,7 +260,11 @@ export class StationView {
     t.userData.select = () => ({
       title: 'Station Terminal', subtitle: 'Business control point',
       rows: [['Bays', `${this.station.unlockedCount}/${this.station.bays.length}`], ['Price', `$${this.station.pricePerKwh.toFixed(2)}/kWh`]],
-      actions: [{ label: 'Open Station Manager', cb: () => this.bus.emit('ui:open', 'station') }],
+      actions: [
+        { label: 'Manage', cb: () => this.bus.emit('ui:open', 'station') },
+        { label: 'Upgrade', kind: 'secondary', cb: () => this.bus.emit('ui:open', 'upgrades') },
+        { label: 'Statistics', kind: 'secondary', cb: () => this.bus.emit('ui:open', 'stats') },
+      ],
     });
     t.userData.focus = this.terminalPos.clone();
     this.root.add(t);
