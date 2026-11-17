@@ -1,0 +1,242 @@
+import * as THREE from 'three';
+
+/**
+ * First-time tutorial: ONE reusable panel (#tutorial) that is re-filled for every step,
+ * plus a small world arrow / ground marker and an optional HUD-button highlight.
+ *
+ * A step is { id, title, text, goal, ok, hint, hintTouch, target(g) -> {x,z,y}|null, glow: selector|null,
+ *             button: label|null (primary action; step completes when it is pressed), done(g, n) -> bool }.
+ * `n` holds counters of game events seen since the step started (charge, paid, hired ...).
+ * Progress is saved ({done, step}); old saves without it are treated as finished.
+ */
+const STEPS = [
+  {
+    id: 'move', title: 'Get moving', text: 'Walk around your new charging station.', goal: 'Walk 10 metres', ok: 'Nice walking!',
+    hint: 'WASD / arrow keys · hold Shift to sprint · or click the ground', hintTouch: 'Drag on the left side to move',
+    done: (g, n) => n.walked >= 10,
+  },
+  {
+    id: 'connect', title: 'First customer', text: 'A car is pulling in. Stand beside its glowing charger.', goal: 'Connect a car', ok: 'Charging started!',
+    hint: 'Stand still at the bay — it connects by itself (or press E)', hintTouch: 'Stand at the bay, or tap E',
+    target: (g, t) => t.bay(['waiting', 'charging']), done: (g, n, t) => n.charge > 0 || t.anyBay(['charging', 'done']),
+  },
+  {
+    id: 'paid', title: 'Get paid', text: 'Stay close while it charges. Billing happens when the car is full.', goal: 'Collect your first payment', ok: 'Cash earned!',
+    hint: 'Tip: E at a charging bay stops and bills early', hintTouch: 'Tap E at a charging bay to bill early',
+    target: (g, t) => t.bay(['charging', 'done', 'waiting']), done: (g, n) => n.paid > 0,
+  },
+  {
+    id: 'terminal', title: 'Station terminal', text: 'Prices, bays and upgrades are managed at the terminal.', goal: 'Open the Station Manager', ok: 'Manager opened',
+    hint: 'Walk to the blue terminal and press E', hintTouch: 'Walk to the terminal and tap E',
+    target: (g, t) => t.terminal(), done: (g) => g.ui.modal === 'station',
+  },
+  {
+    id: 'hire', title: 'Hire help', text: 'Attendants connect and bill cars for you, even while you are away.', goal: 'Open Staff and hire an attendant', ok: 'Welcome aboard!',
+    hint: 'Close this window, then tap Staff 👥', hintTouch: 'Tap Staff 👥, then hire',
+    glow: '.sc[data-open="staff"]', done: (g, n) => n.hired > 0 || g.employees.employees.length > 0,
+  },
+  {
+    id: 'manage', title: 'See the big picture', text: 'Switch to the management view to see your whole business.', goal: 'Open the management view', ok: 'Great view!',
+    hint: 'Press M (M again returns to the street)', hintTouch: 'Tap Manage 🏗️ (tap again to return)',
+    glow: '#btn-mgmt', done: (g) => g.camera.inManagement,
+  },
+  {
+    id: 'missions', title: 'Follow the missions', text: 'Missions pay cash and gems, and lead you to the next stage.', goal: 'Open Missions', ok: 'Good luck!',
+    hint: 'Click Missions 🏁 in the bottom bar', hintTouch: 'Tap Missions 🏁',
+    glow: '.sc[data-open="missions"]', done: (g) => g.ui.modal === 'missions',
+  },
+  {
+    id: 'finish', title: "You're all set!", text: 'Keep customers happy, upgrade your station and grow into a city-wide EV business.', goal: 'Tutorial complete', ok: '',
+    hint: '', hintTouch: '', button: 'Start playing', done: () => false,
+  },
+];
+
+const SKY = 0x5cc8ff;
+
+export class TutorialManager {
+  constructor({ game, bus, scene, saved = null, isNew = false }) {
+    this.g = game;
+    this.bus = bus;
+    this.scene = scene;
+    this.$ = (id) => document.getElementById(id);
+    this.el = this.$('tutorial');
+    this.hintEl = this.$('tut-hint');
+    this.done = saved ? !!saved.done : !isNew || !!window.__NO_TUTORIAL; // old saves never see it unless replayed
+    this.step = saved && !saved.done ? Math.min(saved.step || 0, STEPS.length - 1) : 0;
+    this.n = {};
+    this.state = 'idle'; // idle | active | ok
+    this.okTimer = 0;
+    this.glowEl = null;
+    this.lastPos = null;
+    this.time = 0;
+
+    this.buildMarker();
+    this.bindEvents();
+    this.layout();
+    addEventListener('resize', () => this.layout());
+    if (!this.done) this.begin(this.step, false);
+    else this.render();
+  }
+
+  // ---------- world marker (arrow + ground ring); only one exists ----------
+  buildMarker() {
+    const mk = (color, opacity) => new THREE.MeshBasicMaterial({ color, transparent: true, opacity, depthTest: false, depthWrite: false, side: THREE.DoubleSide });
+    this.marker = new THREE.Group();
+    const arrow = new THREE.Mesh(new THREE.ConeGeometry(0.55, 1.2, 16), mk(SKY, 0.95));
+    arrow.rotation.x = Math.PI; // point down
+    arrow.renderOrder = 999;
+    this.arrow = arrow;
+    this.ring = new THREE.Mesh(new THREE.RingGeometry(1.5, 1.8, 40), mk(SKY, 0.85));
+    this.ring.rotation.x = -Math.PI / 2;
+    this.ring.renderOrder = 998;
+    this.glow = new THREE.Mesh(new THREE.CircleGeometry(1.5, 40), mk(SKY, 0.16));
+    this.glow.rotation.x = -Math.PI / 2;
+    this.glow.renderOrder = 997;
+    this.marker.add(arrow, this.ring, this.glow);
+    this.marker.visible = false;
+    this.scene.add(this.marker);
+  }
+
+  // ---------- events -> counters ----------
+  bindEvents() {
+    const b = this.bus, inc = (k) => () => { this.n[k] = (this.n[k] || 0) + 1; };
+    b.on('charging:start', inc('charge'));
+    b.on('customer:paid', inc('paid'));
+    b.on('employee:hired', inc('hired'));
+    const stop = (e) => e.stopPropagation();
+    for (const ev of ['pointerdown', 'pointerup', 'touchstart', 'mousedown', 'click']) this.el.addEventListener(ev, stop);
+    this.$('tut-next').onclick = (e) => { e.currentTarget.blur(); this.finish(); };
+    this.$('tut-skip').onclick = (e) => { e.currentTarget.blur(); this.skip(); };
+  }
+
+  // ---------- helpers for step targets ----------
+  get targets() {
+    const sv = this.g.stationView, st = this.g.station;
+    const at = (id, y) => { const t = sv.interactables.find((i) => i.id === id); return t ? { x: t.pos.x, z: t.pos.z, y } : null; };
+    return {
+      bay: (states) => {
+        const open = st.bays.filter((b) => b.unlocked);
+        const b = states.map((s) => open.find((x) => x.state === s)).find(Boolean) || open[0];
+        return b ? at(`bay${st.bays.indexOf(b)}`, 5.4) : null;
+      },
+      anyBay: (states) => st.bays.some((b) => b.unlocked && states.includes(b.state)),
+      terminal: () => at('terminal', 3.4),
+    };
+  }
+
+  // ---------- flow ----------
+  begin(i, persist = true) {
+    this.step = i;
+    this.n = { walked: 0 };
+    this.lastPos = null;
+    this.state = 'active';
+    this.done = false;
+    this.render();
+    if (persist) this.save();
+  }
+
+  advance() {
+    if (this.step >= STEPS.length - 1) return this.finish();
+    this.begin(this.step + 1);
+  }
+
+  finish() {
+    this.done = true;
+    this.state = 'idle';
+    this.clearGuides();
+    this.render();
+    this.save();
+  }
+
+  skip() { this.finish(); }
+
+  /** Pause-menu "Replay tutorial". */
+  restart() { this.begin(0); }
+
+  save() { this.g.save?.(); }
+  serialize() { return { done: this.done, step: this.step }; }
+
+  clearGuides() {
+    this.marker.visible = false;
+    if (this.glowEl) { this.glowEl.classList.remove('tut-glow'); this.glowEl = null; }
+  }
+
+  // ---------- rendering of the single panel ----------
+  layout() {
+    const bottom = document.body.classList.contains('touch') || innerWidth <= 480;
+    document.body.classList.toggle('tut-bottom', bottom);
+    this.touch = document.body.classList.contains('touch');
+    if (this.el) this.render();
+  }
+
+  render() {
+    const on = !this.done;
+    document.body.classList.toggle('tut-on', on);
+    this.el.classList.toggle('hidden', !on);
+    if (!on) { this.hintEl.classList.add('hidden'); return; }
+    const s = STEPS[this.step], ok = this.state === 'ok';
+    this.el.classList.toggle('is-ok', ok);
+    this.$('tut-title').textContent = s.title;
+    this.$('tut-prog').textContent = `${this.step + 1}/${STEPS.length}`;
+    this.$('tut-fill').style.width = `${((this.step + (ok ? 1 : 0)) / STEPS.length) * 100}%`;
+    this.$('tut-text').textContent = s.text;
+    this.$('tut-check').textContent = ok || s.button ? '✓' : '';
+    this.$('tut-goal').classList.toggle('ok', ok || !!s.button);
+    this.$('tut-obj').textContent = ok ? s.ok : s.goal;
+    const btn = this.$('tut-next');
+    btn.classList.toggle('hidden', !s.button);
+    if (s.button) btn.textContent = s.button;
+    this.$('tut-skip').classList.toggle('hidden', !!s.button);
+    const hint = this.touch ? s.hintTouch : s.hint;
+    this.hintEl.textContent = hint || '';
+    this.hintEl.classList.toggle('hidden', !hint || ok);
+  }
+
+  // ---------- per-frame ----------
+  update(dt) {
+    if (this.done) return;
+    this.time += dt;
+    const g = this.g, s = STEPS[this.step];
+    if (this.state === 'ok') {
+      this.okTimer -= dt;
+      if (this.okTimer <= 0) this.advance();
+      return;
+    }
+    // distance walked since the step began
+    const p = g.player.pos;
+    if (this.lastPos) this.n.walked += Math.hypot(p.x - this.lastPos.x, p.z - this.lastPos.z);
+    this.lastPos = { x: p.x, z: p.z };
+
+    if (!g.paused && s.done(g, this.n, this.targets)) {
+      this.clearGuides(); // highlight disappears the moment the objective is met
+      if (s.button) return;
+      this.state = 'ok';
+      this.okTimer = 1.1;
+      this.render();
+      return;
+    }
+    this.updateGuides(s, g);
+  }
+
+  updateGuides(s, g) {
+    const t = s.target ? s.target(g, this.targets) : null;
+    if (t) {
+      const k = g.camera.inManagement ? Math.max(1, g.camera.mg.dist / 70) : 1;
+      this.marker.visible = true;
+      this.marker.position.set(t.x, 0, t.z);
+      this.arrow.position.y = (t.y || 4) * Math.min(k, 1.6) + Math.sin(this.time * 3.2) * 0.3 * k;
+      this.arrow.scale.setScalar(k);
+      const pulse = 1 + Math.sin(this.time * 3) * 0.06;
+      this.ring.position.y = this.glow.position.y = 0.46;
+      this.ring.scale.setScalar(k * pulse);
+      this.glow.scale.setScalar(k * pulse);
+    } else this.marker.visible = false;
+    // HUD highlight
+    const el = s.glow ? document.querySelector(s.glow) : null;
+    if (el !== this.glowEl) {
+      this.glowEl?.classList.remove('tut-glow');
+      el?.classList.add('tut-glow');
+      this.glowEl = el;
+    }
+  }
+}

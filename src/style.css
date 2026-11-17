@@ -201,3 +201,41 @@ select { padding: 6px 10px; border-radius: 10px; border: 1px solid var(--line); 
   #mission { top: calc(92px + var(--safe-t)); width: min(240px, 62vw); }
   #toasts { top: calc(150px + var(--safe-t)); }
 }
+
+/* ---------- tutorial (single reusable panel) ---------- */
+:root { --sky: #5cc8ff; --sky-h: #82d7ff; --sky-d: #3aa9e6; --tut-bg: rgba(16, 26, 42, .93); --tut-line: rgba(255,255,255,.13); --tut-text: #fff; --tut-muted: #a9bbd0; --tut-ok: #38d996; }
+#tutorial { position: absolute; z-index: 12; top: calc(64px + var(--safe-t)); left: calc(10px + var(--safe-l)); width: min(300px, 56vw); padding: 10px 12px 8px; border-radius: 16px; background: var(--tut-bg); color: var(--tut-text); border: 1px solid var(--tut-line); box-shadow: var(--shadow); backdrop-filter: blur(8px); animation: tutIn .22s ease-out; touch-action: manipulation; }
+@keyframes tutIn { from { opacity: 0; transform: translateY(-6px); } }
+.tut-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-weight: 800; font-size: 15px; }
+.tut-prog { font-size: 12px; font-weight: 700; color: var(--sky); font-variant-numeric: tabular-nums; }
+.tut-bar { height: 4px; border-radius: 3px; background: var(--tut-line); margin: 6px 0 8px; overflow: hidden; }
+.tut-bar i { display: block; height: 100%; width: 0; background: var(--sky); border-radius: 3px; transition: width .35s; }
+.tut-text { margin: 0 0 8px; font-size: 13.5px; line-height: 1.35; color: var(--tut-muted); }
+.tut-goal { display: flex; align-items: center; gap: 8px; padding: 7px 9px; border-radius: 10px; background: rgba(92,200,255,.12); font-size: 13.5px; font-weight: 700; }
+.tut-check { flex: none; width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--sky); display: grid; place-items: center; font-size: 12px; color: #08141f; }
+.tut-goal.ok { background: rgba(56,217,150,.16); color: var(--tut-ok); }
+.tut-goal.ok .tut-check { background: var(--tut-ok); border-color: var(--tut-ok); animation: tutPop .25s ease-out; }
+@keyframes tutPop { from { transform: scale(.4); } }
+.tut-actions { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 6px; min-height: 30px; }
+.tbtn { font-weight: 800; border-radius: 10px; transition: background .12s, transform .08s, opacity .12s; }
+.tbtn:focus-visible { outline: 2px solid var(--sky-h); outline-offset: 2px; }
+.tbtn.primary { flex: 1; min-height: 42px; padding: 0 16px; background: var(--sky); color: #0a1626; font-size: 15px; }
+.tbtn.primary:hover { background: var(--sky-h); }
+.tbtn.primary:active { background: var(--sky-d); transform: translateY(1px) scale(.98); }
+.tbtn.primary:disabled { opacity: .4; cursor: not-allowed; }
+.tbtn.secondary { min-height: 40px; padding: 0 14px; background: transparent; color: var(--tut-text); border: 1px solid var(--tut-line); }
+.tbtn.secondary:hover { background: rgba(255,255,255,.08); }
+.tbtn.secondary:active { background: rgba(255,255,255,.14); transform: scale(.98); }
+.tbtn.link { margin-left: auto; min-height: 30px; padding: 0 4px; background: none; color: var(--tut-muted); font-size: 12px; font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+.tbtn.link:hover { color: var(--tut-text); }
+.tbtn.link:active { color: var(--sky); }
+#tut-hint { position: absolute; z-index: 11; left: 50%; bottom: calc(158px + var(--safe-b)); transform: translateX(-50%); max-width: min(92vw, 560px); padding: 7px 14px; border-radius: 999px; background: var(--tut-bg); color: var(--tut-text); font-size: 13px; font-weight: 600; text-align: center; border: 1px solid var(--tut-line); box-shadow: var(--shadow); pointer-events: none; }
+.tut-glow { outline: 3px solid var(--sky); outline-offset: 3px; box-shadow: 0 0 0 6px rgba(92,200,255,.28), var(--shadow); animation: tutGlow 1.4s ease-in-out infinite; }
+@keyframes tutGlow { 50% { box-shadow: 0 0 0 10px rgba(92,200,255,.10), var(--shadow); } }
+/* the mission card shares the top-left slot: hide it while the tutorial is up */
+body.tut-on:not(.tut-bottom) #mission { display: none; }
+/* touch / narrow screens: panel sits above the joystick (its top is 222px from the bottom), clear of the interact + sprint buttons */
+body.tut-bottom #tutorial { top: auto; bottom: calc(232px + var(--safe-b)); left: calc(10px + var(--safe-l)); right: calc(100px + var(--safe-r)); width: auto; max-width: 420px; }
+body.tut-bottom #tut-hint { display: none; }
+@media (max-height: 520px) { body.tut-bottom #tutorial { bottom: calc(86px + var(--safe-b)); left: calc(180px + var(--safe-l)); right: calc(100px + var(--safe-r)); } .tut-text { display: none; } }
+@media (prefers-reduced-motion: reduce) { #tutorial, .tut-goal.ok .tut-check, .tut-glow { animation: none; } }

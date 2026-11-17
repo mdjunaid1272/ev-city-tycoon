@@ -296,6 +296,7 @@ export class UIManager {
 
   pauseAction(a) {
     if (a === 'resume') this.closeModal();
+    else if (a === 'tutorial') { this.closeModal(); this.game.tutorial?.restart(); }
     else if (a === 'save') { this.game.save().then(() => this.toast('Game saved', 'good')); }
     else if (a === 'reset') {
       if (confirm('Delete your save and restart? This cannot be undone.')) this.game.resetSave();
@@ -850,6 +851,7 @@ export class UIManager {
     return `<h2>⏸ Paused</h2><div class="sub">EV City Tycoon · Milestone 1</div>
       <button class="btn blue" data-pause="resume">Resume</button>
       <button class="btn ghost" data-pause="save">Save game</button>
+      <button class="btn ghost" data-pause="tutorial">Replay tutorial</button>
       <div class="sect">Settings</div>
       <label class="opt">Graphics quality<select id="set-quality">${Object.keys(QUALITY).map((k) => `<option ${s.quality === k ? 'selected' : ''}>${k}</option>`).join('')}</select></label>
       <label class="opt">Camera sensitivity<input id="set-sens" type="range" min="0.4" max="2.2" step="0.1" value="${s.sensitivity}"></label>

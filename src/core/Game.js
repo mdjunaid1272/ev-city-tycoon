@@ -47,6 +47,7 @@ import { WashView } from '../businesses/WashView.js';
 import { GarageView } from '../businesses/GarageView.js';
 import { MissionManager } from '../progression/MissionManager.js';
 import { UIManager, money } from '../ui/UIManager.js';
+import { TutorialManager } from '../ui/TutorialManager.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -271,7 +272,7 @@ export class Game {
     $('hud').classList.remove('hidden');
     $('loading').classList.add('done');
     setTimeout(() => $('loading').remove(), 700);
-    if (!saved) this.ui.toast('Welcome! Walk to the glowing charger and press E', 'good');
+    this.tutorial = new TutorialManager({ game: this, bus: this.bus, scene: this.sm.scene, saved: saved?.tutorial, isNew: !saved });
     // welcome back: offline earnings first, then the daily login reward
     this.pendingOffline = saved?.lastSeen ? this.offline.compute((Date.now() - saved.lastSeen) / 1000) : null;
     if (this.pendingOffline) this.ui.open('offline');
@@ -453,6 +454,7 @@ export class Game {
     this.sm.updateShadowFocus(this.camera.focusPoint);
     this.ui.setLocation(this.city.districtAt(this.player.pos.x, this.player.pos.z));
     this.ui.update(dt);
+    this.tutorial?.update(dt);
     this.sm.render();
     this.fps.n++; this.fps.t += dt;
     if (this.fps.t >= 1) { this.fps.v = this.fps.n / this.fps.t; this.fps.n = 0; this.fps.t = 0; }
@@ -478,6 +480,7 @@ export class Game {
       offline: this.offline.serialize(),
       login: this.dailyReward.serialize(),
       missions: this.missions.serialize(),
+      tutorial: this.tutorial?.serialize(),
       time: { hour: this.day.hour, day: this.day.day },
       lastSeen: Date.now(),
     };
