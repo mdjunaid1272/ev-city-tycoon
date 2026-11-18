@@ -41,6 +41,10 @@ export class UIManager {
     $('btn-more').onclick = (e) => { e.stopPropagation(); this.toggleMore(); };
     document.querySelectorAll('[data-more]').forEach((b) => (b.onclick = () => this.moreAction(b.dataset.more)));
     addEventListener('pointerdown', (e) => { if (this.moreOpen && !e.target.closest('#more-menu, #btn-more')) this.closeMore(); }, true);
+    const card0 = $('modal-card');
+    card0.addEventListener('pointerdown', () => { this._ptrDown = true; });
+    const release = () => { if (!this._ptrDown) return; this._ptrDown = false; setTimeout(() => { if (this._dirty && !this._ptrDown) { this._dirty = false; this.renderModal(); } }, 80); };
+    addEventListener('pointerup', release, true); addEventListener('pointercancel', release, true);
     $('mission').onclick = () => this.toggleObjective();
     $('mission').onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); this.toggleObjective(); } };
     $('btn-interact').onclick = () => this.game.interaction.interact();
@@ -299,7 +303,7 @@ export class UIManager {
     if (this.selectionFn) this.clearSelection(); // one panel at a time
     const keepPaused = this.modal === 'pause' && MORE_MODALS.includes(name); // pause -> settings / help / save stays paused
     this.modal = name;
-    this._pauseRendered = false;
+    this._pauseRendered = false; this._modalHtml = null; this._dirty = false;
     $('modal').classList.remove('hidden');
     this.game.setPaused(name === 'pause' || keepPaused);
     this.renderModal();
@@ -350,17 +354,22 @@ export class UIManager {
     const card = $('modal-card');
     const m = this.modal;
     if (!m) return;
-    const keepScroll = card.scrollTop;
+    // never swap the buttons out from under a press: a periodic refresh between pointer-down and click would eat the click
+    if (this._ptrDown) { this._dirty = true; return; }
     // avoid rebuilding while the user is dragging a slider / has a select open
     if ((m === 'pause' || m === 'settings') && this._pauseRendered) return;
-    card.innerHTML = `<button class="x" data-close title="Close" aria-label="Close">${icon('close', 16)}</button>` + ({
+    const body = ({
       settings: () => this.tplSettings(), stats: () => this.tplStats(), help: () => this.tplHelp(), save: () => this.tplSave(),
       station: () => this.tplStation(), staff: () => this.tplStaff(), finance: () => this.tplFinance(),
       business: () => this.tplBusinessTabs(), wash: () => this.tplWash(), garage: () => this.tplGarage(),
       offline: () => this.tplOffline(), login: () => this.tplLogin(), stageup: () => this.tplStageUp(), map: () => this.tplMap(), missions: () => this.tplMissionsTabs(),
       pause: () => this.tplPause(), report: () => this.tplReport(),
     }[m] || (() => (String(m).startsWith('hub_') ? this.tplHub(m.slice(4)) : '')))();
-    // the system uses SVG icons in navigation and controls: drop decorative emoji from board titles
+    const html = `<button class="x" data-close title="Close" aria-label="Close">${icon('close', 16)}</button>` + body;
+    if (html === this._modalHtml && m === this._modalName) return; // nothing changed: keep the live DOM (and any press in progress)
+    this._modalHtml = html; this._modalName = m;
+    const keepScroll = card.scrollTop;
+    card.innerHTML = html;    // the system uses SVG icons in navigation and controls: drop decorative emoji from board titles
     const h2 = card.querySelector('h2');
     if (h2) h2.innerHTML = h2.innerHTML.replace(/^(?:\p{Extended_Pictographic}️?\s*)+/u, '');
     card.scrollTop = keepScroll;
@@ -396,7 +405,7 @@ export class UIManager {
     card.querySelectorAll('[data-tab]').forEach((b) => (b.onclick = () => { const [n, t] = b.dataset.tab.split(':'); this.tab[n] = t; this.renderModal(); }));
     card.querySelectorAll('[data-up]').forEach((b) => (b.onclick = () => {
       const it = this.upgrades.list().find((i) => i.id === b.dataset.up);
-      this.guard(it ? it.cost : 0, `Buy ${it?.name}`, () => { const r = this.upgrades.buy(b.dataset.up); if (!r.ok && r.reason) this.toast(r.reason, 'warn'); else if (r.ok) this.toast(`${it?.name} upgraded`, 'good'); this.renderModal(); });
+      this.guard(it ? it.cost : 0, `Buy ${it?.name}`, () => { const r = this.upgrades.buy(b.dataset.up); if (!r.ok && r.reason) this.toast(r.reason, 'warn'); else if (r.ok && !/^(bay|chargers|power:)/.test(it.id)) this.toast(`${it?.name} upgraded`, 'good'); this.renderModal(); });
     }));
     card.querySelectorAll('[data-contract]').forEach((b) => (b.onclick = () => { const [, id] = b.dataset.contract.split(':'); const r = this.contracts.accept(id); this.toast(r.ok ? 'Contract accepted' : r.reason, r.ok ? 'good' : ''); this.renderModal(); }));
     card.querySelectorAll('[data-ret]').forEach((b) => (b.onclick = () => this.retAction(b.dataset.ret)));

@@ -17,7 +17,9 @@ export class UpgradeManager {
       const cost = o.cost ?? 0;
       const maxed = o.maxed ?? false;
       const lock = maxed ? null : o.lock || null;
-      items.push({ ...o, cost, maxed, lock, can: !maxed && !lock && o.cost !== null && this.economy.canAfford(cost) });
+      // facilities that are not built yet are at level 0, not at their starting level
+      const level = o.lock && /^Build the/.test(o.lock) ? 0 : o.level;
+      items.push({ ...o, level, cost, maxed, lock, can: !maxed && !lock && o.cost !== null && this.economy.canAfford(cost) });
     };
     const pw = st.power;
     const level = (kind) => pw.levels[kind];
