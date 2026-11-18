@@ -26,7 +26,8 @@ function conflict(a, b) {
  * Simulation is independent of rendering; far cars are just hidden.
  */
 export class TrafficManager {
-  constructor({ scene, assets, settings, road }) {
+  constructor({ scene, assets, settings, road, colliders = null }) {
+    this.colliders = colliders;
     this.assets = assets;
     this.settings = settings;
     this.road = road;
@@ -49,10 +50,12 @@ export class TrafficManager {
     c.visible = true;
     setCarDirt(c, Math.random() * 0.7); // callers that care (customers) override this
     this.root.add(c);
+    this.colliders?.vehicles.add(c);
     return c;
   }
   release(obj) {
     obj.visible = false;
+    this.colliders?.vehicles.delete(obj);
     const key = obj.userData.poolKey;
     if (!this.pool.has(key)) this.pool.set(key, []);
     this.pool.get(key).push(obj);

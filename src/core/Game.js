@@ -108,7 +108,7 @@ export class Game {
     this.road = new RoadManager();
     this.parking = new ParkingSystem();
     this.lights = new TrafficLightView(this.sm.scene, this.road);
-    this.traffic = new TrafficManager({ scene: this.sm.scene, assets: this.assets, settings: this.settings, road: this.road });
+    this.traffic = new TrafficManager({ scene: this.sm.scene, assets: this.assets, settings: this.settings, road: this.road, colliders: this.colliders });
     this.peds = new PedestrianManager({ scene: this.sm.scene, assets: this.assets, settings: this.settings });
     this.stats = new StatsTracker(this.bus, saved?.stats);
     this.progression = new ProgressionManager({

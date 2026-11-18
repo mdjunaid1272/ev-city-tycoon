@@ -4,6 +4,7 @@ import * as THREE from 'three';
 export class Colliders {
   constructor() {
     this.boxes = [];
+    this.vehicles = new Set(); // moving cars (oriented boxes read from their world matrix); only the player is pushed out of them
     this._hit = new THREE.Vector3();
     this._ray = new THREE.Ray();
   }
@@ -41,6 +42,29 @@ export class Colliders {
           else pos.z = b.maxZ + r;
         }
       }
+    }
+    return pos;
+  }
+
+  /** Push a circle out of every visible car (oriented box: length along local Z, width along local X). */
+  resolveVehicles(pos, r) {
+    for (const o of this.vehicles) {
+      if (!o.visible || !o.parent) continue;
+      const e = o.matrixWorld.elements, cx = e[12], cz = e[14];
+      const hl = (o.userData.length || 4.2) / 2, hw = (o.userData.width || 1.9) / 2;
+      let dx = pos.x - cx, dz = pos.z - cz;
+      const reach = hl + hw + r;
+      if (dx * dx + dz * dz > reach * reach) continue;
+      const c = e[0], s = e[8]; // cos / sin of the car's yaw
+      let lx = c * dx - s * dz, lz = s * dx + c * dz;
+      const nx = Math.max(-hw, Math.min(lx, hw)), nz = Math.max(-hl, Math.min(lz, hl));
+      const ex = lx - nx, ez = lz - nz, d2 = ex * ex + ez * ez;
+      if (d2 >= r * r) continue;
+      if (d2 > 1e-8) { const d = Math.sqrt(d2); lx = nx + (ex / d) * r; lz = nz + (ez / d) * r; }
+      else if (hw - Math.abs(lx) < hl - Math.abs(lz)) lx = (lx >= 0 ? hw : -hw) + (lx >= 0 ? r : -r);
+      else lz = (lz >= 0 ? hl : -hl) + (lz >= 0 ? r : -r);
+      pos.x = cx + c * lx + s * lz;
+      pos.z = cz - s * lx + c * lz;
     }
     return pos;
   }

@@ -63,6 +63,7 @@ export class PlayerController {
     this.pos.x += this.vel.x * dt;
     this.pos.z += this.vel.z * dt;
     this.colliders.resolveCircle(this.pos, PLAYER_R);
+    this.colliders.resolveVehicles(this.pos, PLAYER_R);
     this.pos.x = THREE.MathUtils.clamp(this.pos.x, -CITY_LIMIT, CITY_LIMIT);
     this.pos.z = THREE.MathUtils.clamp(this.pos.z, -CITY_LIMIT, CITY_LIMIT);
 
