@@ -19,8 +19,8 @@
     "suppliesPerWash": 1.5,
     "upkeepPerBayPerDay": 35,
     "arrivalSeconds": [
-      24,
-      42
+      12,
+      21
     ],
     "referralChance": 0.4,
     "maxQueue": 2,
@@ -181,8 +181,8 @@
     ],
     "upkeepPerBayPerDay": 45,
     "arrivalSeconds": [
-      34,
-      60
+      17,
+      30
     ],
     "referralChance": 0.18,
     "maxQueue": 2,
@@ -508,8 +508,8 @@
       "upkeepPerBayPerDay": 25,
       "pricePerKwh": 0.5,
       "arrivalSeconds": [
-        28,
-        48
+        14,
+        24
       ],
       "revenueKey": "small lot",
       "accent": 3116287,
@@ -574,8 +574,8 @@
       "upkeepPerBayPerDay": 40,
       "pricePerKwh": 0.62,
       "arrivalSeconds": [
-        22,
-        38
+        11,
+        19
       ],
       "revenueKey": "commercial hub",
       "accent": 5032432,
@@ -653,8 +653,8 @@
       "upkeepPerBayPerDay": 45,
       "pricePerKwh": 0.45,
       "arrivalSeconds": [
-        20,
-        34
+        10,
+        17
       ],
       "revenueKey": "fleet depot",
       "accent": 16032345,
@@ -720,8 +720,8 @@
       "upkeepPerBayPerDay": 70,
       "pricePerKwh": 0.85,
       "arrivalSeconds": [
-        15,
-        26
+        8,
+        13
       ],
       "revenueKey": "highway hub",
       "accent": 11562239,
