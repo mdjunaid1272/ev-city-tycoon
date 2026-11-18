@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { speedLimitForPlayer } from '../vehicles/PlayerYield.js';
 import { sampleEdge, YELLOW } from './RoadManager.js';
 import { setCarDirt } from './Models.js';
 
@@ -213,6 +214,7 @@ export class TrafficManager {
       if (gap < this.stats.minGap) this.stats.minGap = gap;
       target = Math.min(target, Math.sqrt(lv * lv + 2 * 6 * Math.max(0, gap - 2)));
     }
+    target = Math.min(target, speedLimitForPlayer(a.obj, 6)); // yield to the player standing on the road
     if (e.kind === 'road' && e.to && a.nextConn) {
       const dist = e.len - a.s;
       if (a.resv) {

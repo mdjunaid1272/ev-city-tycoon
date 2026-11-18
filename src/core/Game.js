@@ -49,6 +49,7 @@ import { MissionManager } from '../progression/MissionManager.js';
 import { UIManager, money } from '../ui/UIManager.js';
 import { TutorialManager } from '../ui/TutorialManager.js';
 import { SuitcaseManager } from '../ui/SuitcaseManager.js';
+import { playerYield } from '../vehicles/PlayerYield.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -274,6 +275,7 @@ export class Game {
     $('loading').classList.add('done');
     setTimeout(() => $('loading').remove(), 700);
     this.suitcase = new SuitcaseManager({ game: this });
+    playerYield.pos = this.player.pos;
     this.tutorial = new TutorialManager({ game: this, bus: this.bus, scene: this.sm.scene, saved: saved?.tutorial, isNew: !saved });
     // welcome back: offline earnings first, then the daily login reward
     this.pendingOffline = saved?.lastSeen ? this.offline.compute((Date.now() - saved.lastSeen) / 1000) : null;
