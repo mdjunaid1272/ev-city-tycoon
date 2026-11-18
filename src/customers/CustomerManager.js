@@ -26,7 +26,7 @@ export class CustomerManager {
     this.vehicleDefs = vehicleDefs;
     this.getHour = getHour || (() => 12);
     this.time = 0;
-    this.timer = 3;
+    this.timer = 1.5;
     this.customers = new Map();
     this.queue = []; // customers waiting for a bay (parked in queue slots)
     this.maxQueue = Math.min(config.maxQueue, QUEUE_SLOTS.length);
@@ -132,7 +132,9 @@ export class CustomerManager {
 
   /** Create a customer. Returns the customer, or null if they decide not to come. */
   spawn(forceType = null) {
-    const c = this.createCustomer(forceType || this.pickType());
+    const first = !forceType && this.stats.spawned === 0; // the very first customer of a new game: always a regular, always compatible, and starts close so the player is not left waiting
+    const c = this.createCustomer(first ? 'regular' : forceType || this.pickType());
+    if (first) { c.fast = true; c.vehicle.connector = this.station.charger.connectors[0]; }
     this.stats.spawned++;
     const reason = this.checkService(c);
     if (reason) {

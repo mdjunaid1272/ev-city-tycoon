@@ -119,9 +119,11 @@ export class TrafficManager {
    * Ask for a vehicle to drive in from the east on the south road (westbound lane).
    * cb(obj, x, z, yaw) is called when it reaches the driveway at handoff.s; the caller takes over.
    */
-  requestCustomer(obj, { kind = 'customer', handoffS, cb, spawnZ = 27, handoffEdge = null, spawnEdge = null }) {
-    const edge = spawnEdge || this.road.spawnEdges.find((e) => e.dir === 3 && Math.abs(e.pts[0].z - spawnZ) < 0.5);
-    this.queue.push({ obj, kind, edge, s: 25, handoff: { edge: handoffEdge || this.road.driveIn, s: handoffS, cb } });
+  requestCustomer(obj, { kind = 'customer', handoffS, cb, spawnZ = 27, handoffEdge = null, spawnEdge = null, fast = false }) {
+    // fast: appear on the final stretch (about 3 s from the driveway) instead of at the map edge: used for the very first customer
+    const drive = handoffEdge || this.road.driveIn;
+    const edge = fast ? drive : spawnEdge || this.road.spawnEdges.find((e) => e.dir === 3 && Math.abs(e.pts[0].z - spawnZ) < 0.5);
+    this.queue.push({ obj, kind, edge, s: fast ? Math.max(2, handoffS - 24) : 25, handoff: { edge: drive, s: handoffS, cb } });
   }
 
   /** Put a vehicle back on the road (station exit). Returns false if the lane has no room yet. */

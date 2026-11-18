@@ -439,7 +439,7 @@ export class StationView {
     const rec = { obj, kind: 'customer', customer: c, vehicle: v, state: 'driving', freed: false, f: null, bayId: null, slot: null };
     this.custRecs.set(c.id, rec);
     this.traffic.requestCustomer(obj, {
-      kind: 'customer',
+      kind: 'customer', fast: !!c.fast,
       handoffS: this.driveInS,
       cb: (o, x, z, yaw) => {
         const d = this.customers.arrived(c); // station decides: bay / queue / turn away
