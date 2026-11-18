@@ -1,4 +1,5 @@
 import { randomDirt, randomCondition } from '../vehicles/VehicleState.js';
+import { HAPPY_SCORE } from '../progression/StatsTracker.js';
 
 /**
  * Shared simulation for drive-in service businesses (car wash, garage). Pure logic, no Three.js.
@@ -273,7 +274,7 @@ export class ServiceBusiness {
     this.stats.revenue += revenue;
     c.satisfaction = this.rate(c, quality, extra);
     let tip = 0;
-    if (c.satisfaction >= 85) {
+    if (c.satisfaction >= HAPPY_SCORE) {
       tip = Math.round(revenue * 0.12 * 100) / 100;
       if (tip > 0 && this.economy.earn(tip, 'tips', `tip:${this.id}:${c.id}`)) this.stats.tips += tip;
     }

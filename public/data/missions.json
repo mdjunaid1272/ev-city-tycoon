@@ -27,7 +27,7 @@
     },
     {
       "id": "d_happy",
-      "title": "Make {n} customers happy (80%+)",
+      "title": "Make {n} customers happy (70%+)",
       "stat": "happy",
       "min": 2,
       "max": 6,
@@ -73,10 +73,10 @@
       "id": "d_tips",
       "title": "Earn ${n} in tips",
       "stat": "tips",
-      "min": 10,
-      "max": 40,
-      "step": 5,
-      "cashPer": 6,
+      "min": 4,
+      "max": 15,
+      "step": 1,
+      "cashPer": 14,
       "cashMult": 1
     }
   ],
@@ -115,7 +115,7 @@
     },
     {
       "id": "w_happy",
-      "title": "Make {n} customers happy (80%+)",
+      "title": "Make {n} customers happy (70%+)",
       "stat": "happy",
       "min": 25,
       "max": 50,

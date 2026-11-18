@@ -9,6 +9,7 @@
  * service type; it drives tips and reputation; reputation feeds back into demand and unlocks customer types.
  */
 import { randomDirt, randomCondition } from '../vehicles/VehicleState.js';
+import { HAPPY_SCORE } from '../progression/StatsTracker.js';
 
 let seq = 0;
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -237,12 +238,13 @@ export class CustomerManager {
     c.state = 'paid';
     c.satisfaction = this.rate(c, unitPrice);
     let tip = 0;
-    if (c.satisfaction >= 85) {
+    if (c.satisfaction >= HAPPY_SCORE) {
       tip = Math.round(revenue * 0.12 * 100) / 100;
       if (tip > 0 && this.economy.earn(tip, 'tips', `tip:${c.id}`)) this.stats.tips += tip;
     }
-    if (c.satisfaction >= 80) { this.economy.changeReputation(c.def.repGain, 'happy customer'); this.stats.happy++; }
-    else if (c.satisfaction < 40) { this.economy.changeReputation(-1, 'unhappy customer'); this.stats.angry++; }
+    if (c.satisfaction >= 80) { this.economy.changeReputation(c.def.repGain, 'happy customer'); }
+    if (c.satisfaction >= HAPPY_SCORE) this.stats.happy++;
+    if (c.satisfaction < 40) { this.economy.changeReputation(-1, 'unhappy customer'); this.stats.angry++; }
     this.stats.served++;
     this.stats.satSum += c.satisfaction;
     this.stats.satN++;

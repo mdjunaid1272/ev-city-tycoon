@@ -1,3 +1,4 @@
+import { HAPPY_SCORE } from './StatsTracker.js';
 /**
  * Sequential main missions driven purely by EventBus events.
  * Rewards are granted through EconomyManager (never directly).
@@ -16,7 +17,7 @@ const MISSIONS = [
   { id: 'm_stage3', title: 'Reach Stage 3: Automotive Business Hub', desc: 'Unlocks the garage, store, coffee shop, fleet contracts, solar and storage.', target: 1, event: 'stage:up', test: (p) => p.stage === 3, reward: { cash: 2000, gems: 10 } },
   { id: 'm_garage', title: 'Open the EV Garage', desc: 'Needs reputation 20. Build it on the north lot.', target: 1, event: 'svc:built', test: (p) => p.biz === 'garage', reward: { cash: 1500, reputation: 8 } },
   { id: 'm_repair5', title: 'Complete 5 garage jobs', desc: 'Hire a mechanic and keep spare parts in stock.', target: 5, event: 'svc:paid', test: (p) => p.biz === 'garage', reward: { cash: 2000, gems: 10, reputation: 10 } },
-  { id: 'm_happy', title: 'Make 5 customers happy', desc: 'Keep waits short and prices fair: satisfaction 80%+ counts.', target: 5, event: 'customer:paid', test: (p) => p.satisfaction >= 80, reward: { cash: 1200, gems: 10, reputation: 10 } },
+  { id: 'm_happy', title: 'Make 5 customers happy', desc: 'Keep waits short and prices fair: satisfaction 70%+ counts.', target: 5, event: 'customer:paid', test: (p) => p.satisfaction >= HAPPY_SCORE, reward: { cash: 1200, gems: 10, reputation: 10 } },
   { id: 'm_rep', title: 'Reach 25 reputation', desc: 'Happy customers raise reputation and unlock Premium customers at 10.', target: 1, event: 'reputation:changed', test: (p) => p.total >= 25, reward: { cash: 2000, gems: 20 } },
   { id: 'm_prop', title: 'Buy another property', desc: 'Open the City Map 🗺️, unlock a district permit and buy a lot (small lots in the Residential District are cheapest).', target: 1, event: 'property:bought', test: (p) => p.id.startsWith('hub_'), reward: { cash: 2000, gems: 10, reputation: 10 } },
   { id: 'm_decor', title: 'Decorate your station', desc: 'Management view (M) → 🎨 Decorate. Benches make waiting customers happier; trees and banners attract more.', target: 3, event: 'decor:placed', reward: { cash: 500, gems: 3 } },

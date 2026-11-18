@@ -45,6 +45,7 @@ export class UIManager {
     card0.addEventListener('pointerdown', () => { this._ptrDown = true; });
     const release = () => { if (!this._ptrDown) return; this._ptrDown = false; setTimeout(() => { if (this._dirty && !this._ptrDown) { this._dirty = false; this.renderModal(); } }, 80); };
     addEventListener('pointerup', release, true); addEventListener('pointercancel', release, true);
+    $('d-missions').onclick = () => { this.tab.missions = 'daily'; this.open('missions'); };
     $('mission').onclick = () => this.toggleObjective();
     $('mission').onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); this.toggleObjective(); } };
     $('btn-interact').onclick = () => this.game.interaction.interact();
@@ -148,7 +149,7 @@ export class UIManager {
     if ($('v-sun').dataset.icon !== sun) { $('v-sun').dataset.icon = sun; hydrateIcons($('topbar')); }
     this._dt = (this._dt || 0) + dt;
     if (this._dt > 0.4) { this._dt = 0; this.updateDaily(); }
-    if (['station', 'finance', 'staff', 'wash', 'garage', 'business', 'map'].includes(this.modal) || String(this.modal).startsWith('hub_')) {
+    if (['station', 'finance', 'staff', 'wash', 'garage', 'business', 'map', 'missions'].includes(this.modal) || String(this.modal).startsWith('hub_')) {
       this._mt = (this._mt || 0) + dt;
       if (this._mt > 0.4) { this._mt = 0; this.renderModal(); }
     }
@@ -165,6 +166,7 @@ export class UIManager {
     const sat = this.customers.avgSatisfaction;
     $('d-rev').textContent = money(Math.round(this.economy.todayRevenue));
     $('d-cust').textContent = active;
+    { const gl = this.goals, dn = gl.daily.filter((g) => g.done).length; $('d-dm-count').textContent = `${dn}/${gl.daily.length}`; $('d-dm-fill').style.width = `${gl.daily.length ? (dn / gl.daily.length) * 100 : 0}%`; $('d-missions').classList.toggle('all', gl.daily.length > 0 && dn === gl.daily.length); }
     $('d-sat').textContent = sat === null || sat === undefined ? '—' : `${Math.round(sat)}%`;
   }
 
@@ -712,7 +714,8 @@ export class UIManager {
     const left = kind === 'daily' ? '' : ` · resets in ${Math.max(0, g.weekStartDay + g.cfg.weeklyDays - this.game.day.day)} day(s)`;
     const rows = list.map((x) => {
       const p = g.progressOf(x);
-      const prog = x.stat2 ? `${Math.floor(p.a)}/${x.target} · ${Math.floor(p.b)}/${x.target2}` : `${Math.floor(p.a).toLocaleString('en-US')}/${x.target.toLocaleString('en-US')}`;
+      const cash = x.stat === 'revenue' || x.stat === 'tips', fmt = (v) => (cash ? money(Math.floor(v)) : Math.floor(v).toLocaleString('en-US'));
+      const prog = x.stat2 ? `${Math.floor(p.a)}/${x.target} · ${Math.floor(p.b)}/${x.target2}` : `${fmt(p.a)}/${fmt(x.target)}`;
       return `<div class="mrow ${x.done ? 'done' : 'cur'}"><div class="chk">${x.done ? '✓' : ''}</div><div style="flex:1"><b>${esc(x.title)}</b><small>${prog} · Reward ${this.rewardHtml(x.reward)}</small>${this.bar(x.done ? 1 : g.fraction(x))}</div></div>`;
     }).join('') || '<div class="sub">Nothing available yet.</div>';
     const bonus = kind === 'daily' ? `<div class="sub" style="margin-top:8px">Finish all ${g.cfg.dailyCount} for a bonus: ${this.rewardHtml(g.cfg.dailyBonus)} ${g.dailyBonusDone ? '✓ claimed' : ''}</div>` : '';

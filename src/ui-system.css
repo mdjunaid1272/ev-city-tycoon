@@ -524,3 +524,12 @@ select { background: #fff; color: var(--text); border: 2.5px solid var(--navy); 
 }
 /* tutorial (desktop): sits under the daily stats */
 body.tut-on:not(.tut-bottom) #tutorial { top: calc(8px + var(--bar-h) + 8px + 86px + var(--safe-t)); }
+/* daily missions line in the overview */
+.d-dm { position: relative; display: flex; align-items: center; gap: 6px; width: 100%; margin-top: 8px; padding: 7px 10px 11px; border: 2px solid var(--navy); border-radius: var(--r-sm); background: #fff; color: var(--text); font-weight: 600; font-size: 13px; text-align: left; box-shadow: 0 2px 0 var(--line-2); transition: background .1s, transform .08s; }
+.d-dm:hover { background: var(--navy-2); } .d-dm:active { transform: translateY(2px); box-shadow: none; }
+.d-dm .ic { color: #ff5a5f; } .d-dm .d-dm-t { flex: 1; } .d-dm b { color: var(--blue-d); font-weight: 700; }
+.d-dm-bar { position: absolute; left: 10px; right: 10px; bottom: 4px; height: 5px; border-radius: 3px; background: #dfe5f1; overflow: hidden; }
+.d-dm-bar u { display: block; height: 100%; width: 0; background: var(--green-btn); border-radius: 3px; transition: width .3s; text-decoration: none; }
+.d-dm.all { background: #d9f7e3; } .d-dm.all b { color: #148041; }
+body.tut-on:not(.tut-bottom) #daily .d-dm { display: none; }
+@media (max-height: 520px) { .d-dm { display: none; } }
