@@ -334,3 +334,8 @@ body.nav-over #modal-card { max-height: calc(100vh - var(--nav-h) - 22px - var(-
   body.decor-open #daily, body.sel-open #daily { display: none; }
   .db-head { gap: 6px; } .chip { min-height: 28px; padding: 4px 10px; }
 }
+/* ---------- flying suitcase (watch an ad for cash) ---------- */
+#suitcase { position: absolute; z-index: 9; left: 0; top: 0; display: flex; flex-direction: column; align-items: center; padding: 8px 12px; background: none; border: 0; cursor: pointer; filter: drop-shadow(0 6px 8px rgba(3, 10, 20, .45)); will-change: transform; touch-action: manipulation; }
+#suitcase:hover svg { filter: brightness(1.12); }
+#suitcase:active { filter: drop-shadow(0 2px 4px rgba(3, 10, 20, .5)) brightness(.95); }
+#suitcase .sc-tag { margin-top: -2px; padding: 2px 9px; border-radius: 999px; background: var(--sky); color: #0b2033; font-weight: 800; font-size: 11px; letter-spacing: .3px; }
