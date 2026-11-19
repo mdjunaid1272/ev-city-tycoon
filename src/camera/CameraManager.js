@@ -104,6 +104,16 @@ export class CameraManager {
     }
   }
 
+  /** Only the zoom levels are saved: the street-view angle itself is fixed. */
+  serialize() {
+    return { tpDist: this.tp.dist, mgDist: this.mg.dist };
+  }
+  restore(d) {
+    if (!d) return;
+    if (Number.isFinite(d.tpDist)) this.tp.dist = clamp(d.tpDist, 11, 36);
+    if (Number.isFinite(d.mgDist)) this.mg.dist = clamp(d.mgDist, 60, 420);
+  }
+
   /** Back to the default framing of the current mode (zoom, and in management view the focus on the player). */
   reset() {
     if (this.mode === 'third') this.tp.dist = 20;

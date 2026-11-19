@@ -223,7 +223,8 @@ export class Game {
     this.camera = new CameraManager({
       camera: this.sm.camera, sceneFog: this.sm.scene.fog, bus: this.bus, input: this.input, player: this.player, colliders: this.colliders, settings: this.settings,
     });
-    this.camera.tp.yaw = this.player.yaw; // camera offset (sin,cos of yaw) = behind the player
+    this.camera.tp.yaw = 0; // fixed street-view angle (never taken from the character's facing, so it is the same every launch)
+    if (saved?.camera) this.camera.restore(saved.camera);
     this.goals = new GoalManager({
       bus: this.bus, economy: this.economy, stats: this.stats, cfg: missCfg, progression: this.progression, saved: saved?.goals,
       ctx: { washBuilt: () => this.wash.built, garageBuilt: () => this.garage.built, employees: () => this.employees.employees.filter((e) => !e.leaving).length, properties: () => this.properties.ownedCount, decor: () => this.placement.totalPlaced },
@@ -507,6 +508,7 @@ export class Game {
       login: this.dailyReward.serialize(),
       missions: this.missions.serialize(),
       tutorial: this.tutorial?.serialize(),
+      camera: this.camera.serialize(),
       time: { hour: this.day.hour, day: this.day.day },
       lastSeen: Date.now(),
     };
