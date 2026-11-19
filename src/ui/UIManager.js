@@ -135,7 +135,30 @@ export class UIManager {
   }
 
   // ---------- HUD ----------
+  /** Floating "Open" button above the station terminal: shown in street view when the player is near it. */
+  updateTerminalButton() {
+    let b = this.termBtn;
+    if (!b) {
+      b = this.termBtn = document.createElement('button');
+      b.id = 'term-open';
+      b.type = 'button';
+      b.innerHTML = '<span>🖥️</span> Open';
+      b.onclick = (ev) => { ev.stopPropagation(); this.open('station'); };
+      // keep clicks / drags on the button from also walking the character
+      for (const t of ['pointerdown', 'pointerup', 'mousedown', 'mouseup', 'touchstart', 'touchend']) b.addEventListener(t, (ev) => ev.stopPropagation());
+      document.body.appendChild(b);
+    }
+    const g = this.game, tp = g.stationView.terminalPos, pp = g.player.pos;
+    const near = !g.camera.inManagement && !g.camera.transitioning && !this.modal && !g.paused && Math.hypot(tp.x - pp.x, tp.z - pp.z) < 7;
+    if (!near) { if (b.style.display !== 'none') b.style.display = 'none'; return; }
+    const v = tp.clone(); v.y += 2.6; v.project(g.sm.camera);
+    b.style.display = 'block';
+    b.style.left = `${((v.x + 1) / 2) * innerWidth}px`;
+    b.style.top = `${((1 - v.y) / 2) * innerHeight - 4 + Math.sin(performance.now() / 380) * 4}px`;
+  }
+
   update(dt) {
+    this.updateTerminalButton();
     // animate cash counter
     const target = this.economy.cash;
     this.shownCash += (target - this.shownCash) * Math.min(1, dt * 8);

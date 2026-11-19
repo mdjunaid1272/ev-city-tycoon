@@ -411,6 +411,11 @@ svg.ico { stroke-width: 2.5; }
 .mi { color: var(--text); font-weight: 600; } .mi:hover { background: var(--navy-2); } .mi:active { background: #d6e8ff; }
 .mi:nth-child(1) [data-icon] { color: #2f9bff; } .mi:nth-child(2) [data-icon] { color: #1fb25a; } .mi:nth-child(3) [data-icon] { color: #ff8a3d; } .mi:nth-child(4) [data-icon] { color: #8a5cff; } .mi:nth-child(5) [data-icon] { color: #ff5a5f; }
 
+/* floating "Open" button above the station terminal */
+#term-open { position: fixed; z-index: 30; transform: translate(-50%, -100%); display: none; padding: 8px 16px; border-radius: 999px; background: var(--yellow, #ffd23f); color: var(--navy, #2d3b66); border: 3px solid var(--navy, #2d3b66); font: 800 15px/1 inherit; cursor: pointer; box-shadow: 0 4px 0 rgba(0, 0, 0, .18); white-space: nowrap; }
+#term-open:hover { filter: brightness(1.06); }
+#term-open:active { transform: translate(-50%, calc(-100% + 2px)); }
+
 /* chips on the world */
 #prompt, #mgmt-hint { background: #fff; color: var(--text); border: 3px solid var(--navy); font-weight: 600; box-shadow: var(--ui-shadow); }
 #prompt kbd { background: var(--yellow); color: var(--navy); border: 2px solid var(--navy); }

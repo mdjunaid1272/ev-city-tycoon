@@ -271,11 +271,7 @@ export class StationView {
     t.userData.focus = this.terminalPos.clone();
     this.root.add(t);
     this.selectables.push(t);
-    this.interactables.push({
-      id: 'terminal', pos: this.terminalPos, radius: 3.2,
-      getPrompt: () => ({ text: 'Open Station Manager' }),
-      run: () => this.bus.emit('ui:open', 'station'),
-    });
+    // the Station Manager is opened by the floating "Open" button above the terminal (UIManager), not by a key
   }
 
   createCharger(bayId) {
