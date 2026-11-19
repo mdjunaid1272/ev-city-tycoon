@@ -217,7 +217,9 @@ export class UIManager {
   setPrompt(p) {
     $('prompt').classList.toggle('hidden', !p);
     if (p) $('prompt-text').textContent = p.text;
-    $('btn-interact').hidden = !p;
+    $('btn-interact').hidden = !p || !!p.noKey;
+    const k = $('prompt').querySelector('kbd');
+    if (k) k.style.display = p?.noKey ? 'none' : '';
   }
 
   onMode(m) {
@@ -1066,7 +1068,7 @@ export class UIManager {
       <div class="sect">Moving around</div>
       <div class="help"><kbd>WASD</kbd> / arrows, click the ground, or hold the mouse button and drag. <kbd>Shift</kbd> sprints. Touch: joystick, or tap the ground.</div>
       <div class="sect">Running the station</div>
-      <div class="help">Stand beside a bay and a waiting car connects by itself (or press <kbd>E</kbd>). Open the terminal for prices and upgrades. Hire attendants in <b>Staff</b> so cars are connected and billed while you are away.</div>
+      <div class="help">Stand beside a bay and a waiting car connects by itself. Click a charger to stop its charge and bill the customer. Open the terminal for prices and upgrades. Hire attendants in <b>Staff</b> so cars are connected and billed while you are away.</div>
       <div class="sect">Camera</div>
       <div class="help">Wheel / pinch or the zoom buttons: zoom. <kbd>M</kbd>: management view (drag to pan, <kbd>Q</kbd>/<kbd>R</kbd> rotate, click equipment to select). The target button resets the camera.</div>
       <div class="sect">Building</div>

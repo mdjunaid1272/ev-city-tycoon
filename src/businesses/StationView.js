@@ -220,6 +220,8 @@ export class StationView {
       label.sprite.position.set(bx, 4.2, 0);
       r.add(label.sprite);
 
+      charger.userData.bayIndex = i;
+      charger.userData.bayX = cx;
       this.bayVis.push({ charger, ghost, label, cable: null, bx, side, ringT: 0 });
       this.selectables.push(charger, ghost);
 
@@ -229,15 +231,14 @@ export class StationView {
           const b = this.station.bays[i];
           if (!b.unlocked) return null;
           if (b.state === 'waiting') return { text: `Connecting ${b.vehicle.label} · Bay ${i + 1}…`, auto: true };
-          if (b.state === 'charging') return { text: `Stop & bill · Bay ${i + 1} (${Math.round(b.vehicle.soc * 100)}%)` };
+          if (b.state === 'charging') return { text: `Click the charger to stop & bill · Bay ${i + 1} (${Math.round(b.vehicle.soc * 100)}%)`, noKey: true };
           if (b.state === 'done' && !b.released) return { text: `Unplugging · Bay ${i + 1}…`, auto: true };
           return null;
         },
         run: () => {
           const b = this.station.bays[i];
           if (b.state === 'waiting') this.station.startCharging(i);
-          else if (b.state === 'charging') this.station.stopCharging(i);
-          else if (b.state === 'done') this.station.release(i);
+          else if (b.state === 'done') this.station.release(i); // charging is stopped by clicking the charger (see Game.onClick), not by a key
         },
       });
     });

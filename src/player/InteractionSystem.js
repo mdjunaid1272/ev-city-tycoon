@@ -55,7 +55,7 @@ export class InteractionSystem {
   }
 
   interact() {
-    if (!this.enabled || !this.current) return false;
+    if (!this.enabled || !this.current || this.prompt?.noKey) return false; // click-only prompts ignore the E key / action button
     this.current.run();
     this.bus.emit('interact:done', this.current.id);
     return true;

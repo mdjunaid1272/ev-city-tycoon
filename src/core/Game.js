@@ -378,6 +378,24 @@ export class Game {
     const ndc = new THREE.Vector2((x / innerWidth) * 2 - 1, -(y / innerHeight) * 2 + 1);
     this.raycaster.setFromCamera(ndc, this.sm.camera);
     if (!this.camera.inManagement) {
+      // street view: clicking a charger that is charging stops the charge (walk up to it first if needed)
+      const ch = this.raycaster.intersectObjects(this.stationView.bayVis.map((v) => v.charger), true)[0];
+      if (ch) {
+        let o = ch.object; while (o && o.userData.bayIndex === undefined) o = o.parent;
+        const i = o?.userData.bayIndex;
+        const b = i !== undefined ? this.station.bays[i] : null;
+        if (b && b.state === 'charging') {
+          const cx = o.userData.bayX;
+          if (Math.hypot(cx - this.player.pos.x, this.player.pos.z) <= 4.2) { this.pendingStop = null; this.station.stopCharging(i); }
+          else {
+            this.pendingStop = i;
+            this.player.target = { x: cx + (this.player.pos.x < cx ? -2.2 : 2.2), z: 1.2 };
+            this.player.stuckT = 0; this.player.stuckX = this.player.pos.x; this.player.stuckZ = this.player.pos.z;
+          }
+          return;
+        }
+      }
+      this.pendingStop = null;
       // street view: click / tap the ground to walk there
       const hit = new THREE.Vector3();
       if (this.raycaster.ray.intersectPlane(this.groundPlane, hit)) {
@@ -466,6 +484,11 @@ export class Game {
       this.peds.update(dt, this.camera.focusPoint);
       this.interaction.enabled = !this.camera.inManagement;
       this.interaction.update(this.player.pos, this.time, dt, this.player.speed);
+      if (this.pendingStop != null) { // walked up to a charger that was clicked: stop its charge on arrival
+        const i = this.pendingStop, b = this.station.bays[i], cx = this.stationView.bayVis[i].charger.userData.bayX;
+        if (!b || b.state !== 'charging') this.pendingStop = null;
+        else if (Math.hypot(cx - this.player.pos.x, this.player.pos.z) <= 4.0) { this.pendingStop = null; this.station.stopCharging(i); }
+      }
       if (this.moveMarker.visible) {
         if (!this.player.target) this.moveMarker.visible = false;
         else this.moveMarker.scale.setScalar(1 + Math.sin(this.time * 8) * 0.12);
