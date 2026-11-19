@@ -50,12 +50,12 @@ export class Colliders {
   resolveVehicles(pos, r) {
     for (const o of this.vehicles) {
       if (!o.visible || !o.parent) continue;
-      const e = o.matrixWorld.elements, cx = e[12], cz = e[14];
+      const cx = o.position.x, cz = o.position.z;
       const hl = (o.userData.length || 4.2) / 2, hw = (o.userData.width || 1.9) / 2;
       let dx = pos.x - cx, dz = pos.z - cz;
       const reach = hl + hw + r;
       if (dx * dx + dz * dz > reach * reach) continue;
-      const c = e[0], s = e[8]; // cos / sin of the car's yaw
+      const c = Math.cos(o.rotation.y), s = Math.sin(o.rotation.y); // cos / sin of the car's yaw
       let lx = c * dx - s * dz, lz = s * dx + c * dz;
       const nx = Math.max(-hw, Math.min(lx, hw)), nz = Math.max(-hl, Math.min(lz, hl));
       const ex = lx - nx, ez = lz - nz, d2 = ex * ex + ez * ez;

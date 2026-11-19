@@ -57,6 +57,7 @@ export class PathFollower {
     let vMax = this.maxSpeed * (1 - Math.min(0.7, Math.abs(dy) * 0.5));
     if (last) vMax = Math.min(vMax, Math.sqrt(2 * 5 * dist) + 0.4);
     if (this.hold) vMax = 0; // blocked by another vehicle ahead
+    if (this.limit !== undefined) vMax = Math.min(vMax, this.limit); // gap-based braking set by the lot's avoidance
     vMax = Math.min(vMax, speedLimitForPlayer(o, 5)); // the player stands on its way: stop, then go on when they step aside
     this.speed += Math.max(-this.accel * 2 * dt, Math.min(this.accel * dt, vMax - this.speed));
     const step = this.speed * dt;

@@ -4,6 +4,7 @@ import { createBuilding, setCarDirt } from '../world/Models.js';
 import { PathFollower } from '../vehicles/PathFollower.js';
 import { BAY_SLOTS } from './ChargingStation.js';
 import { QUEUE_SLOTS } from '../customers/CustomerManager.js';
+let avoidSeq = 0; // arrival order of lot cars (priority when paths cross)
 
 const FLOOR = 0.34;
 const CAR_Y = 0.34;
@@ -173,9 +174,9 @@ export class StationView {
     face.position.set(0, 8.6, 0.42);
     const back = face.clone(); back.position.z = -0.42; back.rotation.y = Math.PI;
     pylon.add(face, back);
-    pylon.position.set(15, FLOOR, 21);
+    pylon.position.set(15, FLOOR, 23.2); // beyond the visitor aisle (z = 20-21) so parking cars never clip it
     r.add(pylon);
-    this.colliders.add(15, 21, 1, 1, 9);
+    this.colliders.add(15, 23.2, 1, 1, 9);
 
     // visitor parking row: two cars are already parked when you arrive (see VISITOR section below)
     this.buildExtras();
@@ -196,7 +197,7 @@ export class StationView {
 
     // bays: charger + ghost slot + label
     BAY_SLOTS.forEach((bx, i) => {
-      const side = bx < 0 ? 1 : -1;
+      const side = bx < 0 || bx === 15 ? 1 : -1; // the 4th bay's charger sits on the outside: the exit aisle (x = 12) stays clear
       const cx = bx + side * 2.45;
       const charger = this.createCharger(i);
       charger.position.set(cx, FLOOR, 0);
@@ -403,7 +404,8 @@ export class StationView {
     return [...this.entryHead(), [-12, 21], [slot.x, 21], [slot.x, slot.z]];
   }
   exitTail() {
-    return [[12, -13], [12, -24], [14.5, -27], [17, -27.2]];
+    // first two points: inside the lot (the last one is the waiting spot at the driveway mouth); last three: pull out onto the road
+    return [[12, -13], [12, -21.5], [12, -24], [14.5, -27], [17, -27.2]];
   }
   exitPath(bx) {
     return [[bx, -3], [bx, -9], ...this.exitTail()];
@@ -499,8 +501,11 @@ export class StationView {
   sendOut(rec, path) {
     rec.state = 'leaving';
     rec.f.maxSpeed = 7;
-    rec.f.setPath(path.map(([x, z]) => new THREE.Vector3(x, CAR_Y, z)));
-    rec.f.onDone = () => { rec.state = 'merging'; };
+    // wait at the driveway mouth (off the lane); only pull out when the lane has room, so cars never stand in live traffic
+    const n = 3;
+    rec.tail = path.slice(path.length - n);
+    rec.f.setPath(path.slice(0, path.length - n).map(([x, z]) => new THREE.Vector3(x, CAR_Y, z)));
+    rec.f.onDone = () => { rec.state = 'holding'; };
   }
 
   // ---------- visitors (parking row) ----------
@@ -570,19 +575,87 @@ export class StationView {
 
   /** Simple local avoidance for lot vehicles: hold if another car is right ahead. */
   applyAvoidance(dt) {
+    // Each car probes the space along the way it is about to drive (the whole path ahead, across its full width)
+    // against the bodies of the other lot cars and brakes smoothly to stop a little short. A car never drives into
+    // one that is physically in its way. Two single-file areas (where the entry row, the queue and the aisle cross,
+    // and where the bay lanes funnel into the exit aisle) let one car through at a time, oldest first.
+    const ZONES = this.Lc
+      ? [{ x0: -20, x1: 20, z0: 6.5, z1: 14.5 }, { x0: -20, x1: 20, z0: -16, z1: -10 }]
+      : [{ x0: -17, x1: 17, z0: 6.5, z1: 14.5 }, { x0: -17, x1: 17, z0: -15, z1: -8.5 }];
+    const loc = (p) => (this.Lc ? this.Lc(p.x, p.z) : { x: p.x, z: p.z });
+    const inZ = (Z, p) => { const l = loc(p); return l.x > Z.x0 && l.x < Z.x1 && l.z > Z.z0 && l.z < Z.z1; };
+    // the point `d` metres ahead of the car's centre ALONG ITS PATH (round corners), with the local direction
+    const pathPoint = (m, d) => {
+      const o = m.obj, pts = m.f.path;
+      let x = o.position.x, z = o.position.z, rem = d;
+      let fx = -Math.sin(o.rotation.y), fz = -Math.cos(o.rotation.y);
+      if (!m.f.done) {
+        for (let i = m.f.idx; i < pts.length; i++) {
+          const tx = pts[i].x - x, tz = pts[i].z - z, tl = Math.hypot(tx, tz);
+          if (tl < 1e-6) continue;
+          fx = tx / tl; fz = tz / tl;
+          if (rem <= tl) return { x: x + fx * rem, z: z + fz * rem, fx, fz };
+          rem -= tl; x = pts[i].x; z = pts[i].z;
+        }
+      }
+      return { x: x + fx * rem, z: z + fz * rem, fx, fz };
+    };
+    const probe = (m, n) => {
+      const o = m.obj, lenM = o.userData.length || 4.2, widM = o.userData.width || 1.9;
+      const q = n.obj, yaw = q.rotation.y, c = Math.cos(yaw), s = Math.sin(yaw);
+      const hl = (q.userData.length || 4.2) / 2 + 0.25, hw = (q.userData.width || 1.9) / 2 + 0.25;
+      for (const t of [0.4, 1.2, 2.2, 3.5, 5, 7, 9.5]) {
+        const P = pathPoint(m, lenM / 2 + t);
+        for (const off of [-widM / 2, 0, widM / 2]) {
+          const dx = P.x + P.fz * off - q.position.x, dz = P.z - P.fx * off - q.position.z;
+          if (Math.abs(c * dx - s * dz) < hw && Math.abs(s * dx + c * dz) < hl) return t;
+        }
+      }
+      return Infinity;
+    };
+    // distance from the car's front to a single-file area along its path, or null
+    const toZone = (Z, m) => {
+      const lenM = m.obj.userData.length || 4.2;
+      for (let t = 0.5; t <= 9; t += 0.5) if (inZ(Z, pathPoint(m, lenM / 2 + t))) return t;
+      return null;
+    };
+    for (const m of this.movers) { if (m.f && !m.order) m.order = ++avoidSeq; }
+    const zoneState = ZONES.map((Z) => {
+      const inside = this.movers.some((n) => n.obj.visible && inZ(Z, n.obj.position));
+      const entering = [];
+      for (const m of this.movers) {
+        if (!m.f || m.f.done || !m.obj.visible || inZ(Z, m.obj.position)) continue;
+        const d = toZone(Z, m);
+        if (d !== null) entering.push({ m, d });
+      }
+      let first = null;
+      for (const e of entering) if (!first || e.m.order < first.m.order) first = e;
+      return { inside, entering, first };
+    });
     for (const m of this.movers) {
       if (!m.f || m.f.done) continue;
-      const o = m.obj, fx = -Math.sin(o.rotation.y), fz = -Math.cos(o.rotation.y);
-      let hold = false;
+      let gap = Infinity, hard = false;
       for (const n of this.movers) {
-        if (n === m) continue;
-        const dx = n.obj.position.x - o.position.x, dz = n.obj.position.z - o.position.z;
-        const ahead = dx * fx + dz * fz, lat = Math.abs(-dx * fz + dz * fx);
-        if (ahead > 0 && ahead < 6 && lat < 2.1) { hold = true; break; }
+        if (n === m || !n.obj.visible) continue;
+        if (m.state === 'pulling' && (n.state === 'holding' || n.state === 'leaving')) continue; // cars waiting behind a car that is pulling out never hold it up
+        const t = probe(m, n);
+        if (t === Infinity) continue;
+        // two cars that would block EACH OTHER (crossing paths): the older one goes first, so nobody waits for a car that waits for them
+        if (!(!n.f || n.f.done) && (n.order || 0) > (m.order || 0) && probe(n, m) < Infinity) continue;
+        gap = Math.min(gap, t - 0.4);
+        if (n.state === 'merging' || n.state === 'holding' || n.state === 'pulling') hard = true; // a car waiting to rejoin the road will move on: queue behind it
       }
-      m.holdT = hold ? (m.holdT || 0) + dt : 0;
-      m.f.hold = hold && m.holdT < 6; // deadlock guard: after 6s push through
-      if (m.holdT > 8) m.holdT = 0;
+      for (const zs of zoneState) {
+        const ent = zs.entering.find((e) => e.m === m);
+        if (ent && (zs.inside || ent !== zs.first)) gap = Math.min(gap, ent.d - 0.9); // wait outside the area for the car in it / the older car waiting
+      }
+      const blocked = gap < Infinity;
+      m.holdT = blocked ? (m.holdT || 0) + dt : 0;
+      // a stand-off (nobody can move) is broken after 3 s: the car creeps on slowly for a few seconds. Cars waiting to merge are never pushed through.
+      const push = blocked && !hard && m.holdT >= 3;
+      m.f.limit = !blocked ? Infinity : push ? 1.2 : Math.sqrt(2 * 3.5 * Math.max(0, gap - 0.3));
+      m.f.hold = blocked && !push && gap < 0.5;
+      if (m.holdT > 9 && !hard) m.holdT = 0;
     }
   }
 
@@ -594,6 +667,12 @@ export class StationView {
       if (m.kind === 'customer' && m.slot && m.state !== 'queueing' && m.state !== 'queued' && m.obj.position.z < 13.5) {
         this.customers.releaseSlot(m.customer);
         m.slot = null;
+      }
+      if (m.state === 'holding' && m.tail && !this.movers.some((x) => x !== m && (x.state === 'pulling' || x.state === 'merging')) && this.traffic.canMerge(m.obj, this.road.driveOut, this.driveOutS, true)) {
+        m.state = 'pulling'; m.f.maxSpeed = 6;
+        m.f.setPath(m.tail.map(([x, z]) => new THREE.Vector3(x, CAR_Y, z)));
+        m.f.onDone = () => { m.state = 'merging'; };
+        m.tail = null;
       }
       if (m.state === 'merging' && this.traffic.merge(m.obj, this.road.driveOut, this.driveOutS)) {
         this.movers.splice(this.movers.indexOf(m), 1);
@@ -642,7 +721,7 @@ export class StationView {
     this.time += dt;
     this.updateVehicles(dt);
     for (const [bayId, rec] of this.cars) {
-      if ((rec.state === 'leaving' || rec.state === 'merging') && !rec.freed && rec.obj.position.z < -8) {
+      if ((rec.state === 'leaving' || rec.state === 'holding' || rec.state === 'pulling' || rec.state === 'merging') && !rec.freed && rec.obj.position.z < -8) {
         rec.freed = true;
         this.station.vehicleLeft(bayId);
       }

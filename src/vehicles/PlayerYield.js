@@ -13,11 +13,11 @@ const LOOK = 9; // metres ahead that count
 export function gapToPlayer(obj, lenFallback = 4.2) {
   const p = playerYield.pos;
   if (!p || !obj.parent) return Infinity;
-  const e = obj.matrixWorld.elements;
-  const cx = e[12], cz = e[14];
+  // cars sit directly under identity-transform roots, so position / rotation.y are the world values (and always current)
+  const cx = obj.position.x, cz = obj.position.z, yaw = obj.rotation.y;
   const dx = p.x - cx, dz = p.z - cz;
   if (dx * dx + dz * dz > (LOOK + 4) * (LOOK + 4)) return Infinity;
-  const fx = -e[8], fz = -e[10], rx = e[0], rz = e[2];
+  const fx = -Math.sin(yaw), fz = -Math.cos(yaw), rx = Math.cos(yaw), rz = -Math.sin(yaw);
   const len = obj.userData.length || lenFallback, wid = obj.userData.width || 1.9;
   const along = dx * fx + dz * fz;
   const lat = dx * rx + dz * rz;

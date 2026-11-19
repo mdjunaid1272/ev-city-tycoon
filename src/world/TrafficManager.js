@@ -67,6 +67,7 @@ export class TrafficManager {
       obj, edge, s, v: o.v ?? 0, vmax: o.vmax ?? 8.5 + Math.random() * 3, len: obj.userData.length || 4.2,
       kind: o.kind || 'ambient', forceStraight: !!o.forceStraight, handoff: o.handoff || null, nextConn: null, stuck: 0,
     };
+    obj.userData.isAgent = true; // lane-graph car (as opposed to a lot car steered by a PathFollower)
     a.nextConn = this.chooseConn(a, edge);
     edge.agents.push(a);
     if (edge.kind === 'conn') edge.inter.inside.add(a);
@@ -132,21 +133,41 @@ export class TrafficManager {
 
   /** Put a vehicle back on the road (station exit). Returns false if the lane has no room yet. */
   merge(obj, edge, s) {
+    if (!this.canMerge(obj, edge, s)) return false;
     const len = obj.userData.length || 4.2;
-    // the merge point is close to the stop line: only join while the signal is fresh green and the box is clear
-    const it = edge.to;
-    if (it && edge.len - s < 15) {
-      const L = this.road.light(it, edge.dir % 2);
-      if (L.state !== 'green' || L.t > 5 || it.inside.size) return false;
-    }
-    for (const o of edge.agents) {
-      if (o.s < s && s - o.s < 14 + o.len / 2) return false;
-      if (o.s >= s && o.s - s < 7 + len / 2) return false;
-    }
     this.root.add(obj);
     obj.visible = true;
-    const a = this.makeAgent(obj, edge, s, { v: 4, kind: 'leaving', vmax: 9 });
+    const a = this.makeAgent(obj, edge, s, { v: edge.len - s < 15 ? 2.5 : 4, kind: 'leaving', vmax: 9 });
     this.positionAgent(a);
+    return true;
+  }
+
+  /** Is there room to join the lane at s right now? (same test as merge, without placing the car) */
+  canMerge(obj, edge, s, strict = false) {
+    const len = obj.userData.length || 4.2;
+    // the merge point is just before the stop line: a car that joins on red simply becomes the head of the queue (it enters at walking pace and
+    // stops at the line), so the exit is never limited to one car per green. Only an occupied intersection box refuses a join.
+    const it = edge.to;
+    if (it && edge.len - s < 15 && it.inside.size) return false;
+    for (const o of edge.agents) {
+      const half = (o.len + len) / 2 + 1.2; // bumper-to-bumper room: enough to slot in next to a car that is standing still
+      if (o.s < s) {
+        if (s - o.s < (o.v < 0.5 ? half : 14 + o.len / 2 + (strict ? 6 : 0))) return false;
+      } else {
+        if (o.s - s < (strict ? 13 + len / 2 : o.v < 0.5 ? half : 7 + len / 2)) return false;
+        if (strict && o.s - s < 26 && o.v < 1.5) return false; // never pull out towards a stopped queue (red light ahead)
+      }
+    }
+    // cars still on the previous edge or inside the intersection are not in edge.agents: look at the world around the merge point
+    sampleEdge(edge, s, _p);
+    const px = _p.x, pz = _p.z, fx = -Math.sin(_p.yaw), fz = -Math.cos(_p.yaw), behind = strict ? 30 : 17, ahead = strict ? 14 : 9;
+    for (const a of this.agents) {
+      if (a.obj === obj || !a.obj.visible) continue;
+      const dx = a.obj.position.x - px, dz = a.obj.position.z - pz, along = dx * fx + dz * fz, lat = Math.abs(-dx * fz + dz * fx);
+      if (lat > 4.2) continue;
+      if (along < 0 && -along < behind && a.v > 0.5) return false; // a moving car about to pass the merge point
+      if (along >= 0 && along < ahead && !(a.v < 0.5 && along >= (a.len + len) / 2 + 1.2)) return false;
+    }
     return true;
   }
 
@@ -202,6 +223,40 @@ export class TrafficManager {
     return { gap, lv };
   }
 
+  /**
+   * Lot cars (PathFollower) are invisible to the lane graph: look for one right ahead of this agent
+   * (gap in metres, or Infinity) so traffic never drives into a car that is turning into / out of a driveway.
+   */
+  gapToLotCar(a, look = 9) {
+    if (!this.colliders) return Infinity;
+    const o = a.obj;
+    if (!o.parent) return Infinity;
+    const ax = o.position.x, az = o.position.z, yawA = o.rotation.y, fx = -Math.sin(yawA), fz = -Math.cos(yawA), rx = Math.cos(yawA), rz = -Math.sin(yawA);
+    let best = Infinity;
+    for (const v of this.colliders.vehicles) {
+      if (v === o || !v.visible || !v.parent || v.userData.isAgent) continue;
+      const dx = v.position.x - ax, dz = v.position.z - az;
+      if (dx * dx + dz * dz > (look + 5) * (look + 5)) continue;
+      const along = dx * fx + dz * fz, lat = dx * rx + dz * rz;
+      const vw = (v.userData.width || 1.9) / 2, vl = (v.userData.length || 4.2) / 2;
+      if (along <= 0 || Math.abs(lat) > vw + (o.userData.width || 1.9) / 2 + 0.2 + Math.abs(Math.sin(v.rotation.y - yawA)) * vl * 0.6) continue;
+      best = Math.min(best, along - vl - a.len / 2);
+    }
+    return best;
+  }
+
+  /** True while a lot car still sits at / near the driveway handoff point: the next customer waits instead of arriving on top of it. */
+  handoffBlocked(a, h) {
+    if (!this.colliders) return false;
+    sampleEdge(h.edge, h.s, _p);
+    for (const v of this.colliders.vehicles) {
+      if (v === a.obj || !v.visible || !v.parent || v.userData.isAgent) continue;
+      const dx = v.position.x - _p.x, dz = v.position.z - _p.z;
+      if (dx * dx + dz * dz < 5.8 * 5.8) return true;
+    }
+    return false;
+  }
+
   step(a, dt) {
     const e = a.edge;
     let target = a.vmax;
@@ -215,6 +270,12 @@ export class TrafficManager {
       target = Math.min(target, Math.sqrt(lv * lv + 2 * 6 * Math.max(0, gap - 2)));
     }
     target = Math.min(target, speedLimitForPlayer(a.obj, 6)); // yield to the player standing on the road
+    const lotGap = this.gapToLotCar(a);
+    if (lotGap < Infinity) target = Math.min(target, Math.sqrt(2 * 6 * Math.max(0, lotGap - 1.5)));
+    if (a.handoff && a.edge === a.handoff.edge) {
+      const dh = a.handoff.s - a.s;
+      if (dh < 14 && dh > -1 && this.handoffBlocked(a, a.handoff)) target = Math.min(target, Math.sqrt(2 * 5 * Math.max(0, dh - 2.5 - a.len / 2)));
+    }
     if (e.kind === 'road' && e.to && a.nextConn) {
       const dist = e.len - a.s;
       if (a.resv) {
@@ -242,7 +303,7 @@ export class TrafficManager {
     if (a.dead) return;
 
     const h = a.handoff;
-    if (h && !a.dead && a.edge === h.edge && a.s >= h.s) {
+    if (h && !a.dead && a.edge === h.edge && a.s >= h.s && !this.handoffBlocked(a, h)) {
       sampleEdge(a.edge, a.s, _p);
       // the callback may decline (e.g. the station turns the customer away): then the car just drives on
       if (h.cb(a.obj, _p.x, _p.z, _p.yaw) === false) {
@@ -280,6 +341,7 @@ export class TrafficManager {
 
   detach(a) {
     a.dead = true;
+    a.obj.userData.isAgent = false;
     a.edge.agents.splice(a.edge.agents.indexOf(a), 1);
     this.agents.splice(this.agents.indexOf(a), 1);
   }
@@ -287,6 +349,7 @@ export class TrafficManager {
   kill(a) {
     if (a.dead) return;
     a.dead = true;
+    a.obj.userData.isAgent = false;
     a.edge.agents.splice(a.edge.agents.indexOf(a), 1);
     if (a.edge.kind === 'conn') a.edge.inter.inside.delete(a);
     else if (a.edge.to) a.edge.to.inside.delete(a);
