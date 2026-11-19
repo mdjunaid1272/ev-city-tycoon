@@ -5,7 +5,7 @@ import { HAPPY_SCORE } from './StatsTracker.js';
  */
 const MISSIONS = [
   { id: 'm_mgmt', title: 'Try Management Mode', desc: 'Press M (or the camera button) to view your station from above.', target: 1, event: 'camera:mode', test: (p) => p === 'management', reward: { cash: 200 } },
-  { id: 'm_hire', title: 'Hire your first employee', desc: 'Open Staff (the 👥 button) and hire an attendant: they plug in and unplug cars for you.', target: 1, event: 'employee:hired', reward: { cash: 500, reputation: 3 } },
+  { id: 'm_hire', title: 'Hire your first employee', desc: 'Open Staff (the 👥 button) and hire an attendant: they plug in and unplug cars for you.', target: 1, event: 'employee:hired', have: 'employees', reward: { cash: 500, reputation: 3 } },
   { id: 'm_auto', title: 'Let your team work: 10 tasks', desc: 'Employees connect waiting cars and unplug finished ones on their own.', target: 10, event: 'employee:task-complete', reward: { cash: 800, gems: 5, reputation: 5 } },
   { id: 'm_first', title: 'Charge your first EV', desc: 'Walk to a charger with a waiting car and stand next to it.', target: 1, event: 'charging:complete', reward: { cash: 400, reputation: 5 } },
   { id: 'm_serve5', title: 'Serve 5 charging customers', desc: 'Keep the bays busy.', target: 5, event: 'charging:complete', reward: { cash: 800, gems: 5, reputation: 10 } },
@@ -57,7 +57,29 @@ export class MissionManager {
     this.bus.emit('mission:complete', { mission: m });
     this.index++;
     this.progress = 0;
+    this.syncCurrent();
     this.bus.emit('mission:progress', this.snapshot());
+  }
+
+  /** Work already done before the mission appeared counts (e.g. staff hired earlier): progress follows the current state. */
+  syncCurrent() {
+    const m = this.current;
+    if (!m || !this.have || !m.have) return;
+    const n = this.have[m.have]?.();
+    if (typeof n !== 'number') return;
+    this.progress = Math.max(this.progress, Math.min(n, m.target));
+    if (this.progress >= m.target) this.complete();
+  }
+
+  /** Called regularly: keeps state-based missions (staff count) in step when staff are fired or quit. */
+  refresh() {
+    const m = this.current;
+    if (!m || !this.have || !m.have) return;
+    const n = this.have[m.have]?.();
+    if (typeof n === 'number' && Math.min(n, m.target) > this.progress) {
+      this.progress = Math.min(n, m.target);
+      if (this.progress >= m.target) this.complete(); else this.bus.emit('mission:progress', this.snapshot());
+    }
   }
 
   snapshot() {
@@ -78,6 +100,7 @@ export class MissionManager {
     if (!d) return;
     this.index = Math.min(Math.max(0, d.index | 0), MISSIONS.length);
     this.progress = Math.max(0, d.progress || 0);
+    this.syncCurrent();
     this.bus.emit('mission:progress', this.snapshot());
   }
 }

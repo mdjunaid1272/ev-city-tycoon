@@ -240,7 +240,9 @@ export class Game {
     this.dailyReward = new DailyReward({ economy: this.economy, cfg: progCfg.login, saved: saved?.login });
     if (!saved) this.dailyReward.markToday();
     this.missions = new MissionManager(this.bus, this.economy);
+    this.missions.have = { employees: () => this.employees.employees.filter((e) => !e.leaving).length };
     if (saved?.missions) this.missions.restore(saved.missions);
+    this.missions.syncCurrent();
 
     // selection ring (management mode)
     this.selectionRing = new THREE.Mesh(
