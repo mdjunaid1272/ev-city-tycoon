@@ -103,13 +103,8 @@ export class TutorialManager {
     const h = document.createElement('div');
     h.id = 'tut-hand';
     h.setAttribute('aria-hidden', 'true');
-    h.innerHTML = `<div class="hw"><i class="rp"></i><svg class="hi" viewBox="0 0 64 84" width="60" height="79">
-        <rect x="12" y="34" width="40" height="46" rx="15" fill="#fff" stroke="#2d3b66" stroke-width="3.5"/>
-        <rect x="25" y="3" width="15" height="48" rx="7.5" fill="#fff" stroke="#2d3b66" stroke-width="3.5"/>
-        <path d="M12 54c-6-2-9 4-5 9l7 9" fill="#fff" stroke="#2d3b66" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M25 56v14M34 56v14M43 56v14" stroke="#c9d3e6" stroke-width="3" stroke-linecap="round"/>
-        <rect x="25" y="3" width="15" height="48" rx="7.5" fill="none" stroke="#2d3b66" stroke-width="3.5"/>
-      </svg></div>`;
+    // the supplied artwork (public/Hand-Pointer.png, 220x243): fingertip at about (10%, 3%), finger pointing up-left
+    h.innerHTML = '<div class="hw"><i class="rp"></i><div class="hi"><img src="./Hand-Pointer.png" alt="" draggable="false" width="76"></div></div>';
     document.body.appendChild(h);
     this.hand = h;
   }
@@ -138,7 +133,8 @@ export class TutorialManager {
       const x = (v.x * 0.5 + 0.5) * innerWidth, y = (-v.y * 0.5 + 0.5) * innerHeight;
       const off = x < 40 || x > innerWidth - 40 || y < 70 || y > innerHeight - 40;
       // target off screen: park the hand at the screen edge and turn it towards the target
-      const rot = off ? (Math.atan2(x - innerWidth / 2, -(y - innerHeight / 2)) * 180) / Math.PI : y > innerHeight - 160 ? 180 : 0;
+      // (the artwork's finger points 54 degrees left of up, hence the + 54 when aiming)
+      const rot = off ? (Math.atan2(x - innerWidth / 2, -(y - innerHeight / 2)) * 180) / Math.PI + 54 : y > innerHeight - 160 ? 180 : 0;
       return { x: THREE.MathUtils.clamp(x, 40, innerWidth - 40), y: THREE.MathUtils.clamp(y, 90, innerHeight - 120), rot, mode: 'tap' };
     }
     if (s.id === 'move') {

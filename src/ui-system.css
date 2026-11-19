@@ -537,7 +537,7 @@ body.tut-on:not(.tut-bottom) #daily .d-dm { display: none; }
 #tut-hand { position: fixed; left: 0; top: 0; width: 0; height: 0; z-index: 44; pointer-events: none; display: none; }
 #tut-hand.on { display: block; }
 #tut-hand .hw { position: absolute; left: 0; top: 0; transform-origin: 0 0; transform: rotate(var(--rot, 0deg)); }
-#tut-hand .hi { position: absolute; left: -30px; top: -3px; filter: drop-shadow(0 4px 0 rgba(45, 59, 102, .35)); animation: handTap 1.05s ease-in-out infinite; }
+#tut-hand .hi { animation: handTap 1.05s ease-in-out infinite; }
 #tut-hand .rp { position: absolute; left: -20px; top: -20px; width: 40px; height: 40px; border: 4px solid var(--yellow); border-radius: 50%; opacity: 0; animation: handRipple 1.05s ease-out infinite; }
 #tut-hand.drag .hi { animation: handDrag 1.8s ease-in-out infinite; }
 #tut-hand.drag .rp { animation: none; opacity: .0; }
@@ -546,3 +546,7 @@ body.tut-on:not(.tut-bottom) #daily .d-dm { display: none; }
 @keyframes handDrag { 0%, 100% { transform: translate(-22px, 12px); } 50% { transform: translate(34px, -12px); } }
 @media (prefers-reduced-motion: reduce) { #tut-hand .hi, #tut-hand .rp { animation: none; } }
 body.tut-tap #tut-hint { display: none; }
+
+/* hand pointer artwork (replaces the drawn hand): the fingertip sits exactly on the anchor point */
+#tut-hand .hi { position: absolute; left: 0; top: 0; width: 0; height: 0; filter: drop-shadow(0 4px 0 rgba(45, 59, 102, .3)); }
+#tut-hand .hi img { position: absolute; left: -8px; top: -3px; width: 76px; height: auto; max-width: none; user-select: none; -webkit-user-drag: none; }
