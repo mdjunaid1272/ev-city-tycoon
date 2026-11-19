@@ -48,7 +48,6 @@ import { GarageView } from '../businesses/GarageView.js';
 import { MissionManager } from '../progression/MissionManager.js';
 import { UIManager, money } from '../ui/UIManager.js';
 import { TutorialManager } from '../ui/TutorialManager.js';
-import { SuitcaseManager } from '../ui/SuitcaseManager.js';
 import { Environment } from '../world/Environment.js';
 import { playerYield } from '../vehicles/PlayerYield.js';
 
@@ -277,7 +276,6 @@ export class Game {
     $('hud').classList.remove('hidden');
     $('loading').classList.add('done');
     setTimeout(() => $('loading').remove(), 700);
-    this.suitcase = new SuitcaseManager({ game: this });
     playerYield.pos = this.player.pos;
     this.tutorial = new TutorialManager({ game: this, bus: this.bus, scene: this.sm.scene, saved: saved?.tutorial, isNew: !saved });
     // welcome back: offline earnings first, then the daily login reward
@@ -481,7 +479,6 @@ export class Game {
     this.ui.setLocation(this.city.districtAt(this.player.pos.x, this.player.pos.z));
     this.ui.update(dt);
     this.tutorial?.update(dt);
-    this.suitcase?.update(dt);
     this.sm.render();
     this.fps.n++; this.fps.t += dt;
     if (this.fps.t >= 1) { this.fps.v = this.fps.n / this.fps.t; this.fps.n = 0; this.fps.t = 0; }
