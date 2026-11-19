@@ -129,37 +129,21 @@ export class StationView {
     lot.rotation.x = -Math.PI / 2; lot.position.set(0, FLOOR, 0); lot.receiveShadow = true;
     r.add(lot);
 
-    // canopy
-    const canopy = new THREE.Group();
-    // roof pieces use their own materials so they can fade out in management mode
-    this.roofMats = [0xf4f7fa, 0x1f8a4c].map((c) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.6, transparent: true }));
-    this.roofParts = [
-      mesh(rbox(41, 0.6, 12.5, 0.25, 2), this.roofMats[0], { y: 6, receive: true }),
-      mesh(rbox(41.2, 0.5, 0.5, 0.1, 1), this.roofMats[1], { y: 5.75, z: 6.3 }),
-      mesh(rbox(41.2, 0.5, 0.5, 0.1, 1), this.roofMats[1], { y: 5.75, z: -6.3 }),
-    ];
+    // (no canopy roof or pillars: the pump area is open air)
+    this.roofMats = [];
+    this.roofParts = [];
     this.roofOpacity = 1;
-    canopy.add(...this.roofParts);
-    const lightMat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xfff2c0, emissiveIntensity: 0.15 });
-    nightMaterials.add(lightMat);
-    for (let x = -18; x <= 18; x += 6) canopy.add(mesh(rbox(3.5, 0.1, 0.5, 0.03, 1), lightMat, { x, y: 5.65, z: 0, cast: false }));
-    for (const x of [-19.5, -10, 0, 10, 19.5]) {
-      for (const z of [-5.2, 5.2]) {
-        canopy.add(mesh(rbox(0.5, 5.7, 0.5, 0.15, 1), mat(0xdfe5ec), { x, y: 3, z }));
-        this.colliders.add(x, z, 0.7, 0.7, 6);
+    // solar panels (upgrade visual) sit on the shop roof
+    this.solar = new THREE.Group();
+    for (let row = 0; row < 3; row++) {
+      for (let col = 0; col < 3; col++) {
+        const p = mesh(rbox(3.4, 0.12, 2.2, 0.04, 1), mat(0x1c3b6b, { rough: 0.2, metal: 0.5 }), { x: -14 + (col - 1) * 3.8, y: 5.2, z: -17 + (row - 1) * 2.5 });
+        p.rotation.x = -0.12;
+        this.solar.add(p);
       }
     }
-    // solar roof (upgrade-ready visual on top)
-    this.solar = new THREE.Group();
-    for (let x = -18; x <= 18; x += 4.5) {
-      const p = mesh(rbox(4, 0.12, 5, 0.04, 1), mat(0x1c3b6b, { rough: 0.2, metal: 0.5 }), { x, y: 6.45, z: 0 });
-      p.rotation.x = -0.12;
-      this.solar.add(p);
-    }
     this.solar.visible = false;
-    canopy.add(this.solar);
-    r.add(canopy);
-
+    r.add(this.solar);
     // shop kiosk + terminal
     const shop = createBuilding(12, 4.6, 8, 0x1f8a4c, { roofColor: 0xf4f7fa, awning: 0xffc43d, sign: { text: 'EV STOP', bg: '#ffffff', fg: '#1f8a4c' } });
     shop.position.set(-14, 0.34, -17);
