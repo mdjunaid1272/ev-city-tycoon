@@ -5,9 +5,9 @@ export const isMobile = () =>
   /Android|iPhone|iPad/i.test(navigator.userAgent);
 
 export const QUALITY = {
-  low: { pixelRatio: 1, shadows: false, shadowMap: 512, treeShadows: false, traffic: 10, peds: 6, cullDist: 110, antialias: false },
-  medium: { pixelRatio: 1.5, shadows: true, shadowMap: 1024, treeShadows: false, traffic: 18, peds: 12, cullDist: 150, antialias: true },
-  high: { pixelRatio: 2, shadows: true, shadowMap: 2048, treeShadows: true, traffic: 28, peds: 20, cullDist: 220, antialias: true },
+  low: { detail: 0.6, pixelRatio: 1, shadows: false, shadowMap: 512, treeShadows: false, traffic: 10, peds: 6, cullDist: 110, antialias: false },
+  medium: { detail: 0.85, pixelRatio: 1.5, shadows: true, shadowMap: 1024, treeShadows: false, traffic: 18, peds: 12, cullDist: 150, antialias: true },
+  high: { detail: 1, pixelRatio: 2, shadows: true, shadowMap: 2048, treeShadows: true, traffic: 28, peds: 20, cullDist: 220, antialias: true },
 };
 
 export class Settings {

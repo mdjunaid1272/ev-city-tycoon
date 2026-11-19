@@ -49,6 +49,7 @@ import { MissionManager } from '../progression/MissionManager.js';
 import { UIManager, money } from '../ui/UIManager.js';
 import { TutorialManager } from '../ui/TutorialManager.js';
 import { SuitcaseManager } from '../ui/SuitcaseManager.js';
+import { Environment } from '../world/Environment.js';
 import { playerYield } from '../vehicles/PlayerYield.js';
 
 const $ = (id) => document.getElementById(id);
@@ -92,6 +93,7 @@ export class Game {
     step(0.15, 'Preparing renderer…');
     const canvas = $('c');
     this.sm = new SceneManager(canvas, this.settings);
+    this.sm.env = new Environment({ scene: this.sm.scene, settings: this.settings });
     this.assets = new AssetManager();
     registerProceduralModels(this.assets);
     await this.assets.loadManifest('./data/assets.json');
@@ -102,6 +104,7 @@ export class Game {
     step(0.3, 'Building the city…');
     this.city = new CityManager({ scene: this.sm.scene, colliders: this.colliders, settings: this.settings });
     this.city.build();
+    this.sm.env.addLampGlow(this.city.lampPos);
     await tick();
 
     step(0.65, 'Setting up your charging station…');
@@ -474,6 +477,7 @@ export class Game {
       this.selectionRing.scale.set(s, s, s);
     }
     this.sm.updateShadowFocus(this.camera.focusPoint);
+    this.sm.env.update(dt, this.sm.camera.position, this.camera.focusPoint);
     this.ui.setLocation(this.city.districtAt(this.player.pos.x, this.player.pos.z));
     this.ui.update(dt);
     this.tutorial?.update(dt);

@@ -22,6 +22,8 @@ export class SceneManager {
     this.sun = new THREE.DirectionalLight(0xffffff, 2.2);
     this.sun.castShadow = true;
     this.scene.add(this.sun, this.sun.target);
+    this.fill = new THREE.DirectionalLight(0xbcd7ff, 0.45); // cool bounce light from the opposite side keeps shadows from going flat
+    this.scene.add(this.fill, this.fill.target);
     this.sunDir = new THREE.Vector3(0.5, 0.8, 0.35).normalize();
     this.shadowFocus = new THREE.Vector3();
 
@@ -62,6 +64,9 @@ export class SceneManager {
     this.sun.target.position.set(fx, 0, fz);
     this.sun.position.set(fx + this.sunDir.x * 120, this.sunDir.y * 120, fz + this.sunDir.z * 120);
     this.sun.target.updateMatrixWorld();
+    this.fill.target.position.set(fx, 0, fz);
+    this.fill.position.set(fx - this.sunDir.x * 80, 40 + this.sunDir.y * 20, fz - this.sunDir.z * 80);
+    this.fill.target.updateMatrixWorld();
   }
 
   render() {

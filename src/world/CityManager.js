@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { mat, rbox, mesh, nightMaterials, textTexture } from './Materials.js';
 import { createBuilding, createHouse, createCar } from './Models.js';
 import { districtOfBlock } from './DistrictManager.js';
+import { groundMaterial, slabMaterial, buildExtras } from './CityExtras.js';
 
 export const ROAD_W = 12;
 export const LINES = [-90, -30, 30, 90];
@@ -88,10 +89,11 @@ export class CityManager {
       for (let j = 0; j < 5; j++) this.buildBlock(i - 2, j - 2);
     }
     this.buildInstancedProps();
+    this.extras = buildExtras({ city: this, scene: this.scene, colliders: this.colliders, settings: this.settings });
   }
 
   buildTerrain() {
-    const ground = mesh(new THREE.PlaneGeometry(1800, 1800), mat(0x7ccf6a, { rough: 1 }), { cast: false, receive: true });
+    const ground = mesh(new THREE.PlaneGeometry(1800, 1800), groundMaterial(), { cast: false, receive: true });
     ground.rotation.x = -Math.PI / 2;
     ground.position.y = -0.05;
     this.root.add(ground);
@@ -178,7 +180,7 @@ export class CityManager {
     const g = ch.group;
     const r = this.rand;
     // sidewalk slab + kerb
-    const slab = mesh(rbox(48, 0.3, 48, 0.1, 1), mat(0xd9dde3, { rough: 0.9 }), { x: cx, y: 0.1, z: cz, cast: false, receive: true });
+    const slab = mesh(rbox(48, 0.3, 48, 0.1, 1), slabMaterial(), { x: cx, y: 0.1, z: cz, cast: false, receive: true });
     g.add(slab);
     const inner = (color, size = 42) => {
       const m = mesh(rbox(size, 0.1, size, 0.05, 1), mat(color, { rough: 0.95 }), { x: cx, y: 0.27, z: cz, cast: false, receive: true });
