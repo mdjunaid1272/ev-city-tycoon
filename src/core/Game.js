@@ -151,6 +151,8 @@ export class Game {
       getReputation: () => this.economy.reputation, saved: saved?.employees,
       getCapacity: () => this.station.unlockedCount + (this.wash?.built ? this.wash.unlockedBays : 0) + (this.garage?.built ? this.garage.unlockedBays : 0) + Object.values(this.hubs || {}).reduce((n, h) => n + (h.built ? h.unlockedBays : 0), 0),
     });
+    this.employees.colliders = this.colliders; // staff are solid
+    this.employees.player = this.player.pos;
     this.employees.registerFacility('charging', {
       nav: this.nav, label: 'Charging Station', built: () => true,
       posts: [{ x: -0.8, z: 3.6 }, { x: 0.8, z: 3.6 }, { x: -0.8, z: 2.0 }, { x: 0.8, z: 2.0 }, { x: 0, z: -2.6 }],

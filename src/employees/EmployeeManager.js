@@ -13,6 +13,7 @@
  */
 let seq = 0;
 const rnd = (a, b) => a + Math.random() * (b - a);
+const BODY_R = 0.28; // staff body radius (smaller than the nav grid's 0.5 clearance, so planned paths are never pushed)
 const TASK_DEPT = { attendant: 'charging', washer: 'wash', mechanic: 'garage' };
 
 export class EmployeeManager {
@@ -300,7 +301,8 @@ export class EmployeeManager {
     const step = this.cfg.walkSpeed * speedMult * dt;
     e.yaw = Math.atan2(-dx, -dz);
     e.moving = true;
-    if (d <= step) {
+    // a body that was pushed off its path by a solid object counts as arrived when it is close enough
+    if (d <= step || (e.pushed && d <= 0.45 && e.pi >= e.path.length - 1)) {
       e.pos.x = wp.x; e.pos.z = wp.z; e.pi++;
       return e.pi >= e.path.length;
     }
@@ -314,7 +316,44 @@ export class EmployeeManager {
     for (const e of [...this.employees]) {
       e.moving = false;
       this.step(e, dt);
-      if (e.gone) this.employees.splice(this.employees.indexOf(e), 1);
+      if (e.gone) { this.employees.splice(this.employees.indexOf(e), 1); continue; }
+      this.collide(e);
+    }
+    this.separate();
+  }
+
+  /** Staff are solid: they cannot stand inside buildings, props, chargers, cars or the player. */
+  collide(e) {
+    const c = this.colliders;
+    if (!c) return;
+    const x0 = e.pos.x, z0 = e.pos.z;
+    const p = this.tmp || (this.tmp = { x: 0, z: 0 });
+    p.x = x0; p.z = z0;
+    c.resolveCircle(p, BODY_R);
+    c.resolveVehicles(p, BODY_R);
+    if (this.player && !e.leaving) {
+      const dx = p.x - this.player.x, dz = p.z - this.player.z, d = Math.hypot(dx, dz), m = BODY_R + 0.42;
+      if (d < m && d > 1e-4) { p.x = this.player.x + (dx / d) * m; p.z = this.player.z + (dz / d) * m; }
+    }
+    e.pushed = Math.hypot(p.x - x0, p.z - z0) > 1e-4;
+    if (e.pushed) { c.resolveCircle(p, BODY_R); e.pos.x = p.x; e.pos.z = p.z; }
+  }
+
+  /** Two staff members never overlap: they push each other apart. */
+  separate() {
+    const list = this.employees;
+    for (let i = 0; i < list.length; i++) {
+      for (let j = i + 1; j < list.length; j++) {
+        const a = list[i], b = list[j];
+        const dx = b.pos.x - a.pos.x, dz = b.pos.z - a.pos.z, d2 = dx * dx + dz * dz, m = BODY_R * 2;
+        if (d2 >= m * m) continue;
+        const d = Math.sqrt(d2) || 1e-4, push = (m - d) / 2;
+        const nx = d > 1e-3 ? dx / d : 1, nz = d > 1e-3 ? dz / d : 0;
+        a.pos.x -= nx * push; a.pos.z -= nz * push;
+        b.pos.x += nx * push; b.pos.z += nz * push;
+        if (this.colliders) { this.colliders.resolveCircle(a.pos, BODY_R); this.colliders.resolveCircle(b.pos, BODY_R); }
+        a.pushed = b.pushed = true;
+      }
     }
   }
 
