@@ -71,6 +71,7 @@ export class TutorialManager {
     this.time = 0;
 
     this.buildMarker();
+    this.buildHand();
     this.bindEvents();
     this.layout();
     addEventListener('resize', () => this.layout());
@@ -95,6 +96,68 @@ export class TutorialManager {
     this.marker.add(arrow, this.ring, this.glow);
     this.marker.visible = false;
     this.scene.add(this.marker);
+  }
+
+  // ---------- the pointing hand (shows exactly where to tap / click) ----------
+  buildHand() {
+    const h = document.createElement('div');
+    h.id = 'tut-hand';
+    h.setAttribute('aria-hidden', 'true');
+    h.innerHTML = `<div class="hw"><i class="rp"></i><svg class="hi" viewBox="0 0 64 84" width="60" height="79">
+        <rect x="12" y="34" width="40" height="46" rx="15" fill="#fff" stroke="#2d3b66" stroke-width="3.5"/>
+        <rect x="25" y="3" width="15" height="48" rx="7.5" fill="#fff" stroke="#2d3b66" stroke-width="3.5"/>
+        <path d="M12 54c-6-2-9 4-5 9l7 9" fill="#fff" stroke="#2d3b66" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M25 56v14M34 56v14M43 56v14" stroke="#c9d3e6" stroke-width="3" stroke-linecap="round"/>
+        <rect x="25" y="3" width="15" height="48" rx="7.5" fill="none" stroke="#2d3b66" stroke-width="3.5"/>
+      </svg></div>`;
+    document.body.appendChild(h);
+    this.hand = h;
+  }
+
+  /** What the hand should point at for the current step: {x, y, mode} in screen pixels, or null. */
+  handTarget(s, g) {
+    const rectOf = (el, atBottom) => {
+      const r = el.getBoundingClientRect();
+      if (r.width === 0) return null;
+      const below = r.top + r.height / 2 < innerHeight * 0.55; // upper half: hand sits below pointing up; lower half: above pointing down
+      return { x: r.left + r.width / 2, y: below ? r.bottom - 6 : r.top + 6, rot: below ? 0 : 180, mode: 'tap' };
+    };
+    const ui = g.ui;
+    if (s.id === 'hire' && ui.modal === 'staff') {
+      const b = [...document.querySelectorAll('#modal-card [data-emp-act^="hire"]')].find((x) => !x.disabled);
+      return b ? rectOf(b) : null;
+    }
+    if (ui.modal || ui.confirmOpen) return null; // boards cover the world; the hint panel explains the rest
+    if (s.button) return rectOf(this.$('tut-next'));
+    if (s.glow) { const el = document.querySelector(s.glow); return el ? rectOf(el) : null; }
+    if (s.target) {
+      const t = s.target(g, this.targets);
+      if (!t) return null;
+      const v = new THREE.Vector3(t.x, 1.0, t.z).project(g.sm.camera);
+      if (v.z > 1) return null;
+      const x = (v.x * 0.5 + 0.5) * innerWidth, y = (-v.y * 0.5 + 0.5) * innerHeight;
+      const off = x < 40 || x > innerWidth - 40 || y < 70 || y > innerHeight - 40;
+      // target off screen: park the hand at the screen edge and turn it towards the target
+      const rot = off ? (Math.atan2(x - innerWidth / 2, -(y - innerHeight / 2)) * 180) / Math.PI : y > innerHeight - 160 ? 180 : 0;
+      return { x: THREE.MathUtils.clamp(x, 40, innerWidth - 40), y: THREE.MathUtils.clamp(y, 90, innerHeight - 120), rot, mode: 'tap' };
+    }
+    if (s.id === 'move') {
+      if (document.body.classList.contains('touch')) { const jb = this.$('joy-base').getBoundingClientRect(); return { x: jb.left + jb.width / 2, y: jb.top + jb.height / 2 + 6, rot: 0, mode: 'drag' }; }
+      const v = new THREE.Vector3(g.player.pos.x, 0.3, g.player.pos.z).project(g.sm.camera); // hold and drag from the character
+      return { x: THREE.MathUtils.clamp((v.x * 0.5 + 0.5) * innerWidth + 26, 40, innerWidth - 40), y: THREE.MathUtils.clamp((-v.y * 0.5 + 0.5) * innerHeight + 30, 70, innerHeight - 50), rot: 0, mode: 'drag' };
+    }
+    return null;
+  }
+
+  updateHand(s, g) {
+    const t = this.state === 'active' && !g.paused ? this.handTarget(s, g) : null;
+    const h = this.hand;
+    h.classList.toggle('on', !!t);
+    document.body.classList.toggle('tut-tap', !!t && t.mode === 'tap'); // the hand already says it: hide the text hint
+    if (!t) return;
+    h.style.left = `${t.x}px`; h.style.top = `${t.y}px`;
+    h.style.setProperty('--rot', Math.round(t.rot) + 'deg');
+    h.classList.toggle('drag', t.mode === 'drag');
   }
 
   // ---------- events -> counters ----------
@@ -158,6 +221,8 @@ export class TutorialManager {
 
   clearGuides() {
     this.marker.visible = false;
+    this.hand?.classList.remove('on');
+    document.body.classList.remove('tut-tap');
     if (this.glowEl) { this.glowEl.classList.remove('tut-glow'); this.glowEl = null; }
   }
 
@@ -216,6 +281,7 @@ export class TutorialManager {
       return;
     }
     this.updateGuides(s, g);
+    this.updateHand(s, g);
   }
 
   updateGuides(s, g) {

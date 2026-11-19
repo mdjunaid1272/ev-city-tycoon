@@ -533,3 +533,16 @@ body.tut-on:not(.tut-bottom) #tutorial { top: calc(8px + var(--bar-h) + 8px + 86
 .d-dm.all { background: #d9f7e3; } .d-dm.all b { color: #148041; }
 body.tut-on:not(.tut-bottom) #daily .d-dm { display: none; }
 @media (max-height: 520px) { .d-dm { display: none; } }
+/* ---------- tutorial hand ---------- */
+#tut-hand { position: fixed; left: 0; top: 0; width: 0; height: 0; z-index: 44; pointer-events: none; display: none; }
+#tut-hand.on { display: block; }
+#tut-hand .hw { position: absolute; left: 0; top: 0; transform-origin: 0 0; transform: rotate(var(--rot, 0deg)); }
+#tut-hand .hi { position: absolute; left: -30px; top: -3px; filter: drop-shadow(0 4px 0 rgba(45, 59, 102, .35)); animation: handTap 1.05s ease-in-out infinite; }
+#tut-hand .rp { position: absolute; left: -20px; top: -20px; width: 40px; height: 40px; border: 4px solid var(--yellow); border-radius: 50%; opacity: 0; animation: handRipple 1.05s ease-out infinite; }
+#tut-hand.drag .hi { animation: handDrag 1.8s ease-in-out infinite; }
+#tut-hand.drag .rp { animation: none; opacity: .0; }
+@keyframes handTap { 0%, 100% { transform: translateY(16px) scale(1); } 45% { transform: translateY(2px) scale(.93); } 55% { transform: translateY(2px) scale(.93); } }
+@keyframes handRipple { 0%, 40% { transform: scale(.3); opacity: 0; } 50% { opacity: .95; } 100% { transform: scale(1.5); opacity: 0; } }
+@keyframes handDrag { 0%, 100% { transform: translate(-22px, 12px); } 50% { transform: translate(34px, -12px); } }
+@media (prefers-reduced-motion: reduce) { #tut-hand .hi, #tut-hand .rp { animation: none; } }
+body.tut-tap #tut-hint { display: none; }
