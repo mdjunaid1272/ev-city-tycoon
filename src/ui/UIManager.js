@@ -45,6 +45,8 @@ export class UIManager {
 
   /** Remove every listener and timer this UI created (the UI can be torn down and rebuilt without leaks). */
   dispose() {
+    if (this._disposed) return;
+    this._disposed = true;
     for (const off of this._offs) off();
     this._offs.length = 0;
     for (const [t, type, fn, opts] of this._listeners) t.removeEventListener(type, fn, opts);
@@ -72,7 +74,7 @@ export class UIManager {
     document.querySelectorAll('[data-more]').forEach((b) => (b.onclick = () => this.moreAction(b.dataset.more)));
     this.listen(window, 'pointerdown', (e) => { if (this.moreOpen && !e.target.closest('#more-menu, #btn-more')) this.closeMore(); }, true);
     const card0 = $('modal-card');
-    card0.addEventListener('pointerdown', () => { this._ptrDown = true; });
+    this.listen(card0, 'pointerdown', () => { this._ptrDown = true; });
     const release = () => { if (!this._ptrDown) return; this._ptrDown = false; setTimeout(() => { if (this._dirty && !this._ptrDown) { this._dirty = false; this.renderModal(); } }, 80); };
     this.listen(window, 'pointerup', release, true); this.listen(window, 'pointercancel', release, true);
     this.listen(window, 'keydown', (e) => this.trapTab(e), true);
@@ -88,7 +90,7 @@ export class UIManager {
     $('btn-interact').onclick = () => this.game.interaction.interact();
     const sp = $('btn-sprint');
     sp.onclick = () => { this.game.input.sprintToggle = !this.game.input.sprintToggle; sp.classList.toggle('on', this.game.input.sprintToggle); };
-    $('modal').addEventListener('pointerdown', (e) => { if (e.target === $('modal') && !['pause', 'offline', 'login'].includes(this.modal)) this.closeModal(); });
+    this.listen($('modal'), 'pointerdown', (e) => { if (e.target === $('modal') && !['pause', 'offline', 'login'].includes(this.modal)) this.closeModal(); });
   }
 
   bindEvents() {

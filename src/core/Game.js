@@ -293,9 +293,30 @@ export class Game {
     this.autosave = 0;
     this.fps = { n: 0, t: 0, v: 0 };
     this.sm.renderer.setAnimationLoop(() => this.frame());
-    addEventListener('visibilitychange', () => { if (document.hidden) this.save(); });
-    addEventListener('beforeunload', () => this.save());
+    this.onHide = () => { if (document.hidden) this.save(); };
+    this.onUnload = () => this.save();
+    addEventListener('visibilitychange', this.onHide);
+    addEventListener('beforeunload', this.onUnload);
     window.__game = this; // debugging / automated tests
+  }
+
+  /**
+   * Tear the whole game down: stop the loop, remove every global listener, unsubscribe every EventBus handler,
+   * close the UI and the tutorial. Safe to call more than once.
+   */
+  dispose() {
+    if (this.disposed) return;
+    this.disposed = true;
+    this.sm?.renderer?.setAnimationLoop(null);
+    removeEventListener('visibilitychange', this.onHide);
+    removeEventListener('beforeunload', this.onUnload);
+    this.tutorial?.dispose();
+    this.ui?.dispose();
+    this.input?.dispose();
+    this.ads?.dispose();
+    this.sm?.dispose();
+    this.bus.clear();
+    if (window.__game === this) delete window.__game;
   }
 
   addPropertyTargets() {

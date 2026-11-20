@@ -5,8 +5,11 @@
  *   input:click {x,y}                input:key code
  * Polled state: move (x,y in -1..1), sprint.
  */
+import { Disposables } from './Disposables.js';
+
 export class Input {
   constructor(bus, canvas) {
+    this.d = new Disposables(); // every listener below is removed again by dispose()
     this.bus = bus;
     this.canvas = canvas;
     this.keys = new Set();
@@ -17,19 +20,27 @@ export class Input {
     this.pointers = new Map();
     this.pinch = null;
 
-    addEventListener('keydown', (e) => this.onKey(e, true));
-    addEventListener('keyup', (e) => this.onKey(e, false));
-    addEventListener('blur', () => this.keys.clear());
-    canvas.addEventListener('contextmenu', (e) => e.preventDefault());
-    canvas.addEventListener('wheel', (e) => {
+    const d = this.d;
+    d.listen(window, 'keydown', (e) => this.onKey(e, true));
+    d.listen(window, 'keyup', (e) => this.onKey(e, false));
+    d.listen(window, 'blur', () => this.keys.clear());
+    d.listen(canvas, 'contextmenu', (e) => e.preventDefault());
+    d.listen(canvas, 'wheel', (e) => {
       e.preventDefault();
       bus.emit('input:zoom', Math.sign(e.deltaY) * Math.min(Math.abs(e.deltaY), 120) / 120);
     }, { passive: false });
-    canvas.addEventListener('pointerdown', (e) => this.onDown(e));
-    canvas.addEventListener('pointermove', (e) => this.onMove(e));
-    canvas.addEventListener('pointerup', (e) => this.onUp(e));
-    canvas.addEventListener('pointercancel', (e) => this.onUp(e, true));
+    d.listen(canvas, 'pointerdown', (e) => this.onDown(e));
+    d.listen(canvas, 'pointermove', (e) => this.onMove(e));
+    d.listen(canvas, 'pointerup', (e) => this.onUp(e));
+    d.listen(canvas, 'pointercancel', (e) => this.onUp(e, true));
     this.setupJoystick();
+  }
+
+  /** Remove every listener; safe to call more than once. */
+  dispose() {
+    this.d.dispose();
+    this.keys.clear(); this.pointers.clear();
+    this.move.x = this.move.y = this.joy.x = this.joy.y = 0;
   }
 
   onKey(e, down) {
@@ -125,7 +136,7 @@ export class Input {
       this.joy.x = x; this.joy.y = y;
       knob.style.transform = `translate(${x * R}px, ${-y * R}px)`;
     };
-    zone.addEventListener('pointerdown', (e) => {
+    this.d.listen(zone, 'pointerdown', (e) => {
       if (id !== null) return;
       id = e.pointerId;
       zone.setPointerCapture(id);
@@ -137,7 +148,7 @@ export class Input {
       base.classList.add('active');
       zone.dispatchEvent(new PointerEvent('pointermove', e));
     });
-    zone.addEventListener('pointermove', (e) => {
+    this.d.listen(zone, 'pointermove', (e) => {
       if (e.pointerId !== id) return;
       let dx = (e.clientX - cx) / R, dy = -(e.clientY - cy) / R;
       const l = Math.hypot(dx, dy);
@@ -150,7 +161,7 @@ export class Input {
       set(0, 0);
       base.classList.remove('active');
     };
-    zone.addEventListener('pointerup', end);
-    zone.addEventListener('pointercancel', end);
+    this.d.listen(zone, 'pointerup', end);
+    this.d.listen(zone, 'pointercancel', end);
   }
 }

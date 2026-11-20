@@ -29,7 +29,17 @@ export class SceneManager {
 
     this.applyQuality();
     this.resize();
-    addEventListener('resize', () => this.resize());
+    this.onResize = () => this.resize();
+    addEventListener('resize', this.onResize);
+  }
+
+  /** Stop reacting to window changes and release GPU resources. Safe to call twice. */
+  dispose() {
+    if (this.disposed) return;
+    this.disposed = true;
+    removeEventListener('resize', this.onResize);
+    this.renderer.setAnimationLoop?.(null);
+    this.renderer.dispose();
   }
 
   applyQuality() {

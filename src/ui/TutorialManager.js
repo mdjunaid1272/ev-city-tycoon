@@ -52,6 +52,7 @@ hint: 'Stand still at the bay: the car connects by itself', hintTouch: 'Walk to 
 ];
 
 const SKY = 0x5cc8ff;
+const STOP_EVENTS = ['pointerdown', 'pointerup', 'touchstart', 'mousedown', 'click']; // clicks on the tutorial panel never reach the 3D scene
 
 export class TutorialManager {
   constructor({ game, bus, scene, saved = null, isNew = false }) {
@@ -84,8 +85,11 @@ export class TutorialManager {
 
   /** Remove every listener, DOM node and world object this tutorial created. */
   dispose() {
+    if (this._disposed) return;
+    this._disposed = true;
     removeEventListener('resize', this.onResize);
     removeEventListener('pointerdown', this.onTouch);
+    for (const ev of STOP_EVENTS) this.el?.removeEventListener(ev, this._stop);
     for (const off of this._offs || []) off();
     this._offs = [];
     this.clearGuides();
@@ -180,7 +184,8 @@ export class TutorialManager {
     this.onTouch = (e) => { if (e.pointerType === 'touch' && !this.touch) { this.touch = true; this.render(); } };
     addEventListener('pointerdown', this.onTouch, { passive: true });
     const stop = (e) => e.stopPropagation();
-    for (const ev of ['pointerdown', 'pointerup', 'touchstart', 'mousedown', 'click']) this.el.addEventListener(ev, stop);
+    this._stop = stop;
+    for (const ev of STOP_EVENTS) this.el.addEventListener(ev, stop);
     this.$('tut-next').onclick = (e) => { e.currentTarget.blur(); this.finish(); };
     this.$('tut-skip').onclick = (e) => { e.currentTarget.blur(); this.skip(); };
   }

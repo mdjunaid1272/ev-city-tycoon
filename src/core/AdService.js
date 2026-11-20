@@ -8,6 +8,14 @@ export class AdService {
     this.removeAds = false; // set by the "remove ads" purchase (Milestone 8)
     this.provider = null;
     this.shown = 0;
+    this.timers = new Set();
+  }
+
+  /** Close a running demo ad and stop its timers. Safe to call twice. */
+  dispose() {
+    for (const t of this.timers) clearInterval(t);
+    this.timers.clear();
+    document.getElementById('ad-overlay')?.remove();
   }
 
   /** placement: 'offline-2x' | 'daily-2x' | 'upgrade-speedup' ... Resolves true if the reward should be granted. */
@@ -23,9 +31,10 @@ export class AdService {
       const t = setInterval(() => {
         n--;
         el.querySelector('#ad-count').textContent = n > 0 ? `Ad ends in ${n}…` : 'Thanks for watching!';
-        if (n <= 0) { clearInterval(t); el.querySelector('#ad-close').disabled = false; }
+        if (n <= 0) { clearInterval(t); this.timers.delete(t); el.querySelector('#ad-close').disabled = false; }
       }, 1000);
-      const done = (ok) => { clearInterval(t); el.remove(); if (ok) this.shown++; resolve(ok); };
+      this.timers.add(t);
+      const done = (ok) => { clearInterval(t); this.timers.delete(t); el.remove(); if (ok) this.shown++; resolve(ok); };
       el.querySelector('#ad-close').onclick = () => done(true);
       el.querySelector('#ad-skip').onclick = () => done(false);
     });

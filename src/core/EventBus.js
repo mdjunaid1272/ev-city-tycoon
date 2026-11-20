@@ -20,6 +20,17 @@ export class EventBus {
     const set = this.map.get(evt);
     if (set) set.delete(fn);
   }
+  /** Number of handlers for one event (or for all events). Used by teardown checks. */
+  count(evt = null) {
+    if (evt) return this.map.get(evt)?.size || 0;
+    let n = 0;
+    for (const s of this.map.values()) n += s.size;
+    return n;
+  }
+  /** Remove every subscription (whole-game teardown). */
+  clear() {
+    this.map.clear();
+  }
   emit(evt, payload) {
     const set = this.map.get(evt);
     if (!set) return;
