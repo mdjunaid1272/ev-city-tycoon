@@ -608,3 +608,19 @@ button:focus-visible, [role="button"]:focus-visible, .btn:focus-visible, .ibtn:f
 
 /* five breakdown items: the odd one out spans the full width */
 .d-detail span:last-child:nth-child(odd) { grid-column: 1 / -1; }
+
+/* floating world buttons (terminal, cafe): comfortable touch targets */
+@media (pointer: coarse), (max-width: 760px) {
+  #term-open, #cafe-open { min-height: 44px; padding: 10px 18px; }
+}
+
+/* price steppers (- / +): touch-sized */
+@media (pointer: coarse), (max-width: 760px) {
+  .stepper button { min-width: 44px; min-height: 44px; }
+}
+
+/* small +/- buttons inside rows: 34px on desktop, a full touch target on phones */
+.btn.mini { min-width: 34px; width: auto; }
+@media (pointer: coarse), (max-width: 760px) {
+  .btn.mini { min-width: 44px; }
+}

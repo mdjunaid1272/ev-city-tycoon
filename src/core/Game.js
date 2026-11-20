@@ -164,7 +164,7 @@ export class Game {
     // the cafe: a business inside the station lot (opens with the Coffee Shop upgrade); baristas are a normal employee department
     this.cafe = new Cafe({ bus: this.bus, economy: this.economy, cfg: cafeCfg, hub: this.hub, tasks: this.tasks, getHour: () => this.day?.hour ?? 12, getReputation: () => this.economy.reputation, getStage: () => this.progression.stage, saved: saved?.cafe });
     this.cafe.hubCashierBoost = () => (this.employees.satisfactionBonus > 0 ? 1.25 : 1);
-    this.cafeView = new CafeView({ scene: this.sm.scene, assets: this.assets, colliders: this.colliders, nav: this.nav, bus: this.bus, cafe: this.cafe, employees: this.employees });
+    this.cafeView = new CafeView({ scene: this.sm.scene, assets: this.assets, colliders: this.colliders, nav: this.nav, bus: this.bus, cafe: this.cafe, employees: this.employees, settings: this.settings });
     this.employees.registerFacility('cafe', {
       nav: this.nav, label: 'Caf\u00e9', built: () => this.cafe.built, posts: CAFE_LAYOUT.stand,
       door: { x: CAFE_LAYOUT.entry.x, z: CAFE_LAYOUT.entry.z }, breakSpot: { x: 21.5, z: -5.2 },

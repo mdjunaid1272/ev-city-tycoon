@@ -183,3 +183,8 @@ kbd, #prompt kbd { background: linear-gradient(180deg, #ffe27a, var(--yellow)); 
   #modal-card, #confirm-card { animation: none; }
   .btn, .ibtn, .sc, .tab, .act { transition: none; }
 }
+
+/* phones: the board padding is 14px, so the title ribbon bleeds out by exactly that much */
+@media (max-width: 760px) {
+  #modal-card > h2 { margin-left: -14px; margin-right: -14px; }
+}

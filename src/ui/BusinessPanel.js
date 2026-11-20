@@ -135,7 +135,7 @@ export const BusinessPanel = {
       const ok = w.availablePackages().includes(k);
       const price = w.packagePrice(k);
       return `<div class="bay ${ok ? '' : 'locked'}"><span class="n" style="width:30px">${p.icon}</span><span class="st"><b>${esc(p.label)}</b><br>${p.seconds}s · cleans ${Math.round(p.clean * 100)}%${ok ? '' : ' · 🔒 needs better equipment'}</span>
-        ${ok ? `<button class="btn ghost" style="min-width:34px" data-svc="wash:price:${k}:-">−</button><b style="min-width:54px;text-align:center">${money(price, 2)}</b><button class="btn ghost" style="min-width:34px" data-svc="wash:price:${k}:+">+</button>` : ''}</div>`;
+        ${ok ? `<button class="btn ghost mini" data-svc="wash:price:${k}:-">−</button><b style="min-width:54px;text-align:center">${money(price, 2)}</b><button class="btn ghost mini" data-svc="wash:price:${k}:+">+</button>` : ''}</div>`;
     }).join('');
     const ne = w.nextEquipment();
     const washers = m.employees.filter((e) => e.role === 'washer' && !e.leaving).length;
