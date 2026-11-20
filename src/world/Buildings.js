@@ -27,6 +27,7 @@ export const shade = (hex, f) => _c.set(hex).lerp(f >= 0 ? _w.set(0xffffff) : _k
 export class Kit {
   constructor() { this.parts = []; }
   add(geo, color) {
+    if (geo.index) geo = geo.toNonIndexed(); // merged parts must all share one indexing mode
     const c = new THREE.Color(color), n = geo.attributes.position.count, a = new Float32Array(n * 3);
     for (let i = 0; i < n; i++) { a[i * 3] = c.r; a[i * 3 + 1] = c.g; a[i * 3 + 2] = c.b; }
     geo.setAttribute('color', new THREE.BufferAttribute(a, 3));
@@ -177,6 +178,35 @@ export function createPremiumBuilding(w, h, d, color, { style = 'office', seed =
     for (let k = 0; k < 3; k++) kit.box(-hw * 0.5 + k * hw * 0.5, 2, hd + 0.1, 3.2, 4, 0.2, 0x59616c);
   }
 
+  // --- EV-business identities: lit sign band under the cornice plus a rooftop icon visible from the management camera
+  if (style === 'ev' || style === 'wash' || style === 'garage' || style === 'cafe') {
+    for (const [s, zf] of facesZ) glass.box(0, h - 0.95, zf + s * 0.07, w * 0.8, 0.22, 0.05);
+    const top = h + 0.9;
+    if (style === 'ev') {
+      const bolt = new THREE.Shape();
+      bolt.moveTo(0.3, 1.6); bolt.lineTo(-0.7, -0.1); bolt.lineTo(-0.05, -0.1); bolt.lineTo(-0.3, -1.6); bolt.lineTo(0.7, 0.15); bolt.lineTo(0.05, 0.15); bolt.closePath();
+      const bg = new THREE.ExtrudeGeometry(bolt, { depth: 0.35, bevelEnabled: false }); bg.scale(1.1, 1.1, 1); bg.translate(0, top + 2.2, -0.15); kit.add(bg, 0xffd23f);
+      const disc = new THREE.CylinderGeometry(2.2, 2.2, 0.25, 24); disc.rotateX(Math.PI / 2); disc.translate(0, top + 2.2, -0.35); kit.add(disc, 0x17a35a);
+      kit.cyl(0, top + 0.5, -0.3, 0.2, 1.0, 0x59616c, 6);
+    } else if (style === 'wash') {
+      [[-hw * 0.55, 0.9, 0xffffff], [-hw * 0.3, 0.6, 0x9fe6ff], [hw * 0.1, 1.1, 0xffffff], [hw * 0.45, 0.7, 0x9fe6ff], [hw * 0.7, 0.5, 0xffffff]].forEach(([bx, rad, col], i) => {
+        const sp = new THREE.SphereGeometry(rad, 12, 10); sp.translate(bx, top + rad + (i % 2) * 0.9, -0.3); kit.add(sp, col);
+      });
+      for (const sx of [-1, 1]) { kit.cyl(sx * (hw - 0.6), 1.7, hd + 0.9, 0.38, 3.2, sx > 0 ? 0xff7a59 : 0x2f8cff, 10); kit.cyl(sx * (hw - 0.6), 3.4, hd + 0.9, 0.5, 0.25, 0xffffff, 10); }
+    } else if (style === 'garage') {
+      for (const sx of [-1, 1]) {
+        kit.box(sx * w * 0.27, 1.6, hd + 0.14, w * 0.2, 3.1, 0.18, 0x59616c);
+        for (let k = 0; k < 5; k++) kit.box(sx * w * 0.27, 0.5 + k * 0.6, hd + 0.25, w * 0.2 - 0.1, 0.08, 0.06, 0x8b929c);
+      }
+      const gear = new THREE.CylinderGeometry(1.2, 1.2, 0.35, 16); gear.rotateX(Math.PI / 2); gear.translate(0, top + 1.8, -0.2); kit.add(gear, 0xf4f7fa);
+      for (let k = 0; k < 8; k++) { const a = (k / 8) * 6.283; kit.box(Math.cos(a) * 1.4, top + 1.8 + Math.sin(a) * 1.4, -0.2, 0.5, 0.5, 0.35, 0xf4f7fa); }
+      kit.cyl(0, top + 1.8, -0.2, 0.45, 0.4, 0x2b3340, 10);
+    } else {
+      kit.cyl(0, top + 1.0, -0.3, 1.5, 0.15, 0xf4f7fa, 18); kit.cyl(0, top + 1.9, -0.3, 1.0, 1.6, 0xffffff, 18);
+      const handle = new THREE.TorusGeometry(0.5, 0.12, 8, 14); handle.translate(1.15, top + 1.9, -0.3); kit.add(handle, 0x8a5a35);
+      for (const [sx, sy] of [[-0.3, 3.2], [0.25, 3.8], [-0.1, 4.4]]) { const st = new THREE.SphereGeometry(0.22, 8, 6); st.translate(sx, top + sy, -0.3); kit.add(st, 0xf1f3f5); }
+    }
+  }
   g.add(kit.build(detailMaterial()));
   const gm = glass.build(glassMaterial());
   if (gm) { gm.castShadow = false; g.add(gm); }

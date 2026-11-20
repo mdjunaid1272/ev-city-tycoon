@@ -146,7 +146,7 @@ export class StationView {
     this.solar.visible = false;
     r.add(this.solar);
     // shop kiosk + terminal
-    const shop = createBuilding(12, 4.6, 8, 0x1f8a4c, { roofColor: 0xf4f7fa, awning: 0xffc43d, sign: { text: 'EV STOP', bg: '#ffffff', fg: '#1f8a4c' } });
+    const shop = createBuilding(12, 4.6, 8, 0x1f8a4c, { roofColor: 0xf4f7fa, awning: 0xffc43d, sign: { text: 'EV STOP', bg: '#ffffff', fg: '#1f8a4c' }, style: 'ev', seed: 2 });
     shop.position.set(-14, 0.34, -17);
     r.add(shop);
     this.colliders.add(-14, -17, 12.3, 8.3, 5);

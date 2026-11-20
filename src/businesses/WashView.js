@@ -14,7 +14,7 @@ export class WashView extends ServiceLotView {
   }
 
   buildBuilding() {
-    const b = createBuilding(22, 4.6, 6, 0x4cc9f0, { roofColor: 0xffffff, awning: 0xffc43d, sign: { text: 'CAR WASH', bg: '#2f8cff', fg: '#ffffff' } });
+    const b = createBuilding(22, 4.6, 6, 0x4cc9f0, { roofColor: 0xffffff, awning: 0xffc43d, sign: { text: 'CAR WASH', bg: '#2f8cff', fg: '#ffffff' }, style: 'wash', seed: 7 });
     b.position.set(-8, FLOOR, -21);
     this.stage.add(b);
     this.makeBuildingSelectable(b);

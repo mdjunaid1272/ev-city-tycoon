@@ -67,7 +67,7 @@ export class CafeView {
   // ---------- static structure ----------
   buildStructure() {
     const r = this.root, L = CAFE_LAYOUT, b = L.building;
-    this.building = createBuilding(b.w, 3.8, b.d, 0xb8793e, { roofColor: 0xf4f7fa, awning: 0xffc43d, sign: { text: 'CAFE', bg: '#5a3a22', fg: '#ffffff' } });
+    this.building = createBuilding(b.w, 3.8, b.d, 0xb8793e, { roofColor: 0xf4f7fa, awning: 0xffc43d, sign: { text: 'CAFE', bg: '#5a3a22', fg: '#ffffff' }, style: 'cafe', seed: 3 });
     this.building.position.set(b.x, FLOOR, b.z);
     this.building.userData.select = () => cafeBuildingInfo(this);
     this.building.userData.focus = new THREE.Vector3(b.x, 0, b.z);

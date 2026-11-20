@@ -13,7 +13,7 @@ export class HubView extends ServiceLotView {
 
   buildBuilding() {
     const h = this.biz.hub;
-    const b = createBuilding(22, 4.6, 6, h.building, { roofColor: 0xffffff, awning: 0xffc43d, sign: { text: h.sign, bg: '#1f2a37', fg: '#ffffff' } });
+    const b = createBuilding(22, 4.6, 6, h.building, { roofColor: 0xffffff, awning: 0xffc43d, sign: { text: h.sign, bg: '#1f2a37', fg: '#ffffff' }, style: 'shop', seed: 6 });
     b.position.set(-8, FLOOR, -21);
     this.stage.add(b);
     this.makeBuildingSelectable(b);
