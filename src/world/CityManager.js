@@ -3,6 +3,7 @@ import { mat, rbox, mesh, nightMaterials, textTexture } from './Materials.js';
 import { createBuilding, createHouse, createCar } from './Models.js';
 import { districtOfBlock } from './DistrictManager.js';
 import { groundMaterial, slabMaterial, buildExtras } from './CityExtras.js';
+import { buildRoadArt } from './RoadArt.js';
 
 export const ROAD_W = 12;
 export const LINES = [-90, -30, 30, 90];
@@ -112,33 +113,8 @@ export class CityManager {
   }
 
   buildRoads() {
-    const roadMat = mat(0x3a404c, { rough: 0.95 });
-    const L = ROAD_EXTENT * 2;
-    for (const l of LINES) {
-      const h = mesh(new THREE.PlaneGeometry(L, ROAD_W), roadMat, { cast: false, receive: true });
-      h.rotation.x = -Math.PI / 2; h.position.set(0, 0.03, l);
-      const v = mesh(new THREE.PlaneGeometry(ROAD_W, L), roadMat, { cast: false, receive: true });
-      v.rotation.x = -Math.PI / 2; v.position.set(l, 0.03, 0);
-      this.root.add(h, v);
-    }
-    // lane dashes + crosswalks (instanced)
-    const dashGeo = new THREE.BoxGeometry(2.2, 0.02, 0.25);
-    const dashPos = [];
-    for (const l of LINES) {
-      for (let t = -ROAD_EXTENT + 3; t < ROAD_EXTENT; t += 5) {
-        if (LINES.some((o) => Math.abs(t - o) < ROAD_W / 2 + 4)) continue;
-        dashPos.push([t, l, 0]);
-        dashPos.push([l, t, Math.PI / 2]);
-      }
-    }
-    const dashes = new THREE.InstancedMesh(dashGeo, mat(0xf2d64b), dashPos.length);
+    this.roadArt = buildRoadArt({ root: this.root, lines: LINES, extent: ROAD_EXTENT, roadW: ROAD_W, blockCenters: BLOCK_CENTERS, quality: this.settings?.quality });
     const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3(1, 1, 1);
-    dashPos.forEach(([x, z, r], i) => {
-      q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), r);
-      dashes.setMatrixAt(i, m4.compose(new THREE.Vector3(x, 0.05, z), q, s));
-    });
-    dashes.receiveShadow = true;
-    this.root.add(dashes);
 
     const stripes = [];
     for (const lx of LINES) {
