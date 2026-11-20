@@ -319,3 +319,60 @@ describe('tutorial: persistence across save and load', () => {
     }
   });
 });
+
+describe('tutorial: polish (live progress, stuck nudge, safe skip)', () => {
+  it('shows live walking progress in the objective', () => {
+    const { t, game } = setup();
+    expect(document.getElementById('tut-obj').textContent).toBe('Walk 10 metres · 0/10 m');
+    walk(t, game, 4.5);
+    expect(document.getElementById('tut-obj').textContent).toMatch(/Walk 10 metres · [3-5]\/10 m/);
+    t.dispose();
+  });
+
+  it('says a customer is on the way while no bay is waiting', () => {
+    const { t, game } = setup();
+    t.begin(1, false);
+    expect(document.getElementById('tut-obj').textContent).toMatch(/customer is on the way/);
+    game.station.bays[0].state = 'waiting';
+    t.update(0.05);
+    expect(document.getElementById('tut-obj').textContent).toBe('Connect a car');
+    t.dispose();
+  });
+
+  it('the Staff step adapts its hint to whether a board is open', () => {
+    const { t, game } = setup();
+    t.begin(4, false);
+    expect(document.getElementById('tut-hint').textContent).toMatch(/bottom bar, then hire/);
+    game.ui.modal = 'station';
+    t.update(0.05);
+    expect(document.getElementById('tut-hint').textContent).toMatch(/Close this board/);
+    t.dispose();
+  });
+
+  it('after 30 s on one step the panel nudges and the hint says "Stuck?"; paused time does not count', () => {
+    const { t, game } = setup();
+    for (let i = 0; i < 20; i++) t.update(1);
+    expect(t.el.classList.contains('nudge')).toBe(false);
+    game.paused = true; for (let i = 0; i < 60; i++) t.update(1); game.paused = false;
+    expect(t.el.classList.contains('nudge')).toBe(false);
+    for (let i = 0; i < 12; i++) t.update(1);
+    expect(t.el.classList.contains('nudge')).toBe(true);
+    expect(document.getElementById('tut-hint').textContent).toMatch(/^Stuck\?/);
+    t.begin(0, false);
+    expect(t.el.classList.contains('nudge')).toBe(false);
+    t.dispose();
+  });
+
+  it('the Skip button needs a second tap within 3 s; programmatic skip() stays immediate', () => {
+    const { t } = setup();
+    const btn = document.getElementById('tut-skip');
+    btn.click();
+    expect(t.done).toBe(false);
+    expect(btn.textContent).toBe('Tap again to skip');
+    for (let i = 0; i < 4; i++) t.update(1); // the arming expires
+    expect(btn.textContent).toBe('Skip');
+    btn.click(); expect(t.done).toBe(false);
+    btn.click(); expect(t.done).toBe(true);
+    t.dispose();
+  });
+});

@@ -238,4 +238,6 @@ body.tut-on:not(.tut-bottom) #mission { display: none; }
 body.tut-bottom #tutorial { top: auto; bottom: calc(232px + var(--safe-b)); left: calc(10px + var(--safe-l)); right: calc(100px + var(--safe-r)); width: auto; max-width: 420px; }
 body.tut-bottom #tut-hint { display: none; }
 @media (max-height: 520px) { body.tut-bottom #tutorial { bottom: calc(86px + var(--safe-b)); left: calc(180px + var(--safe-l)); right: calc(100px + var(--safe-r)); } .tut-text { display: none; } }
-@media (prefers-reduced-motion: reduce) { #tutorial, .tut-goal.ok .tut-check, .tut-glow { animation: none; } }
+#tutorial.nudge { animation: tutNudge 1.6s ease-in-out infinite; }
+@keyframes tutNudge { 0%, 100% { transform: none; } 50% { transform: translateY(-3px); box-shadow: 0 0 0 3px rgba(92, 200, 255, .55), var(--shadow); } }
+@media (prefers-reduced-motion: reduce) { #tutorial.nudge, #tutorial, .tut-goal.ok .tut-check, .tut-glow { animation: none; } }

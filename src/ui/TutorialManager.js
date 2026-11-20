@@ -13,11 +13,13 @@ const STEPS = [
   {
     id: 'move', title: 'Get moving', text: 'Walk around your new charging station.', goal: 'Walk 10 metres', ok: 'Nice walking!',
     hint: 'WASD / arrow keys · hold Shift to sprint · or hold the mouse button and drag', hintTouch: 'Use the joystick: press and drag in the bottom-left corner to walk',
+    progress: (g, n) => `${Math.min(10, Math.floor(n.walked))}/10 m`,
     done: (g, n) => n.walked >= 10,
   },
   {
     id: 'connect', title: 'First customer', text: 'A car is pulling in. Stand beside its glowing charger.', goal: 'Connect a car', ok: 'Charging started!',
 hint: 'Stand still at the bay: the car connects by itself', hintTouch: 'Walk to the bay with the joystick and stand still: the car connects by itself',
+    progress: (g, n, t) => (t.bay(['waiting', 'charging']) || t.anyBay(['charging', 'done']) ? '' : 'a customer is on the way…'),
     target: (g, t) => t.bay(['waiting', 'charging']), done: (g, n, t) => n.charge > 0 || t.anyBay(['charging', 'done']) || (g.stats?.total?.served ?? 0) > (n.servedAtStart ?? Infinity),
   },
   {
@@ -32,7 +34,8 @@ hint: 'Stand still at the bay: the car connects by itself', hintTouch: 'Walk to 
   },
   {
     id: 'hire', title: 'Hire help', text: 'Attendants connect and bill cars for you, even while you are away.', goal: 'Open Staff and hire an attendant', ok: 'Welcome aboard!',
-    hint: 'Close this window, then tap Staff 👥', hintTouch: 'Tap Staff 👥, then hire',
+    hint: (g) => (g.ui.modal ? 'Close this board, then tap Staff 👥 in the bottom bar' : 'Tap Staff 👥 in the bottom bar, then hire an attendant'),
+    hintTouch: (g) => (g.ui.modal ? 'Close this board, then tap Staff 👥' : 'Tap Staff 👥, then hire an attendant'),
     glow: '.sc[data-open="staff"]', done: (g, n) => n.hired > 0 || g.employees.employees.length > 0,
   },
   {
@@ -70,6 +73,8 @@ export class TutorialManager {
     this.glowEl = null;
     this.lastPos = null;
     this.time = 0;
+    this.stepTime = 0; // seconds spent on the current step (paused time does not count)
+    this.skipArmed = 0;
 
     this.buildMarker();
     this.buildHand();
@@ -187,7 +192,13 @@ export class TutorialManager {
     this._stop = stop;
     for (const ev of STOP_EVENTS) this.el.addEventListener(ev, stop);
     this.$('tut-next').onclick = (e) => { e.currentTarget.blur(); this.finish(); };
-    this.$('tut-skip').onclick = (e) => { e.currentTarget.blur(); this.skip(); };
+    // a stray tap must not throw the whole tutorial away: the first tap arms the button, a second one within 3 s skips
+    this.$('tut-skip').onclick = (e) => {
+      e.currentTarget.blur();
+      if (this.skipArmed > 0) return this.skip();
+      this.skipArmed = 3;
+      this.$('tut-skip').textContent = 'Tap again to skip';
+    };
   }
 
   // ---------- helpers for step targets ----------
@@ -215,6 +226,8 @@ export class TutorialManager {
     // saved counters (only finite numbers are trusted; older saves have none)
     if (restore?.n && typeof restore.n === 'object') for (const [k, v] of Object.entries(restore.n)) if (Number.isFinite(v) && v >= 0) this.n[k] = v;
     this.lastPos = null;
+    this.stepTime = 0;
+    this.skipArmed = 0;
     this.state = restore?.state === 'ok' ? 'ok' : 'active';
     this.okTimer = this.state === 'ok' ? Math.min(1.1, Math.max(0, Number.isFinite(restore.okTimer) ? restore.okTimer : 0.5)) : 0;
     this.done = false;
@@ -274,12 +287,19 @@ export class TutorialManager {
     this.$('tut-text').textContent = s.text;
     this.$('tut-check').textContent = ok || s.button ? '✓' : '';
     this.$('tut-goal').classList.toggle('ok', ok || !!s.button);
-    this.$('tut-obj').textContent = ok ? s.ok : s.goal;
+    const prog = !ok && s.progress ? s.progress(this.g, this.n, this.targets) : '';
+    this.$('tut-obj').textContent = ok ? s.ok : prog ? `${s.goal} · ${prog}` : s.goal;
     const btn = this.$('tut-next');
     btn.classList.toggle('hidden', !s.button);
     if (s.button) btn.textContent = s.button;
     this.$('tut-skip').classList.toggle('hidden', !!s.button);
-    const hint = this.touch ? s.hintTouch : s.hint;
+    if (this.skipArmed <= 0) this.$('tut-skip').textContent = 'Skip';
+    const raw = this.touch ? s.hintTouch : s.hint;
+    let hint = typeof raw === 'function' ? raw(this.g) : raw;
+    const stuck = this.state === 'active' && this.stepTime > 30 && !s.button;
+    this.el.classList.toggle('nudge', stuck); // a gentle pulse when the player has been on one step for a while
+    if (stuck && hint) hint = `Stuck? ${hint}`;
+    this._dyn = `${prog}|${hint}`;
     this.hintEl.textContent = hint || '';
     this.hintEl.classList.toggle('hidden', !hint || ok);
   }
@@ -291,6 +311,7 @@ export class TutorialManager {
     // paused (menu, pause screen, confirm dialog): nothing advances, no timer runs, walking progress is not measured
     if (g.paused || g.ui?.confirmOpen) { this.lastPos = null; this.hand?.classList.remove('on'); return; }
     this.time += dt;
+    if (this.skipArmed > 0) { this.skipArmed -= dt; if (this.skipArmed <= 0) this.render(); }
     if (this.state === 'ok') {
       this.okTimer -= dt;
       if (this.okTimer <= 0) this.advance();
@@ -310,8 +331,16 @@ export class TutorialManager {
       this.save(); // the success moment is part of the saved state
       return;
     }
+    this.stepTime += dt;
     this.updateGuides(s, g);
     this.updateHand(s, g);
+    // live text (distance walked, waiting-for-customer, context hints) re-renders only when it actually changes
+    const prog = s.progress ? s.progress(g, this.n, this.targets) : '';
+    const raw = this.touch ? s.hintTouch : s.hint;
+    const base = typeof raw === 'function' ? raw(g) : raw;
+    const stuck = this.stepTime > 30 && !s.button;
+    const key = `${prog}|${stuck && base ? `Stuck? ${base}` : base}`;
+    if (key !== this._dyn || stuck !== this.el.classList.contains('nudge')) this.render();
   }
 
   updateGuides(s, g) {
