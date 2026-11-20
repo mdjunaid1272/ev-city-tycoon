@@ -4,6 +4,7 @@ import { createBuilding, createHouse, createCar } from './Models.js';
 import { districtOfBlock } from './DistrictManager.js';
 import { groundMaterial, slabMaterial, buildExtras } from './CityExtras.js';
 import { buildRoadArt } from './RoadArt.js';
+import { pickStyle } from './Buildings.js';
 
 export const ROAD_W = 12;
 export const LINES = [-90, -30, 30, 90];
@@ -13,6 +14,8 @@ const BLOCK_HALF = 24;
 export const CITY_LIMIT = 160;
 
 const PALETTE = [0xff7a59, 0x2f8cff, 0xffc43d, 0x35c28a, 0xb06cff, 0xff8fb1, 0x4cc9f0, 0xf4a259];
+/** wider, softer facade palette for varied streetscapes: brick, cream, teal, mustard, sage, slate, coral, sky */
+const FACADES = [0xd9674a, 0xf2d7a1, 0x3aa8a0, 0xe9b949, 0x9bc28a, 0x6f86a8, 0xf08a7a, 0x78b7e6, 0xb06cff, 0xff8fb1];
 const SHOPS = ['CAFE', 'MARKET', 'BANK', 'PIZZA', 'HOTEL', 'PHARMA', 'BOOKS', 'GYM'];
 
 function rng(seed) {
@@ -177,22 +180,21 @@ export class CityManager {
       let n = 0;
       for (const ox of [-10.5, 10.5]) for (const oz of [-10.5, 10.5]) {
         const h = 10 + Math.floor(r() * 4) * 6 + (ix === 0 ? 6 : 0);
-        const b = createBuilding(18, h, 18, PALETTE[(ix + iz + n + 8) % PALETTE.length], {
+        const b = createBuilding(18, h, 18, FACADES[(ix * 5 + iz * 3 + n * 7 + 8) % FACADES.length], {
           awning: PALETTE[(n + 3) % PALETTE.length], sign: { text: SHOPS[(Math.floor(r() * 99) + n) % SHOPS.length] },
+          style: pickStyle(ix + iz + n, h), seed: ix * 31 + iz * 17 + n + 1,
         });
         b.position.set(cx + ox, 0.3, cz + oz);
         b.rotation.y = oz > 0 ? 0 : Math.PI;
         b.rotation.y = 0;
         g.add(b);
         this.colliders.add(cx + ox, cz + oz, 18.2, 18.2, h + 1);
-        // rooftop AC units
-        for (let k = 0; k < 2; k++) g.add(mesh(rbox(2, 1.2, 2, 0.2), mat(0xb5bdc7), { x: cx + ox + (r() - 0.5) * 8, y: h + 1.1, z: cz + oz + (r() - 0.5) * 8 }));
         n++;
       }
       this.addTree(cx - 21, cz, 0.9); this.addTree(cx + 21, cz, 0.9); this.addTree(cx, cz - 21, 0.9); this.addTree(cx, cz + 21, 0.9);
     } else if (type === 'commercial') {
       inner(0x4a505c);
-      const mall = createBuilding(34, 10, 16, 0x2f8cff, { roofColor: 0xffffff, awning: 0xffc43d, sign: { text: 'CITY MALL', bg: '#ffc43d' } });
+      const mall = createBuilding(34, 10, 16, 0x2f8cff, { roofColor: 0xffffff, awning: 0xffc43d, sign: { text: 'CITY MALL', bg: '#ffc43d' }, style: 'shop', seed: 5 });
       mall.position.set(cx, 0.3, cz - 14);
       g.add(mall);
       this.colliders.add(cx, cz - 14, 34.2, 16.2, 11);
@@ -222,7 +224,7 @@ export class CityManager {
     } else if (type === 'industrial') {
       inner(0x8b929c);
       for (const oz of [-12, 12]) {
-        const w = createBuilding(34, 8, 15, oz < 0 ? 0xf4a259 : 0x8fb8de, { roofColor: 0xcfd6df });
+        const w = createBuilding(34, 8, 15, oz < 0 ? 0xf4a259 : 0x8fb8de, { roofColor: 0xcfd6df, style: 'warehouse', seed: oz });
         w.position.set(cx - 2, 0.3, cz + oz);
         g.add(w);
         this.colliders.add(cx - 2, cz + oz, 34.2, 15.2, 9);

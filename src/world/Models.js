@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { mat, rbox, mesh, wallMaterial, textTexture } from './Materials.js';
+import { createPremiumBuilding } from './Buildings.js';
 
 /** Vehicle archetypes (visual part; sim data lives in public/data/vehicles.json). */
 export const CAR_STYLES = {
@@ -161,7 +162,8 @@ export function createTree(rand = Math.random) {
 }
 
 /** Generic colorful building with windows and rounded roof cap. */
-export function createBuilding(w, h, d, color, { roofColor = 0xf4f7fa, awning = null, sign = null } = {}) {
+export function createBuilding(w, h, d, color, { roofColor = 0xf4f7fa, awning = null, sign = null, style = null, seed = 1 } = {}) {
+  if (style) return createPremiumBuilding(w, h, d, color, { style, seed, roofColor, awning, sign });
   const g = new THREE.Group();
   const wallsMat = [];
   const sideX = wallMaterial(color, d, h), sideZ = wallMaterial(color, w, h);
