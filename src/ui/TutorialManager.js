@@ -12,22 +12,22 @@ import * as THREE from 'three';
 const STEPS = [
   {
     id: 'move', title: 'Get moving', text: 'Walk around your new charging station.', goal: 'Walk 10 metres', ok: 'Nice walking!',
-    hint: 'WASD / arrow keys · hold Shift to sprint · or hold the mouse and drag', hintTouch: 'Drag on the left side to move',
+    hint: 'WASD / arrow keys · hold Shift to sprint · or hold the mouse button and drag', hintTouch: 'Use the joystick: press and drag in the bottom-left corner to walk',
     done: (g, n) => n.walked >= 10,
   },
   {
     id: 'connect', title: 'First customer', text: 'A car is pulling in. Stand beside its glowing charger.', goal: 'Connect a car', ok: 'Charging started!',
-    hint: 'Stand still at the bay — it connects by itself (or press E)', hintTouch: 'Stand at the bay, or tap E',
+    hint: 'Stand still at the bay: the car connects by itself', hintTouch: 'Walk to the bay with the joystick and stand still: the car connects by itself',
     target: (g, t) => t.bay(['waiting', 'charging']), done: (g, n, t) => n.charge > 0 || t.anyBay(['charging', 'done']),
   },
   {
     id: 'paid', title: 'Get paid', text: 'Stay close while it charges. Billing happens when the car is full.', goal: 'Collect your first payment', ok: 'Cash earned!',
-    hint: 'Tip: E at a charging bay stops and bills early', hintTouch: 'Tap E at a charging bay to bill early',
+    hint: 'Tip: click a charging charger to stop and bill early', hintTouch: 'Tip: tap a charging charger to stop and bill early',
     target: (g, t) => t.bay(['charging', 'done', 'waiting']), done: (g, n) => n.paid > 0,
   },
   {
     id: 'terminal', title: 'Station terminal', text: 'Prices, bays and upgrades are managed at the terminal.', goal: 'Open the Station Manager', ok: 'Manager opened',
-    hint: 'Walk to the blue terminal and press E', hintTouch: 'Walk to the terminal and tap E',
+    hint: 'Walk to the terminal and click the floating Open button', hintTouch: 'Walk to the terminal and tap the floating Open button',
     target: (g, t) => t.terminal(), done: (g) => g.ui.modal === 'station',
   },
   {
@@ -74,9 +74,21 @@ export class TutorialManager {
     this.buildHand();
     this.bindEvents();
     this.layout();
-    addEventListener('resize', () => this.layout());
+    this.onResize = () => this.layout();
+    addEventListener('resize', this.onResize);
     if (!this.done) this.begin(this.step, false);
     else this.render();
+  }
+
+  /** Remove every listener, DOM node and world object this tutorial created. */
+  dispose() {
+    removeEventListener('resize', this.onResize);
+    removeEventListener('pointerdown', this.onTouch);
+    this.clearGuides();
+    this.scene.remove(this.marker);
+    this.marker.traverse((o) => { o.geometry?.dispose(); o.material?.dispose(); });
+    this.hand?.remove();
+    document.body.classList.remove('tut-on', 'tut-tap', 'tut-bottom');
   }
 
   // ---------- world marker (arrow + ground ring); only one exists ----------
@@ -162,6 +174,9 @@ export class TutorialManager {
     b.on('charging:start', inc('charge'));
     b.on('customer:paid', inc('paid'));
     b.on('employee:hired', inc('hired'));
+    // hybrid devices: the first real touch switches the hints to the joystick wording
+    this.onTouch = (e) => { if (e.pointerType === 'touch' && !this.touch) { this.touch = true; this.render(); } };
+    addEventListener('pointerdown', this.onTouch, { passive: true });
     const stop = (e) => e.stopPropagation();
     for (const ev of ['pointerdown', 'pointerup', 'touchstart', 'mousedown', 'click']) this.el.addEventListener(ev, stop);
     this.$('tut-next').onclick = (e) => { e.currentTarget.blur(); this.finish(); };
@@ -175,11 +190,11 @@ export class TutorialManager {
     return {
       bay: (states) => {
         const open = st.bays.filter((b) => b.unlocked);
-        const b = states.map((s) => open.find((x) => x.state === s)).find(Boolean) || open[0];
+        const b = states.map((s) => open.find((x) => x.state === s)).find(Boolean); // no bay in a wanted state -> no marker (never an arbitrary bay)
         return b ? at(`bay${st.bays.indexOf(b)}`, 5.4) : null;
       },
       anyBay: (states) => st.bays.some((b) => b.unlocked && states.includes(b.state)),
-      terminal: () => at('terminal', 3.4),
+      terminal: () => { const p = this.g.stationView.terminalPos; return p ? { x: p.x, z: p.z, y: 3.4 } : null; },
     };
   }
 
@@ -226,7 +241,7 @@ export class TutorialManager {
   layout() {
     const bottom = document.body.classList.contains('touch') || innerWidth <= 480;
     document.body.classList.toggle('tut-bottom', bottom);
-    this.touch = document.body.classList.contains('touch');
+    this.touch = !!this.touch || document.body.classList.contains('touch') || !!this.g.touch;
     if (this.el) this.render();
   }
 
@@ -256,8 +271,10 @@ export class TutorialManager {
   // ---------- per-frame ----------
   update(dt) {
     if (this.done) return;
-    this.time += dt;
     const g = this.g, s = STEPS[this.step];
+    // paused (menu, pause screen, confirm dialog): nothing advances, no timer runs, walking progress is not measured
+    if (g.paused || g.ui?.confirmOpen) { this.lastPos = null; this.hand?.classList.remove('on'); return; }
+    this.time += dt;
     if (this.state === 'ok') {
       this.okTimer -= dt;
       if (this.okTimer <= 0) this.advance();
@@ -265,10 +282,10 @@ export class TutorialManager {
     }
     // distance walked since the step began
     const p = g.player.pos;
-    if (this.lastPos) this.n.walked += Math.hypot(p.x - this.lastPos.x, p.z - this.lastPos.z);
+    if (this.lastPos) { const d = Math.hypot(p.x - this.lastPos.x, p.z - this.lastPos.z); if (d < 3) this.n.walked += d; } // a jump (fast travel) is not walking
     this.lastPos = { x: p.x, z: p.z };
 
-    if (!g.paused && s.done(g, this.n, this.targets)) {
+    if (s.done(g, this.n, this.targets)) {
       this.clearGuides(); // highlight disappears the moment the objective is met
       if (s.button) return;
       this.state = 'ok';

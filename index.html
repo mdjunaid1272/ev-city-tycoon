@@ -45,10 +45,16 @@
 
     <!-- 2. DAILY OVERVIEW (top-left, under the bar) -->
     <section id="daily" class="panel">
-      <div class="d-stats">
+      <div class="d-stats" id="d-stats" role="button" tabindex="0" aria-expanded="false" title="Tap for the customer breakdown">
         <div class="d-stat"><span class="ic" data-icon="cash" data-size="16"></span><small>Today</small><b id="d-rev">$0</b></div>
         <div class="d-stat"><span class="ic" data-icon="users" data-size="16"></span><small>Customers</small><b id="d-cust">0</b></div>
         <div class="d-stat"><span class="ic" data-icon="star" data-size="16"></span><small>Satisfied</small><b id="d-sat">—</b></div>
+      </div>
+      <div id="d-detail" class="d-detail" hidden aria-label="Customers on site">
+        <span title="Parked in a queue slot, waiting for a free bay">Queued <b id="dd-queued">0</b></span>
+        <span title="At a bay, waiting to be connected or served">Waiting <b id="dd-waiting">0</b></span>
+        <span title="Connected to a charger">Charging <b id="dd-charging">0</b></span>
+        <span title="Being washed, diagnosed or repaired">Service <b id="dd-service">0</b></span>
       </div>
       <div id="mission" role="button" tabindex="0" aria-expanded="false" title="Show objective details">
         <div class="m-head"><span>Objective</span><span id="m-reward"></span><span class="chev" data-icon="chevron" data-size="16"></span></div>

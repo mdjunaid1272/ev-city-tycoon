@@ -1,6 +1,7 @@
 import { QUALITY } from '../core/Settings.js';
 import { districtOfBlock } from '../world/DistrictManager.js';
 import { icon, hydrateIcons } from './icons.js';
+import { siteCounts } from '../customers/SiteCounts.js';
 
 const $ = (id) => document.getElementById(id);
 const CONFIRM_COST = 10000; // purchases at or above this price ask for confirmation
@@ -46,6 +47,12 @@ export class UIManager {
     const release = () => { if (!this._ptrDown) return; this._ptrDown = false; setTimeout(() => { if (this._dirty && !this._ptrDown) { this._dirty = false; this.renderModal(); } }, 80); };
     addEventListener('pointerup', release, true); addEventListener('pointercancel', release, true);
     $('d-missions').onclick = () => { this.tab.missions = 'daily'; this.open('missions'); };
+    // expandable overview: tap the stats row for the customer breakdown (state is remembered)
+    const ds = $('d-stats'); let open = false; try { open = localStorage.getItem('evct.overview') === '1'; } catch (e) {}
+    const setOv = (v) => { $('d-detail').hidden = !v; ds.setAttribute('aria-expanded', String(v)); $('daily').classList.toggle('ov-open', v); try { localStorage.setItem('evct.overview', v ? '1' : '0'); } catch (e) {} };
+    ds.onclick = () => setOv($('d-detail').hidden);
+    ds.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOv($('d-detail').hidden); } };
+    setOv(open);
     $('mission').onclick = () => this.toggleObjective();
     $('mission').onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); this.toggleObjective(); } };
     $('btn-interact').onclick = () => this.game.interaction.interact();
@@ -184,11 +191,14 @@ export class UIManager {
 
   /** Daily overview: revenue today, customers on site, satisfaction. */
   updateDaily() {
-    const sizeOf = (x) => (x && x.customers ? x.customers.size : 0);
-    const active = sizeOf(this.customers) + (this.customers.queue?.length || 0) + sizeOf(this.wash) + sizeOf(this.garage) + Object.values(this.hubs || {}).reduce((s, h) => s + sizeOf(h), 0);
+    // every customer is counted once: queued customers already live in their business's customer map (see SiteCounts)
+    const c = siteCounts([this.customers, this.wash, this.garage, ...Object.values(this.hubs || {})]);
+    const active = c.onSite;
+    const setT = (id, v) => { const e = $(id); if (e && e.textContent !== String(v)) e.textContent = v; };
+    setT('dd-queued', c.queued); setT('dd-waiting', c.waiting); setT('dd-charging', c.charging); setT('dd-service', c.service);
     const sat = this.customers.avgSatisfaction;
     $('d-rev').textContent = money(Math.round(this.economy.todayRevenue));
-    $('d-cust').textContent = active;
+    setT('d-cust', active);
     { const gl = this.goals, dn = gl.daily.filter((g) => g.done).length; $('d-dm-count').textContent = `${dn}/${gl.daily.length}`; $('d-dm-fill').style.width = `${gl.daily.length ? (dn / gl.daily.length) * 100 : 0}%`; $('d-missions').classList.toggle('all', gl.daily.length > 0 && dn === gl.daily.length); }
     $('d-sat').textContent = sat === null || sat === undefined ? '—' : `${Math.round(sat)}%`;
   }
