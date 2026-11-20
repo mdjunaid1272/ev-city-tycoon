@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { rbox } from './Materials.js';
+import { parkFeatureAt } from './Streetscape.js';
 
 /**
  * Visual richness for the city: textured grass and sidewalks, road edge lines, street furniture (hydrants, bins,
@@ -118,7 +119,7 @@ export function buildExtras({ city, scene, colliders, settings }) {
     } else if (type === 'park') {
       for (let i = 0; i < 70; i++) {
         const x = cx + (r() - 0.5) * 40, z = cz + (r() - 0.5) * 40;
-        if (Math.hypot(x - cx - 6, z - cz - 4) < 8.5 || Math.abs(x - cx) < 2.6 || Math.abs(z - cz) < 2.6) continue;
+        if (Math.hypot(x - cx - 6, z - cz - 4) < 8.5 || Math.abs(x - cx) < 2.6 || Math.abs(z - cz) < 2.6 || parkFeatureAt(x - cx, z - cz)) continue;
         L.flower.push([x, z, r()]);
       }
       for (let i = 0; i < 22; i++) { // bushes and rocks around the pond
@@ -128,7 +129,7 @@ export function buildExtras({ city, scene, colliders, settings }) {
       }
       for (let i = 0; i < 9; i++) {
         const x = cx + (r() - 0.5) * 38, z = cz + (r() - 0.5) * 38;
-        if (Math.hypot(x - cx - 6, z - cz - 4) < 10 || Math.abs(x - cx) < 3.5 || Math.abs(z - cz) < 3.5) continue;
+        if (Math.hypot(x - cx - 6, z - cz - 4) < 10 || Math.abs(x - cx) < 3.5 || Math.abs(z - cz) < 3.5 || parkFeatureAt(x - cx, z - cz)) continue;
         L.pine.push([x, z, 0.9 + r() * 0.6]);
       }
     } else if (type === 'industrial') {

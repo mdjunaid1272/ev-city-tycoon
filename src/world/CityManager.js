@@ -5,6 +5,7 @@ import { districtOfBlock } from './DistrictManager.js';
 import { groundMaterial, slabMaterial, buildExtras } from './CityExtras.js';
 import { buildRoadArt } from './RoadArt.js';
 import { pickStyle } from './Buildings.js';
+import { buildStreetscape, parkFeatureAt } from './Streetscape.js';
 
 export const ROAD_W = 12;
 export const LINES = [-90, -30, 30, 90];
@@ -94,6 +95,7 @@ export class CityManager {
     }
     this.buildInstancedProps();
     this.extras = buildExtras({ city: this, scene: this.scene, colliders: this.colliders, settings: this.settings });
+    this.streetscape = buildStreetscape({ city: this, scene: this.scene, colliders: this.colliders, settings: this.settings });
   }
 
   buildTerrain() {
@@ -248,7 +250,7 @@ export class CityManager {
       g.add(path, path2);
       for (let i = 0; i < 26; i++) {
         const x = cx + (r() - 0.5) * 40, z = cz + (r() - 0.5) * 40;
-        if (Math.hypot(x - cx - 6, z - cz - 4) < 9 || Math.abs(x - cx) < 2.5 || Math.abs(z - cz) < 2.5) continue;
+        if (Math.hypot(x - cx - 6, z - cz - 4) < 9 || Math.abs(x - cx) < 2.5 || Math.abs(z - cz) < 2.5 || parkFeatureAt(x - cx, z - cz)) continue;
         this.addTree(x, z, 0.9 + r() * 0.7);
       }
       for (const [bx, bz, ry] of [[-3.5, -8, 0], [3.5, 10, Math.PI]]) {

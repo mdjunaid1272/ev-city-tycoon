@@ -123,6 +123,9 @@ export function createPremiumBuilding(w, h, d, color, { style = 'office', seed =
       if (door) {
         kit.box(x, 1.2, zf + s * 0.08, gw * 0.55, 2.4, 0.16, 0x6b4a2f);
         glass.box(x, 1.55, zf + s * 0.17, gw * 0.4, 1.4, 0.04);
+        const stepCol = shade(awnCol, -0.1); // two red-ish shop steps leading to the door
+        kit.box(x, 0.1, zf + s * 0.55, gw * 0.9, 0.2, 1.0, stepCol);
+        kit.box(x, 0.24, zf + s * 0.3, gw * 0.75, 0.2, 0.55, shade(awnCol, 0.1));
       } else {
         glass.box(x, 1.55, zf + s * 0.06, gw - 0.35, 2.3, 0.1);
         kit.box(x, 2.85, zf + s * 0.09, gw - 0.25, 0.25, 0.16, dark);
