@@ -54,11 +54,11 @@ describe('player profile', () => {
     const a = p.summary(base);
     expect(a.level).toBe(1); expect(a.title).toBe('Rookie Operator'); expect(a.frac).toBe(0); expect(a.badges.every((b) => !b.earned)).toBe(true);
     const b = p.summary({ ...base, served: 60, revenue: 10500, stage: 3, days: 12, charged: 1, washed: 1, repaired: 1 });
-    expect(b.level).toBe(6); expect(b.title).toBe('Fleet Manager'); expect(b.frac).toBeGreaterThanOrEqual(0); expect(b.frac).toBeLessThanOrEqual(1);
+    expect(b.level).toBe(6); expect(b.title).toBe('Business Boss'); expect(b.frac).toBeGreaterThanOrEqual(0); expect(b.frac).toBeLessThanOrEqual(1);
     const got = b.badges.filter((x) => x.earned).map((x) => x.id);
     expect(got).toEqual(expect.arrayContaining(['first', 'c50', 'r10k', 's3', 'd10', 'jack']));
     expect(got).not.toContain('c500');
     expect(b.badges).toHaveLength(BADGES.length);
-    expect(p.summary({ ...base, stage: 99 }).title).toBe('Energy Tycoon'); // stages beyond the list keep the top title
+    expect(p.summary({ ...base, stage: 99 }).title).toBe('City EV Mogul'); // stages beyond the list keep the top title
   });
 });

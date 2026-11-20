@@ -12,7 +12,8 @@ export const OUTFITS = [
   { id: 'pink', name: 'Pink', shirt: 0xff8fb1, hat: 0x3a4a6b },
   { id: 'gold', name: 'Gold', shirt: 0xffc43d, hat: 0x1f8a4c },
 ];
-export const TITLES = ['Rookie Operator', 'Station Owner', 'Fleet Manager', 'Charging Boss', 'City Charger', 'EV Mogul', 'Energy Tycoon'];
+/** one title per business stage (public/data/progression.json has four) */
+export const TITLES = ['Rookie Operator', 'Station Owner', 'Business Boss', 'City EV Mogul'];
 export const NAME_MAX = 16;
 export const DEFAULT_NAME = 'Player';
 

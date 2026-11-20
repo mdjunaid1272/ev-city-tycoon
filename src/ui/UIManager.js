@@ -20,7 +20,7 @@ export { money };
 // panels that show continuously changing values (progress, timers) refresh a few times a second; the others refresh from events,
 // with a slow safety net for values that depend only on the clock
 const LIVE_MODALS = new Set(['station', 'wash', 'garage', 'cafe']);
-const SLOW_MODALS = new Set(['finance', 'staff', 'business', 'map', 'missions', 'stats']);
+const SLOW_MODALS = new Set(['finance', 'staff', 'business', 'map', 'missions', 'stats', 'profile']);
 
 /** HTML/CSS overlay: HUD, prompts, panels, pause menu. Reads state, never owns it. */
 export class UIManager {
@@ -322,7 +322,8 @@ export class UIManager {
     // never swap the buttons out from under a press: a periodic refresh between pointer-down and click would eat the click
     if (this._ptrDown) { this._dirty = true; return; }
     // avoid rebuilding while the user is dragging a slider / has a select open
-    if ((m === 'pause' || m === 'settings' || m === 'profile') && this._pauseRendered) return;
+    if ((m === 'pause' || m === 'settings') && this._pauseRendered) return;
+    if (m === 'profile' && document.activeElement?.id === 'prof-name') return; // never rebuild the name box while it is being typed in
     const body = ({
       settings: () => this.tplSettings(), stats: () => this.tplStats(), profile: () => this.tplProfile(), help: () => this.tplHelp(), save: () => this.tplSave(),
       station: () => this.tplStation(), staff: () => this.tplStaff(), finance: () => this.tplFinance(),
@@ -339,7 +340,7 @@ export class UIManager {
     if (same) patchHtml(card, html); else card.innerHTML = html;
     card.scrollTop = keepScroll;
     card.querySelector('[data-close]').onclick = () => this.closeModal();
-    this._pauseRendered = m === 'pause' || m === 'settings' || m === 'profile';
+    this._pauseRendered = m === 'pause' || m === 'settings';
     this.bindModal(card);
   }
 

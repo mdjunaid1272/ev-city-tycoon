@@ -23,11 +23,31 @@ await p.click('#btn-profile'); await p.waitForTimeout(300);
 const open1 = await p.evaluate(() => ({ modal: __game.ui.modal, h2: document.querySelector('#modal-card h2')?.textContent, name: document.getElementById('prof-name')?.value, badges: document.querySelectorAll('.bd').length, avatars: document.querySelectorAll('[data-profile^="avatar:"]').length, outfits: document.querySelectorAll('[data-profile^="outfit:"]').length, paused: __game.paused }));
 check('the avatar button opens the Profile board (game keeps running)', open1.modal === 'profile' && open1.h2 === 'Profile' && open1.name === 'Player' && open1.badges === 9 && open1.avatars === 8 && open1.outfits === 6 && !open1.paused, JSON.stringify(open1));
 
+// stages section: track, current stage, next-stage goals with live progress, updates on stage-up
+const st1 = await p.evaluate(() => ({ items: [...document.querySelectorAll('.stage-track .st')].map((e) => e.className.replace('st ', '')), cur: document.querySelector('.prof-stage b')?.textContent, next: document.querySelector('.prof-next b')?.textContent, goals: document.querySelectorAll('#modal-card .mrow').length, head: document.querySelector('.prof-title')?.textContent }));
+check('Profile shows the stage track, current stage and next-stage goals', st1.items.length === 4 && st1.items[0] === 'cur' && st1.items.slice(1).every((c) => c === 'lock') && /Stage 1 · Small EV Station/.test(st1.cur) && /Next: Stage 2/.test(st1.next) && st1.goals === 4 && /Stage 1/.test(st1.head), JSON.stringify(st1));
+const until = (fn, arg) => p.waitForFunction(fn, arg, { timeout: 15000 }).then(() => true, () => false); // headless frames are slow: wait for the refresh instead of a fixed time
+await p.evaluate(() => { __game.economy.reputation = 12; });
+check('the open Profile board refreshes goal progress live', await until(() => [...document.querySelectorAll('#modal-card .mrow')].some((r) => r.classList.contains('done'))));
+await p.evaluate(() => { __game.progression.stage = 3; });
+await until(() => document.querySelector('.stage-track .st.cur')?.textContent.includes('3'));
+const st3 = await p.evaluate(() => ({ items: [...document.querySelectorAll('.stage-track .st')].map((e) => e.className.replace('st ', '')), title: document.querySelector('.prof-title')?.textContent }));
+check('stage 3: two stages done, stage 3 current, stage 4 locked; title follows the stage', st3.items.join() === 'done,done,cur,lock' && /Business Boss/.test(st3.title) && /Stage 3/.test(st3.title), JSON.stringify(st3));
+await p.evaluate(() => { __game.progression.stage = 4; });
+await until(() => !document.querySelector('.prof-next'));
+check('max stage: no next-stage section, congratulation line shown', await p.evaluate(() => !document.querySelector('.prof-next') && /Maximum stage/.test(document.querySelector('#modal-card').textContent)));
+await p.evaluate(() => { __game.progression.stage = 1; __game.economy.reputation = 0; });
+await until(() => document.querySelector('.stage-track .st.cur')?.textContent.includes('1'));
+
 // typing must not move the player and must not close the board
 const before = await p.evaluate(() => ({ x: __game.player.pos.x, z: __game.player.pos.z }));
 await p.focus('#prof-name'); await p.fill('#prof-name', ''); await p.keyboard.type('wasd Ada <i>', { delay: 20 }); await p.keyboard.press('Enter'); await p.waitForTimeout(600);
 const after = await p.evaluate(() => ({ x: __game.player.pos.x, z: __game.player.pos.z, name: __game.profile.name, shown: document.getElementById('prof-name').value, modal: __game.ui.modal, title: document.getElementById('btn-profile').title }));
 check('typing a name does not walk the player; the name is cleaned and saved', Math.hypot(after.x - before.x, after.z - before.z) < 0.05 && after.name === 'wasd Ada i' && after.shown === 'wasd Ada i' && after.modal === 'profile' && /wasd Ada i/.test(after.title), JSON.stringify(after));
+
+// the board is refreshed on a timer: it must never rebuild the name box while it has focus
+await p.focus('#prof-name'); await p.keyboard.type('Z'); await p.waitForTimeout(5000);
+check('refresh never disturbs the name box while it has focus', await p.evaluate(() => document.activeElement?.id === 'prof-name' && document.getElementById('prof-name').value === 'wasd Ada iZ'));
 
 // an empty name is refused
 await p.fill('#prof-name', '   '); await p.keyboard.press('Enter'); await p.waitForTimeout(300);

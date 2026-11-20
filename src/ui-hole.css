@@ -210,3 +210,13 @@ kbd, #prompt kbd { background: linear-gradient(180deg, #ffe27a, var(--yellow)); 
 .bd span { display: block; font-size: 24px; }
 .bd small { display: block; font-weight: 700; font-size: 12px; margin-top: 2px; }
 .bd em { display: block; font-style: normal; font-size: 10.5px; opacity: .75; margin-top: 2px; }
+.stage-track { list-style: none; display: flex; gap: 6px; margin: 4px 0 8px; padding: 0; }
+.stage-track .st { flex: 1; min-width: 0; text-align: center; padding: 6px 2px; border-radius: 12px; background: #f1f4fa; border: 2px solid var(--line-2, #d5ddec); opacity: .65; }
+.stage-track .st i { display: grid; place-items: center; width: 28px; height: 28px; margin: 0 auto 2px; border-radius: 50%; font-style: normal; font-weight: 800; background: #fff; border: 2px solid var(--line-2, #c9d3e6); }
+.stage-track .st small { display: block; font-size: 10.5px; line-height: 1.15; font-weight: 700; overflow-wrap: anywhere; }
+.stage-track .st.done { opacity: 1; background: #d9f7e3; border-color: #9be0b3; }
+.stage-track .st.done i { background: #35c28a; color: #fff; border-color: #148041; }
+.stage-track .st.cur { opacity: 1; background: #fff6d6; border-color: #e8c24a; box-shadow: 0 0 0 3px #5cc8ff; }
+.stage-track .st.cur i { background: #ffc43d; border-color: #b98a10; }
+.prof-stage, .prof-next { margin: 4px 0; }
+.prof-next { margin-top: 10px; }

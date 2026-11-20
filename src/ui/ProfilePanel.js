@@ -16,6 +16,7 @@ export const ProfilePanel = {
 
   tplProfile() {
     const p = this.game.profile, sum = p.summary(this.profileContext()), s = this.stats.total;
+    const pr = this.progression;
     const earned = sum.badges.filter((b) => b.earned).length;
     const since = new Date(p.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
     return `<h2>Profile</h2><div class="sub">Your boss card. Changes save automatically.</div>
@@ -24,10 +25,11 @@ export const ProfilePanel = {
         <div class="prof-id">
           <label class="prof-lbl" for="prof-name">Name</label>
           <input id="prof-name" type="text" maxlength="${NAME_MAX}" value="${esc(p.name)}" autocomplete="off" spellcheck="false" enterkeyhint="done">
-          <div class="prof-title"><b>${esc(sum.title)}</b> · Level ${sum.level}</div>
+          <div class="prof-title"><b>${esc(sum.title)}</b> · Level ${sum.level} · Stage ${pr.stage}</div>
         </div>
       </div>
       <div class="prof-xp">${this.bar(sum.frac, 'var(--blue, #2f8cff)')}<small>${money(Math.max(0, sum.xp))} / ${money(sum.xpNeed)} earned towards level ${sum.level + 1}</small></div>
+      ${this.profileStages()}
       <div class="sect">Avatar</div>
       <div class="prof-grid" role="radiogroup" aria-label="Avatar">${AVATARS.map((a) => `<button class="prof-opt${a === p.avatar ? ' on' : ''}" role="radio" aria-checked="${a === p.avatar}" data-profile="avatar:${a}" aria-label="Avatar ${a}">${a}</button>`).join('')}</div>
       <div class="sect">Outfit</div>
@@ -40,6 +42,23 @@ export const ProfilePanel = {
       <div class="kv"><span>Customers served</span><b>${s.served}</b></div>
       <div class="sect">Badges (${earned}/${sum.badges.length})</div>
       <div class="prof-badges">${sum.badges.map((b) => `<div class="bd${b.earned ? ' on' : ''}" title="${esc(b.desc)}"><span>${b.earned ? b.icon : '🔒'}</span><small>${esc(b.name)}</small><em>${esc(b.desc)}</em></div>`).join('')}</div>`;
+  },
+
+  /** Stage track (done / current / locked), the current stage, and the next stage's goals with live progress. */
+  profileStages() {
+    const pr = this.progression, cur = pr.current, nxt = pr.next;
+    const track = pr.stages.map((s) => {
+      const st = s.stage < pr.stage ? 'done' : s.stage === pr.stage ? 'cur' : 'lock';
+      return `<li class="st ${st}"${st === 'cur' ? ' aria-current="step"' : ''}><i>${st === 'done' ? '✓' : st === 'lock' ? '🔒' : s.stage}</i><small>${esc(s.name)}</small></li>`;
+    }).join('');
+    let html = `<div class="sect">Stages (${pr.stage}/${pr.stages.length})</div><ol class="stage-track">${track}</ol>
+      <div class="prof-stage"><b>Stage ${pr.stage} · ${esc(cur.name)}</b><div class="sub">${esc(cur.blurb || '')}</div></div>`;
+    if (nxt) {
+      const goals = pr.goalsFor(nxt.stage), done = goals.filter((g) => g.done).length;
+      html += `<div class="prof-next"><b>Next: Stage ${nxt.stage} · ${esc(nxt.name)}</b> <small>(${done}/${goals.length} goals)</small></div>` + goals.map((g) => `<div class="mrow ${g.done ? 'done' : 'cur'}"><div class="chk">${g.done ? '✓' : ''}</div><div style="flex:1"><b>${esc(g.label)}</b><small>${Math.floor(g.value).toLocaleString('en-US')} / ${g.target.toLocaleString('en-US')}</small>${this.bar(g.value / g.target)}</div></div>`).join('')
+        + `<div class="sub" style="margin-top:6px">Reward <b>${this.rewardHtml(nxt.reward)}</b>${nxt.unlocks?.length ? ` · unlocks: ${esc(nxt.unlocks.join(', '))}` : ''}</div>`;
+    } else html += '<div class="sub">Maximum stage reached: you run a City EV Empire.</div>';
+    return html;
   },
 
   bindProfile(card) {
