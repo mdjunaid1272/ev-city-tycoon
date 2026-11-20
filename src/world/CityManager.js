@@ -4,7 +4,7 @@ import { createBuilding, createHouse, createCar } from './Models.js';
 import { districtOfBlock } from './DistrictManager.js';
 import { groundMaterial, slabMaterial, buildExtras } from './CityExtras.js';
 import { buildRoadArt } from './RoadArt.js';
-import { pickStyle } from './Buildings.js';
+import { pickStyle, setBuildingDetail } from './Buildings.js';
 import { buildStreetscape, parkFeatureAt } from './Streetscape.js';
 import { buildProps } from './Props.js';
 
@@ -91,6 +91,7 @@ export class CityManager {
 
   build() {
     this.buildTerrain();
+    setBuildingDetail(this.settings?.quality?.detail ?? 1);
     this.buildRoads();
     for (let i = 0; i < 5; i++) {
       for (let j = 0; j < 5; j++) this.buildBlock(i - 2, j - 2);
@@ -98,7 +99,7 @@ export class CityManager {
     this.buildInstancedProps();
     this.extras = buildExtras({ city: this, scene: this.scene, colliders: this.colliders, settings: this.settings });
     this.streetscape = buildStreetscape({ city: this, scene: this.scene, colliders: this.colliders, settings: this.settings });
-    this.props = buildProps({ city: this, scene: this.scene, colliders: this.colliders, roofSigns: this.roofSigns });
+    this.props = buildProps({ city: this, scene: this.scene, colliders: this.colliders, roofSigns: this.roofSigns, settings: this.settings });
   }
 
   buildTerrain() {

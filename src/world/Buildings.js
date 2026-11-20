@@ -8,6 +8,9 @@ import { mat, nightMaterials, textTexture, wallMaterial } from './Materials.js';
  * a stepped crown, rooftop equipment, glazed storefronts with doors and striped awnings, balconies, signs and style-specific
  * features. All small parts of one building are merged into ONE vertex-coloured mesh plus ONE shared emissive-glass mesh.
  */
+let DETAIL = 1;
+/** 1 = full facade detail; below 0.7 (low quality) balconies, fins, belts and awning lips are skipped */
+export const setBuildingDetail = (d) => { DETAIL = d; };
 export const BUILDING_STYLES = ['office', 'apartment', 'hotel', 'shop', 'cafe', 'restaurant', 'ev', 'warehouse'];
 
 function seeded(seed) {
@@ -87,7 +90,8 @@ export function createPremiumBuilding(w, h, d, color, { style = 'office', seed =
 
   // --- base plinth, belt courses, cornice, pilasters
   kit.box(0, 0.25, 0, w + 0.5, 0.5, d + 0.5, dark);
-  const belts = h > 12 ? Math.floor(h / 8) : 0;
+  const lo = DETAIL < 0.7;
+  const belts = h > 12 && !lo ? Math.floor(h / 8) : 0;
   for (let k = 1; k <= belts; k++) kit.box(0, k * (h / (belts + 1)), 0, w + 0.3, 0.28, d + 0.3, trim);
   kit.box(0, h - 0.15, 0, w + 0.8, 0.5, d + 0.8, trim); // cornice
   kit.box(0, h + 0.2, 0, w + 0.5, 0.5, d + 0.5, roofColor); // roof slab
@@ -138,7 +142,7 @@ export function createPremiumBuilding(w, h, d, color, { style = 'office', seed =
     for (let i = 0; i < n; i++) {
       const x = -((n - 1) * seg) / 2 + i * seg;
       kit.box(x, 3.3, zf + s * 0.85, seg, 0.14, 1.7, i % 2 ? 0xffffff : awnCol);
-      kit.box(x, 3.05, zf + s * 1.6, seg, 0.28, 0.08, i % 2 ? 0xffffff : awnCol);
+      if (!lo) kit.box(x, 3.05, zf + s * 1.6, seg, 0.28, 0.08, i % 2 ? 0xffffff : awnCol);
     }
     // planters or bench-front details so storefronts differ
     if (style === 'shop' || style === 'cafe' || style === 'restaurant') {
@@ -152,7 +156,7 @@ export function createPremiumBuilding(w, h, d, color, { style = 'office', seed =
   }
 
   // --- style features
-  if (style === 'apartment') {
+  if (style === 'apartment' && !lo) {
     const gap = 4.5, floors = Math.floor((h - 5) / gap);
     for (let f = 0; f < floors; f++) {
       const y = 5.6 + f * gap;
@@ -168,7 +172,7 @@ export function createPremiumBuilding(w, h, d, color, { style = 'office', seed =
     glass.box(hw + 0.48, h * 0.62, hd - 1.4, 0.06, 5.8, 1.8);
     kit.box(0, 3.7, hd + 1.9, 5.5, 0.22, 3, trim); // porte-cochere canopy
     for (const px of [-2.4, 2.4]) kit.box(px, 1.8, hd + 3.2, 0.28, 3.6, 0.28, 0xe9d9a6);
-  } else if (style === 'office') {
+  } else if (style === 'office' && !lo) {
     for (let k = 1; k < Math.floor(w / 3); k++) for (const [s, zf] of facesZ) kit.box(-hw + k * 3, h * 0.55, zf + s * 0.1, 0.12, h * 0.8, 0.16, dark); // vertical fins
     kit.box(0, h + 0.5, 0, w * 0.35, 0.12, d * 0.35, 0xf4c542); // helipad plate
   } else if (style === 'ev' || style === 'restaurant' || style === 'cafe') {

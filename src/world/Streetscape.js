@@ -39,7 +39,7 @@ export class Layer {
     this.defColor = color;
   }
   add(x, y, z, sx = 1, sy = 1, sz = 1, ry = 0, color = this.defColor, rx = 0, rz = 0) { this.items.push([x, y, z, sx, sy, sz, ry, color, rx, rz]); }
-  finish(root) {
+  finish(root, cull = false) {
     if (!this.items.length) return null;
     const im = new THREE.InstancedMesh(this.geo, this.material, this.items.length);
     const c = new THREE.Color();
@@ -49,7 +49,7 @@ export class Layer {
       if (!this.material.emissive || this.material.emissive.getHex() === 0) im.setColorAt(i, c.setHex(col));
     });
     im.instanceMatrix.needsUpdate = true; if (im.instanceColor) im.instanceColor.needsUpdate = true;
-    im.castShadow = this.cast; im.receiveShadow = true; im.frustumCulled = false;
+    im.castShadow = this.cast; im.receiveShadow = true; im.frustumCulled = cull; // per-park layers are culled by the frustum
     root.add(im);
     return im;
   }
@@ -64,11 +64,18 @@ export function buildStreetscape({ city, scene, colliders, settings }) {
   const box = (w, h, d) => new THREE.BoxGeometry(w, h, d);
   const cyl = (rt, rb, h, seg = 16) => new THREE.CylinderGeometry(rt, rb, h, seg);
 
-  const L = {
+  const W = {
     planterBox: new Layer(rbox(2.4, 0.55, 0.9, 0.08, 1), { rough: 0.85, cast: true }),
     planterTop: new Layer(rbox(2.2, 0.4, 0.7, 0.15, 1), { rough: 0.9 }),
     boothBody: new Layer(box(1, 2.4, 1), { rough: 0.6, cast: true }),
     boothGlass: new Layer(box(0.7, 1.6, 0.06), { rough: 0.2 }),
+  };
+  const lowEnd = detail < 0.7;
+  const bulbMat = new THREE.MeshStandardMaterial({ color: 0xfff2c8, emissive: 0xffc66b, emissiveIntensity: 0 });
+  nightMaterials.add(bulbMat);
+  const bulbGeo = new THREE.SphereGeometry(0.2, 10, 8);
+  const parkSets = [];
+  const makeParkLayers = () => ({
     plaza: new Layer(cyl(5.2, 5.2, 0.07, 28), { rough: 0.9 }),
     ring: new Layer(cyl(1.9, 1.9, 0.6, 20), { rough: 0.8, cast: true }),
     water: new Layer(cyl(1.7, 1.7, 0.05, 20), { rough: 0.1, metal: 0.1 }),
@@ -86,10 +93,9 @@ export function buildStreetscape({ city, scene, colliders, settings }) {
     cone1: new Layer(new THREE.ConeGeometry(1.7, 3.0, 9), { rough: 0.9, cast: true }),
     cone2: new Layer(new THREE.ConeGeometry(1.2, 2.5, 9), { rough: 0.9, cast: true }),
     stone: new Layer(cyl(0.45, 0.5, 0.06, 9), { color: 0xd8cfb8, rough: 0.95 }),
-  };
-  const bulbMat = new THREE.MeshStandardMaterial({ color: 0xfff2c8, emissive: 0xffc66b, emissiveIntensity: 0 });
-  nightMaterials.add(bulbMat);
-  L.bulb = new Layer(new THREE.SphereGeometry(0.2, 10, 8), { material: bulbMat });
+    bulb: new Layer(bulbGeo, { material: bulbMat }),
+  });
+  let L = null;
 
   const FLOWERS = [0xff7a59, 0xffc43d, 0xff8fb1, 0xb06cff, 0xffffff, 0xff4f6d];
   const GROUND = 0.33; // lawn / slab surface
@@ -98,20 +104,20 @@ export function buildStreetscape({ city, scene, colliders, settings }) {
     const cx = BLOCK_CENTERS[ix + 2], cz = BLOCK_CENTERS[iz + 2], type = city.blockType(ix, iz);
 
     // ---------- sidewalks: planter boxes + the odd red phone booth on busy blocks
-    if (type === 'tall' || type === 'commercial') {
+    if ((type === 'tall' || type === 'commercial') && !lowEnd) {
       [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(([nx, nz], si) => {
         const ry = nx !== 0 ? Math.PI / 2 : 0;
         for (const t of [-9.6, 9.6]) {
           if (type === 'commercial' && nz > 0) continue; // the car lot opens on this side
           const x = cx + nx * 22.9 + (nz !== 0 ? t : 0), z = cz + nz * 22.9 + (nx !== 0 ? t : 0);
-          L.planterBox.add(x, GROUND + 0.27, z, 1, 1, 1, ry, 0xa86a3c);
-          L.planterTop.add(x, GROUND + 0.62, z, 1, 1, 1, ry, [0x58c15a, 0x7dd05b, 0x3fae4a][Math.floor(r() * 3)]);
+          W.planterBox.add(x, GROUND + 0.27, z, 1, 1, 1, ry, 0xa86a3c);
+          W.planterTop.add(x, GROUND + 0.62, z, 1, 1, 1, ry, [0x58c15a, 0x7dd05b, 0x3fae4a][Math.floor(r() * 3)]);
           solid(x, z, nx !== 0 ? 1.0 : 2.5, nx !== 0 ? 2.5 : 1.0, 1);
         }
         if (si === Math.floor(r() * 4) && !(type === 'commercial' && nz > 0)) {
           const t = -13.5, x = cx + nx * 22.9 + (nz !== 0 ? t : 0), z = cz + nz * 22.9 + (nx !== 0 ? t : 0);
-          L.boothBody.add(x, GROUND + 1.2, z, 1, 1, 1, ry, 0xd7332b);
-          L.boothGlass.add(x + nx * 0.52, GROUND + 1.35, z + nz * 0.52, 1, 1, 1, ry, 0x9fd3f2);
+          W.boothBody.add(x, GROUND + 1.2, z, 1, 1, 1, ry, 0xd7332b);
+          W.boothGlass.add(x + nx * 0.52, GROUND + 1.35, z + nz * 0.52, 1, 1, 1, ry, 0x9fd3f2);
           solid(x, z, 1.1, 1.1, 2.4);
         }
       });
@@ -119,6 +125,7 @@ export function buildStreetscape({ city, scene, colliders, settings }) {
 
     // ---------- parks
     if (type !== 'park') continue;
+    L = makeParkLayers(); parkSets.push(L);
     const P = (dx, dz) => [cx + dx, cz + dz];
 
     // fountain plaza
@@ -168,7 +175,7 @@ export function buildStreetscape({ city, scene, colliders, settings }) {
       L.bed.add(bx, GROUND + 0.2, bz, 1, 1, 1, 0, 0xc9bda3);
       L.soil.add(bx, GROUND + 0.2, bz, 1, 1, 1, 0, 0x4f9a43);
       const palette = [FLOWERS[Math.floor(r() * 6)], FLOWERS[Math.floor(r() * 6)]];
-      for (let k = 0; k < 11; k++) {
+      for (let k = 0; k < (lowEnd ? 0 : 11); k++) {
         const a = r() * 6.28, rr = Math.sqrt(r()) * 1.25;
         L.bloom.add(bx + Math.cos(a) * rr, GROUND + 0.5 + r() * 0.1, bz + Math.sin(a) * rr, 1, 1, 1, 0, palette[k % 2]);
       }
@@ -181,7 +188,7 @@ export function buildStreetscape({ city, scene, colliders, settings }) {
       L.pole.add(lx, GROUND + 0.9, lz); L.bulb.add(lx, GROUND + 2.0, lz);
     }
     // stepping stones from the fountain to the path crossing
-    for (let k = 0; k < 6; k++) { const t = k / 5, [qx, qz] = P(-10 + 8 * t + Math.sin(t * 3) * 0.5, 10 - 8 * t); L.stone.add(qx, GROUND + 0.04, qz, 1, 1, 1, k); }
+    for (let k = 0; k < (lowEnd ? 0 : 6); k++) { const t = k / 5, [qx, qz] = P(-10 + 8 * t + Math.sin(t * 3) * 0.5, 10 - 8 * t); L.stone.add(qx, GROUND + 0.04, qz, 1, 1, 1, k); }
 
     // feature trees
     ORANGE.forEach(([dx, dz]) => {
@@ -196,6 +203,7 @@ export function buildStreetscape({ city, scene, colliders, settings }) {
     });
   }
 
-  for (const key of Object.keys(L)) L[key].finish(root);
-  return { root, counts: Object.fromEntries(Object.entries(L).map(([k, v]) => [k, v.items.length])), detail };
+  for (const key of Object.keys(W)) W[key].finish(root);
+  for (const set of parkSets) for (const key of Object.keys(set)) set[key].finish(root, true);
+  return { root, counts: Object.fromEntries(Object.entries(W).map(([k, v]) => [k, v.items.length])), parks: parkSets.length, detail };
 }

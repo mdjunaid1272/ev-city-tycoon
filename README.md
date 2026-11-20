@@ -79,3 +79,11 @@ npm run test:e2e  # browser tests: needs `npm run dev` running and a Chromium-ba
 4. Economy: a per-business history chart (the Finance board shows today only), and a "buy" advisor that ranks upgrades by payback.
 5. Performance: instance the repeated props of the city blocks and merge the static building meshes; add a dynamic resolution scaler for Android.
 6. Audio and the monetisation hooks (milestone 8 of the original plan) are still open.
+
+## City environment (premium redesign)
+Procedural, no new assets or dependencies. Everything repeated is instanced or merged; every collider, lane and property slot is unchanged.
+- `src/world/RoadArt.js` asphalt, double-yellow centre lines, turn arrows, checkered kerbs, tactile paving, drains, road signs
+- `src/world/Buildings.js` seeded facade styles (office, apartment, hotel, shop, cafe, restaurant, ev, wash, garage, warehouse)
+- `src/world/Streetscape.js` sidewalk planters / phone booths and the park (fountain, playground, beds, hedges, lights)
+- `src/world/Props.js` lamp bases, bollards, bus shelters, barriers, clock towers, rooftop signs, lamp light pools, distant skyline
+- Quality: `low` skips balconies, fins, bollards, light pools, skyline and park flowers; park layers are frustum-culled.

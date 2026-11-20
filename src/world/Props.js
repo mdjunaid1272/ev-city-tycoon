@@ -38,7 +38,8 @@ const clockMaterial = () => canvasMat(128, 128, (g, S) => {
   g.lineWidth = 4; g.beginPath(); g.moveTo(S / 2, S / 2); g.lineTo(S / 2 - 8, S / 2 - 40); g.stroke();
 });
 
-export function buildProps({ city, scene, colliders, roofSigns = [] }) {
+export function buildProps({ city, scene, colliders, roofSigns = [], settings }) {
+  const lowEnd = (settings?.quality?.detail ?? 1) < 0.7;
   const root = new THREE.Group();
   scene.add(root);
   const r = rng(4242);
@@ -46,7 +47,7 @@ export function buildProps({ city, scene, colliders, roofSigns = [] }) {
   const GROUND = 0.33;
 
   const B = new Layer(new THREE.BoxGeometry(1, 1, 1), { rough: 0.7, cast: true });
-  const C = new Layer(new THREE.CylinderGeometry(1, 1, 1, 12), { rough: 0.7, cast: true });
+  const C = new Layer(new THREE.CylinderGeometry(1, 1, 1, 8), { rough: 0.7, cast: true });
   const glassMat = new THREE.MeshStandardMaterial({ color: 0x9fd3f2, roughness: 0.15, transparent: true, opacity: 0.45 });
   const G = new Layer(new THREE.BoxGeometry(1, 1, 1), { material: glassMat });
   const faces = new Layer(new THREE.PlaneGeometry(1, 1), { material: clockMaterial() });
@@ -68,9 +69,9 @@ export function buildProps({ city, scene, colliders, roofSigns = [] }) {
       const at = (t, depth = 23.0) => [cx + nx * depth + (nz !== 0 ? t : 0), cz + nz * depth + (nx !== 0 ? t : 0)];
       const ry = nx !== 0 ? Math.PI / 2 : 0; // long axis along the sidewalk
       // bollards beside both crosswalk ramps
-      for (const t of [-19.4, 19.4]) { const [x, z] = at(t, 23.2); C.add(x, GROUND + 0.45, z, 0.17, 0.9, 0.17, 0, 0x3b4450); C.add(x, GROUND + 0.82, z, 0.18, 0.12, 0.18, 0, 0xf2c230); }
+      for (const t of lowEnd ? [] : [-19.4, 19.4]) { const [x, z] = at(t, 23.2); C.add(x, GROUND + 0.45, z, 0.17, 0.9, 0.17, 0, 0x3b4450); C.add(x, GROUND + 0.82, z, 0.18, 0.12, 0.18, 0, 0xf2c230); }
       // mailbox
-      if (r() > 0.6 && type !== 'industrial') {
+      if (r() > 0.6 && type !== 'industrial' && !lowEnd) {
         const [x, z] = at(-12.2, 23.1);
         C.add(x, GROUND + 0.5, z, 0.07, 1, 0.07, 0, 0x59616c); B.add(x, GROUND + 1.15, z, 0.7, 0.55, 0.55, ry, 0x2f6fe0);
         solid(x, z, 0.8, 0.8, 1.4);
@@ -135,7 +136,7 @@ export function buildProps({ city, scene, colliders, roofSigns = [] }) {
   pool.transparent = true; pool.blending = THREE.AdditiveBlending; pool.depthWrite = false; pool.opacity = 0; pool.userData.max = 0.55;
   nightFades.add(pool);
   const pools = new Layer(new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2), { material: pool });
-  for (const [x, z] of city.lampPos) pools.add(x, 0.36, z, 11, 1, 11, 0);
+  if (!lowEnd) for (const [x, z] of city.lampPos) pools.add(x, 0.36, z, 11, 1, 11, 0);
 
   // ---- distant skyline: a ring of hazy towers beyond the scenery, windows lit at night (one instanced draw)
   const sky = rng(99), skyMat = wallMaterial(0x8ea6c6, 20, 44);
@@ -147,7 +148,7 @@ export function buildProps({ city, scene, colliders, roofSigns = [] }) {
     skyline.setMatrixAt(i, M4.compose(Vd.set(Math.cos(a) * dist, h / 2 - 2, Math.sin(a) * dist), Qd, Sd.set(w, h, dd)));
   }
   skyline.frustumCulled = false; skyline.castShadow = false; skyline.receiveShadow = false;
-  root.add(skyline);
+  if (!lowEnd) root.add(skyline);
   for (const l of [B, C, G, faces, signs, glows, pools]) l.finish(root);
   return { root, counts: { boxes: B.items.length, cylinders: C.items.length, glass: G.items.length, clocks: faces.items.length / 4, roofSigns: roofSigns.length } };
 }
