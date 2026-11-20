@@ -55,6 +55,7 @@ export class EmployeeView {
 
   info(e) {
     const m = this.mgr, def = m.cfg.roles[e.role];
+    if (!m.employees.includes(e) || e.leaving) return null; // fired / quit: the panel closes itself
     const rows = [
       ['Skill', stars(e.skill)], ['Work speed', `x${m.workMult(e).toFixed(2)}`], ['Experience', `Lv ${m.level(e)} · ${e.xp} xp`],
       ['Salary', `${$(e.salary)}/day`], ['Status', e.dept === 'off' ? 'Off duty' : STATE_TEXT[e.state] || e.state], ['Tasks done', e.tasksDone],
@@ -66,7 +67,7 @@ export class EmployeeView {
       title: `${def.icon} ${e.name}`, subtitle: def.label, rows,
       // only real actions: skill training, workplace change (when the role can work elsewhere), duty, staff board, fire (confirmed)
       actions: [
-        ...(e.skill < m.cfg.maxSkill ? [{ label: `Upgrade skill → ${e.skill + 1} · ${$(tc)}`, disabled: !this.economy.canAfford(tc), cb: () => m.train(e.id) }] : []),
+        ...(e.skill < m.cfg.maxSkill ? [{ label: `Upgrade skill → ${e.skill + 1} · ${$(tc)}`, disabled: !this.economy.canAfford(tc), reason: `Not enough cash: ${$(Math.max(0, Math.ceil(tc - this.economy.cash)))} more needed`, cb: () => m.train(e.id) }] : []),
         ...(m.eligibleDepts(e).length > 1 ? [{ label: `Change workplace · ${m.facilities[m.homeOf(e)]?.label || m.homeOf(e)} ▸`, kind: 'secondary', cb: () => m.transfer(e.id) }] : []),
         { label: e.dept === 'off' ? 'Put on duty' : 'Send off duty', kind: 'secondary', cb: () => m.assign(e.id, e.dept === 'off' ? m.homeOf(e) : 'off') },
         { label: 'Open Staff board', kind: 'secondary', cb: () => this.bus.emit('ui:open', 'staff') },

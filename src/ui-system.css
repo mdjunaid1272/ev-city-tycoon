@@ -601,3 +601,7 @@ button, .btn, .ibtn, .sc, .act, .mi, [role="button"] { touch-action: manipulatio
 /* keyboard focus: always visible, on every control, light and dark backgrounds */
 button:focus-visible, [role="button"]:focus-visible, .btn:focus-visible, .ibtn:focus-visible, .sc:focus-visible, .act:focus-visible, .mi:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible, .d-stats:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; box-shadow: 0 0 0 5px #fff; position: relative; z-index: 2; }
 #modal-card:focus, #confirm-card:focus { outline: none; }
+
+/* why an action is disabled */
+.sel-why { margin-top: 8px; padding: 6px 8px; border-radius: var(--r-sm); background: #fff4e0; border: 2px solid var(--warn); font-size: 11.5px; line-height: 1.35; color: var(--text); }
+.sel-why b { font-weight: 800; }

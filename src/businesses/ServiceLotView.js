@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { mat, rbox, mesh, textTexture } from '../world/Materials.js';
 import { createBuilding, setCarDirt } from '../world/Models.js';
+import { serviceBuildingInfo } from '../ui/BuildingInfo.js';
 import { PathFollower } from '../vehicles/PathFollower.js';
 import { NavGrid } from '../employees/NavGrid.js';
 import { makeLabel } from './StationView.js';
@@ -194,15 +195,8 @@ export class ServiceLotView {
     t.add(mesh(rbox(0.7, 0.5, 0.05, 0.02, 1), mat(0x0b2a40, { emissive: 0x39d0ff, ei: 0.9 }), { y: 1.15, z: 0.32, cast: false }));
     t.position.set(this.terminalLocal.x, FLOOR, this.terminalLocal.z);
     t.rotation.y = 0;
-    t.userData.select = () => ({
-      title: `${this.biz.cfg.icon} ${this.biz.cfg.label}`, subtitle: 'Business control point',
-      rows: [['Bays', `${this.biz.unlockedBays}/${this.biz.bays.length}`], ['Queue', `${this.biz.queue.length}/${this.biz.maxQueue}`]],
-      actions: [
-        { label: 'Manage', cb: () => this.bus.emit('ui:open', this.id) },
-        { label: 'Staff', kind: 'secondary', cb: () => this.bus.emit('ui:open', 'staff') },
-        { label: 'Upgrade', kind: 'secondary', cb: () => this.bus.emit('ui:open', 'upgrades') },
-      ],
-    });
+    t.userData.select = () => serviceBuildingInfo(this);
+
     const tw = this.W(this.terminalLocal.x, this.terminalLocal.z);
     t.userData.focus = new THREE.Vector3(tw.x, 0, tw.z);
     this.stage.add(t);
@@ -210,6 +204,14 @@ export class ServiceLotView {
     this.addCollider(this.terminalLocal.x, this.terminalLocal.z, 1.2, 1.2, 2);
     const pos = new THREE.Vector3(tw.x, 0, tw.z);
     this.interactables.push({ id: `${this.id}-terminal`, pos, radius: 3.4, getPrompt: () => ({ text: `Open ${this.biz.cfg.label} manager` }), run: () => this.bus.emit('ui:open', this.id) });
+  }
+
+  /** The main building is selectable too (same panel as the terminal). */
+  makeBuildingSelectable(b) {
+    b.userData.select = () => serviceBuildingInfo(this);
+    const w = this.W(b.position.x, b.position.z);
+    b.userData.focus = new THREE.Vector3(w.x, 0, w.z);
+    this.selectables.push(b);
   }
 
   /** Shown/hidden bays, ghost slots for unbuilt bays. */

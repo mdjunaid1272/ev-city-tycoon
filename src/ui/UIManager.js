@@ -323,6 +323,7 @@ export class UIManager {
     $('selection').classList.add('hidden');
     document.body.classList.remove('sel-open');
     this.game.selectionRing.visible = false;
+    this.game.setSelectionOutline(null);
   }
   /** Contextual panel for the selected 3D object. Actions come from the object's real state; `kind` picks the button style. */
   refreshSelection() {
@@ -330,7 +331,12 @@ export class UIManager {
     if (!this.selectionFn) return;
     const info = this.selectionFn();
     if (!info) return this.clearSelection();
-    const key = JSON.stringify([info.title, info.rows, info.actions.map((a) => [a.label, !!a.disabled, a.kind || ''])]);
+    // management view: every selected object can be centred with one tap
+    if (this.camera.inManagement && this.game.selectionRing.visible) {
+      const at = this.game.selectionRing.position;
+      info.actions = [...info.actions, { label: 'Focus camera', kind: 'secondary', cb: () => this.camera.focusOn(at) }];
+    }
+    const key = JSON.stringify([info.title, info.rows, info.actions.map((a) => [a.label, !!a.disabled, a.kind || '', a.reason || ''])]);
     if (key === this._selKey) return;
     this._selKey = key;
     el.classList.remove('hidden');
@@ -338,7 +344,9 @@ export class UIManager {
     el.innerHTML = `<div class="sel-head"><div><h3>${esc(info.title)}</h3><div class="sub">${esc(info.subtitle || '')}</div></div><button class="x" data-sel-close title="Close" aria-label="Close">${icon('close', 16)}</button></div>
       ${info.rows.length ? `<div class="rows">${info.rows.map(([k, v]) => `<span>${esc(k)}</span><span>${esc(v)}</span>`).join('')}</div>` : ''}
       <div class="sel-actions">${info.actions.map((a, i) => `<button class="btn ${a.kind === 'secondary' ? 'ghost' : a.kind === 'danger' ? 'danger' : ''}" data-a="${i}" ${a.disabled ? 'disabled' : ''}>${esc(a.label)}</button>`).join('')}
-        <button class="btn ghost" data-sel-close>Close</button></div>`;
+        <button class="btn ghost" data-sel-close>Close</button></div>
+      ${info.actions.some((a) => a.disabled) ? `<div class="sel-why" role="note">${info.actions.filter((a) => a.disabled).map((a) => `<div><b>${esc(a.label.split(' · ')[0])}</b>: ${esc(a.reason || 'Not available right now')}</div>`).join('')}</div>` : ''}`;
+    el.onpointerdown = el.onpointerup = el.onclick = (e) => e.stopPropagation(); // never reaches the 3D scene underneath
     el.querySelectorAll('[data-sel-close]').forEach((b) => (b.onclick = () => this.clearSelection()));
     el.querySelectorAll('[data-a]').forEach((b) => (b.onclick = () => { info.actions[b.dataset.a].cb(); this._selKey = null; if (this.selectionFn) this.refreshSelection(); }));
   }

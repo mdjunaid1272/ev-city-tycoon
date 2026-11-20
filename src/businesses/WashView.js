@@ -17,6 +17,7 @@ export class WashView extends ServiceLotView {
     const b = createBuilding(22, 4.6, 6, 0x4cc9f0, { roofColor: 0xffffff, awning: 0xffc43d, sign: { text: 'CAR WASH', bg: '#2f8cff', fg: '#ffffff' } });
     b.position.set(-8, FLOOR, -21);
     this.stage.add(b);
+    this.makeBuildingSelectable(b);
     this.colliders.add(this.origin.x - 8, this.origin.z - 21, 22.3, 6.3, 5);
     // long canopy over the wash bays (fades out so bays stay visible)
     this.roofPiece(22, 0.5, 11.5, 0xf4f7fa, -8, 5.9, BAY_Z - 0.5);

@@ -14,6 +14,7 @@ export class GarageView extends ServiceLotView {
     const b = createBuilding(22, 4.8, 6, 0xff7a59, { roofColor: 0xffffff, awning: 0x2b3340, sign: { text: 'EV GARAGE', bg: '#2b3340', fg: '#ffffff' } });
     b.position.set(-8, FLOOR, -21);
     this.stage.add(b);
+    this.makeBuildingSelectable(b);
     this.colliders.add(this.origin.x - 8, this.origin.z - 21, 22.3, 6.3, 5);
     this.roofPiece(22, 0.5, 11.5, 0x4a525d, -8, 5.9, BAY_Z - 0.5);
     this.roofPiece(22.2, 0.45, 0.5, 0xff7a59, -8, 5.65, BAY_Z + 5.4, 0.1);

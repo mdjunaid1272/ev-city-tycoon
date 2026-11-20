@@ -16,6 +16,7 @@ export class HubView extends ServiceLotView {
     const b = createBuilding(22, 4.6, 6, h.building, { roofColor: 0xffffff, awning: 0xffc43d, sign: { text: h.sign, bg: '#1f2a37', fg: '#ffffff' } });
     b.position.set(-8, FLOOR, -21);
     this.stage.add(b);
+    this.makeBuildingSelectable(b);
     this.addCollider(-8, -21, 22.3, 6.3, 5);
     this.roofPiece(22, 0.5, 11.5, 0xf4f7fa, -8, 5.9, BAY_Z - 0.5);
     this.roofPiece(22.2, 0.45, 0.5, h.accent, -8, 5.65, BAY_Z + 5.4, 0.1);

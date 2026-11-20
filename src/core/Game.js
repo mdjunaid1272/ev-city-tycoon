@@ -416,7 +416,23 @@ export class Game {
     const focus = o.userData.focus;
     this.selectionRing.position.set(focus.x, 0.45, focus.z);
     this.selectionRing.visible = true;
+    this.setSelectionOutline(o);
     this.ui.showSelection(o.userData.select);
+  }
+
+  /** Yellow outline box around the selected object (follows it when it moves, e.g. an employee). Pass null to remove. */
+  setSelectionOutline(obj) {
+    if (this.selectionBox) {
+      this.sm.scene.remove(this.selectionBox);
+      this.selectionBox.geometry.dispose(); this.selectionBox.material.dispose();
+      this.selectionBox = null;
+    }
+    if (!obj) return;
+    this.selectionBox = new THREE.BoxHelper(obj, 0xffd23f);
+    this.selectionBox.material.depthTest = false;
+    this.selectionBox.renderOrder = 998;
+    this.selectionBox.frustumCulled = false;
+    this.sm.scene.add(this.selectionBox);
   }
 
   /** Street view, mouse: hold the left button and drag — the character keeps walking towards the cursor; release to stop. */
@@ -498,6 +514,7 @@ export class Game {
       if (this.autosave > 15) { this.autosave = 0; this.save(); }
     }
     this.camera.update(dt);
+    this.selectionBox?.update();
     if (this.selectionRing.visible) {
       const s = (1 + Math.sin(this.time * 4) * 0.06) * Math.max(1, this.camera.mg.dist / 120);
       this.selectionRing.scale.set(s, s, s);

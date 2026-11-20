@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { mat, rbox, mesh, nightMaterials, textTexture } from '../world/Materials.js';
 import { createBuilding, setCarDirt } from '../world/Models.js';
+import { stationBuildingInfo, needCash } from '../ui/BuildingInfo.js';
 import { PathFollower } from '../vehicles/PathFollower.js';
 import { BAY_SLOTS } from './ChargingStation.js';
 import { QUEUE_SLOTS } from '../customers/CustomerManager.js';
@@ -149,6 +150,9 @@ export class StationView {
     shop.position.set(-14, 0.34, -17);
     r.add(shop);
     this.colliders.add(-14, -17, 12.3, 8.3, 5);
+    shop.userData.select = () => stationBuildingInfo(this); // the whole building is selectable, not just the terminal
+    shop.userData.focus = new THREE.Vector3(-14, 0, -17);
+    this.selectables.push(shop);
     this.buildTerminal();
 
     // pylon sign
@@ -243,15 +247,7 @@ export class StationView {
     t.add(mesh(rbox(0.9, 1.4, 0.6, 0.15, 2), mat(0x2f8cff), { y: 0.85 }));
     t.add(mesh(rbox(0.7, 0.5, 0.05, 0.02, 1), mat(0x0b2a40, { emissive: 0x39d0ff, ei: 0.9 }), { y: 1.15, z: -0.32, cast: false }));
     t.position.copy(this.terminalPos);
-    t.userData.select = () => ({
-      title: 'Station Terminal', subtitle: 'Business control point',
-      rows: [['Bays', `${this.station.unlockedCount}/${this.station.bays.length}`], ['Price', `$${this.station.pricePerKwh.toFixed(2)}/kWh`]],
-      actions: [
-        { label: 'Manage', cb: () => this.bus.emit('ui:open', 'station') },
-        { label: 'Upgrade', kind: 'secondary', cb: () => this.bus.emit('ui:open', 'upgrades') },
-        { label: 'Statistics', kind: 'secondary', cb: () => this.bus.emit('ui:open', 'stats') },
-      ],
-    });
+    t.userData.select = () => stationBuildingInfo(this);
     t.userData.focus = this.terminalPos.clone();
     this.root.add(t);
     this.selectables.push(t);
@@ -345,7 +341,7 @@ export class StationView {
       return {
         title: `Bay ${i + 1} (empty slot)`, subtitle: 'Not built yet',
         rows: [['Build cost', `$${cost.toLocaleString('en-US')}`], ['Adds', `+${st.charger.kw} kW capacity`]],
-        actions: [{ label: `Build bay · $${cost.toLocaleString('en-US')}`, disabled: !this.economy.canAfford(cost), cb: () => st.buyBay(i) }],
+        actions: [{ label: `Build bay · $${cost.toLocaleString('en-US')}`, disabled: !this.economy.canAfford(cost), reason: needCash(this.economy, cost), cb: () => st.buyBay(i) }],
       };
     }
     rows.push(['Status', { empty: 'Free', reserved: 'Vehicle arriving', waiting: 'Vehicle waiting', charging: 'Charging', done: 'Complete' }[b.state]]);
@@ -361,7 +357,7 @@ export class StationView {
     if (b.state === 'charging') actions.push({ label: 'Stop & bill', cb: () => st.stopCharging(i) });
     if (b.state === 'done' && !b.released) actions.push({ label: 'Unplug & send off', cb: () => st.release(i) });
     const nx = st.nextChargerUpgrade();
-    if (nx) actions.push({ label: `Upgrade chargers → ${nx.name} · $${nx.cost.toLocaleString('en-US')}`, disabled: !this.economy.canAfford(nx.cost), cb: () => st.upgradeChargers() });
+    if (nx) actions.push({ label: `Upgrade chargers → ${nx.name} · $${nx.cost.toLocaleString('en-US')}`, disabled: !this.economy.canAfford(nx.cost), reason: needCash(this.economy, nx.cost), cb: () => st.upgradeChargers() });
     return { title: `Bay ${i + 1}`, subtitle: 'Charging bay', rows, actions };
   }
 
