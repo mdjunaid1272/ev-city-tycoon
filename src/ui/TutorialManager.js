@@ -12,7 +12,7 @@ import * as THREE from 'three';
 const STEPS = [
   {
     id: 'move', title: 'Get moving', text: 'Walk around your new charging station.', goal: 'Walk 10 metres', ok: 'Nice walking!',
-    hint: 'WASD / arrow keys · hold Shift to sprint · or hold the mouse button and drag', hintTouch: 'Use the joystick: press and drag in the bottom-left corner to walk',
+    hint: 'WASD (Space = down) · hold Shift to sprint · or hold the mouse button and drag', hintTouch: 'Use the joystick: press and drag in the bottom-left corner to walk',
     done: (g, n) => n.walked >= 10,
   },
   {

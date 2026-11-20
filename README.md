@@ -20,7 +20,7 @@ npm run build    # production build in dist/
 
 | | Desktop | Mobile |
 |-|-|-|
-| Move | WASD / arrows, or click the ground (Shift sprint) | Joystick, or tap the ground |
+| Move | W A S / Space (down) / arrows, or click the ground (Shift sprint) | Joystick, or tap the ground |
 | Camera | Fixed high-angle follow camera, wheel zoom | Pinch |
 | Interact | Stand next to a bay (cars connect by themselves); click a charging charger to stop and bill; click the floating Open button at the terminal | Same, by tapping |
 | Management (isometric) camera | M | Manage button; ↺ ↻ rotate 90° |
