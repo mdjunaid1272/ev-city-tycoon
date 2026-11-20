@@ -15,11 +15,11 @@ export const ProfilePanel = {
   },
 
   tplProfile() {
-    const p = this.game.profile, sum = p.summary(this.profileContext()), s = this.stats.total;
+    const p = this.game.profile, sum = p.summary(this.profileContext());
     const pr = this.progression;
     const earned = sum.badges.filter((b) => b.earned).length;
     const since = new Date(p.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
-    return `<h2>Profile</h2><div class="sub">Your boss card. Changes save automatically.</div>
+    return `<h2>Profile</h2>
       <div class="prof-head">
         <div class="prof-ava" aria-hidden="true">${p.avatar}</div>
         <div class="prof-id">
@@ -34,25 +34,21 @@ export const ProfilePanel = {
       <div class="prof-grid" role="radiogroup" aria-label="Avatar">${AVATARS.map((a) => `<button class="prof-opt${a === p.avatar ? ' on' : ''}" role="radio" aria-checked="${a === p.avatar}" data-profile="avatar:${a}" aria-label="Avatar ${a}">${a}</button>`).join('')}</div>
       <div class="sect">Outfit</div>
       <div class="prof-grid" role="radiogroup" aria-label="Outfit colour">${OUTFITS.map((o) => `<button class="prof-sw${o.id === p.outfit ? ' on' : ''}" role="radio" aria-checked="${o.id === p.outfit}" data-profile="outfit:${o.id}" aria-label="${o.name} outfit" style="--shirt:${hex(o.shirt)};--hat:${hex(o.hat)}"><i></i></button>`).join('')}</div>
-      <div class="sect">Career</div>
+      <div class="sect">Time played</div>
       <div class="kv"><span>Playtime</span><b>${duration(p.playSeconds)}</b></div>
       <div class="kv"><span>Playing since</span><b>${esc(since)}</b></div>
-      <div class="kv"><span>City day / stage</span><b>Day ${this.day.day} · Stage ${this.progression.stage}</b></div>
-      <div class="kv"><span>Total revenue</span><b>${money(this.economy.totalRevenue)}</b></div>
-      <div class="kv"><span>Customers served</span><b>${s.served}</b></div>
       <div class="sect">Badges (${earned}/${sum.badges.length})</div>
-      <div class="prof-badges">${sum.badges.map((b) => `<div class="bd${b.earned ? ' on' : ''}" title="${esc(b.desc)}"><span>${b.earned ? b.icon : '🔒'}</span><small>${esc(b.name)}</small><em>${esc(b.desc)}</em></div>`).join('')}</div>`;
+      <div class="prof-badges">${sum.badges.map((b) => `<div class="bd${b.earned ? ' on' : ''}" title="${esc(b.desc)}"><span>${b.earned ? b.icon : '🔒'}</span><small>${esc(b.name)}</small></div>`).join('')}</div>`;
   },
 
   /** Stage track (done / current / locked), the current stage, and the next stage's goals with live progress. */
   profileStages() {
-    const pr = this.progression, cur = pr.current, nxt = pr.next;
+    const pr = this.progression, nxt = pr.next;
     const track = pr.stages.map((s) => {
       const st = s.stage < pr.stage ? 'done' : s.stage === pr.stage ? 'cur' : 'lock';
       return `<li class="st ${st}"${st === 'cur' ? ' aria-current="step"' : ''}><i>${st === 'done' ? '✓' : st === 'lock' ? '🔒' : s.stage}</i><small>${esc(s.name)}</small></li>`;
     }).join('');
-    let html = `<div class="sect">Stages (${pr.stage}/${pr.stages.length})</div><ol class="stage-track">${track}</ol>
-      <div class="prof-stage"><b>Stage ${pr.stage} · ${esc(cur.name)}</b><div class="sub">${esc(cur.blurb || '')}</div></div>`;
+    let html = `<div class="sect">Stages (${pr.stage}/${pr.stages.length})</div><ol class="stage-track">${track}</ol>`;
     const future = pr.stages.filter((x) => x.stage > pr.stage);
     if (future.length) {
       this._profOpen = this._profOpen || new Map(); // the player's own expand / collapse choices survive the live refresh
