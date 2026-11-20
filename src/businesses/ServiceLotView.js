@@ -386,7 +386,16 @@ export class ServiceLotView {
         // two cars that would block EACH OTHER (crossing paths): the older one goes first, so nobody waits for a car that waits for them
         if (!(!n.f || n.f.done) && (n.order || 0) > (m.order || 0) && probe(n, m) < Infinity) continue;
         gap = Math.min(gap, t - 0.4);
-        if (n.state === 'merging' || n.state === 'holding' || n.state === 'pulling') hard = true; // a car waiting to rejoin the road will move on: queue behind it
+        if (n.state === 'merging' || n.state === 'holding' || n.state === 'pulling' || n.state === 'leaving') hard = true; // a car waiting to rejoin the road will move on: queue behind it
+      }
+      // a car pulling out to the road (or waiting at its edge) also stops short of road cars standing or driving in its way
+      if (m.state === 'pulling' || m.state === 'merging') {
+        for (const a of this.traffic.agents) {
+          if (a.obj === m.obj || !a.obj.visible) continue;
+          const t = probe(m, { obj: a.obj });
+          if (t === Infinity) continue;
+          gap = Math.min(gap, t - 0.4); hard = true;
+        }
       }
       for (const zs of zoneState) {
         const ent = zs.entering.find((e) => e.m === m);

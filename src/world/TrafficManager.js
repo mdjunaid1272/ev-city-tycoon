@@ -168,6 +168,14 @@ export class TrafficManager {
       if (along < 0 && -along < behind && a.v > 0.5) return false; // a moving car about to pass the merge point
       if (along >= 0 && along < ahead && !(a.v < 0.5 && along >= (a.len + len) / 2 + 1.2)) return false;
     }
+    // cars of other businesses that are still inside their own lots (waiting at their own merge point, which can be only a few metres away)
+    if (this.colliders) {
+      for (const o of this.colliders.vehicles) {
+        if (o === obj || !o.visible || !o.parent || this.agents.some((a) => a.obj === o)) continue;
+        const need = (len + (o.userData.length || 4.2)) / 2 + 1;
+        if (Math.hypot(o.position.x - px, o.position.z - pz) < need) return false;
+      }
+    }
     return true;
   }
 
