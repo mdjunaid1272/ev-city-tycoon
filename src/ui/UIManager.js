@@ -52,6 +52,7 @@ export class UIManager {
     card0.addEventListener('pointerdown', () => { this._ptrDown = true; });
     const release = () => { if (!this._ptrDown) return; this._ptrDown = false; setTimeout(() => { if (this._dirty && !this._ptrDown) { this._dirty = false; this.renderModal(); } }, 80); };
     addEventListener('pointerup', release, true); addEventListener('pointercancel', release, true);
+    addEventListener('keydown', (e) => this.trapTab(e), true);
     $('d-missions').onclick = () => { this.tab.missions = 'daily'; this.open('missions'); };
     // expandable overview: tap the stats row for the customer breakdown (state is remembered)
     const ds = $('d-stats'); let open = false; try { open = localStorage.getItem('evct.overview') === '1'; } catch (e) {}
@@ -350,12 +351,15 @@ export class UIManager {
     if (this.confirmOpen) this.resolveConfirm(false);
     if (this.selectionFn) this.clearSelection(); // one panel at a time
     const keepPaused = this.modal === 'pause' && MORE_MODALS.includes(name); // pause -> settings / help / save stays paused
+    if (!this.modal) this._returnFocus = document.activeElement; // where focus goes back to when the board closes
     this.modal = name;
     this._pauseRendered = false; this._modalHtml = null; this._dirty = false;
     $('modal').classList.remove('hidden');
     this.game.setPaused(name === 'pause' || keepPaused);
     this.renderModal();
     this.syncNav();
+    this.syncBlocking();
+    this.focusInto($('modal-card'));
   }
   closeModal() {
     if (this.modal === 'offline' && this.game.pendingOffline) { this.offline.apply(this.game.pendingOffline, 1); this.game.pendingOffline = null; this.toast('Offline earnings collected', 'good'); }
@@ -364,7 +368,48 @@ export class UIManager {
     $('modal').classList.add('hidden');
     this.game.setPaused(false);
     this.syncNav();
+    this.syncBlocking();
+    this.restoreFocus();
     if (wasOffline && this.dailyReward.status()) this.open('login');
+  }
+
+  // ---------- keyboard focus + blocking dialogs ----------
+  /** Boards that must be answered before anything behind them can be used. */
+  get blocking() { return !!this.confirmOpen || ['pause', 'offline', 'login', 'stageup', 'report'].includes(this.modal) || (!!this.modal && !!this.game.paused); }
+
+  /** While a blocking dialog is open the world UI behind it can be neither clicked nor tabbed to. */
+  syncBlocking() {
+    const hud = $('hud'), modal = $('modal');
+    const hudOff = this.blocking, modalOff = !!this.confirmOpen;
+    if (hud.inert !== hudOff) hud.inert = hudOff;
+    if (modal.inert !== modalOff) modal.inert = modalOff;
+  }
+
+  focusables(root) {
+    return [...root.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')].filter((el) => !el.disabled && !el.hidden && el.offsetParent !== null && el.getAttribute('tabindex') !== '-1');
+  }
+
+  focusInto(root) {
+    if (!root) return;
+    root.focus({ preventScroll: true }); // the dialog itself: the next Tab lands on its first control
+  }
+
+  restoreFocus() {
+    const el = this._returnFocus; this._returnFocus = null;
+    if (el && el.isConnected && typeof el.focus === 'function' && el !== document.body) { try { el.focus({ preventScroll: true }); } catch (e) { /* element is gone */ } }
+  }
+
+  /** Tab / Shift+Tab never leave the open dialog. */
+  trapTab(e) {
+    if (e.key !== 'Tab') return;
+    const root = this.confirmOpen ? $('confirm-card') : this.modal ? $('modal-card') : null;
+    if (!root) return;
+    const list = this.focusables(root);
+    if (!list.length) { e.preventDefault(); root.focus(); return; }
+    const first = list[0], last = list[list.length - 1], at = document.activeElement;
+    if (!root.contains(at)) { e.preventDefault(); (e.shiftKey ? last : first).focus(); }
+    else if (e.shiftKey && (at === first || at === root)) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && at === last) { e.preventDefault(); first.focus(); }
   }
 
   // ---------- confirmation dialog (expensive purchases, destructive actions) ----------
@@ -372,6 +417,7 @@ export class UIManager {
   askConfirm({ title, text, yes = 'Confirm', no = 'Cancel', danger = false }) {
     if (this.confirmOpen) this.resolveConfirm(false);
     return new Promise((resolve) => {
+      this._confirmReturn = document.activeElement;
       this.confirmOpen = resolve;
       $('confirm-card').innerHTML = `<h3>${esc(title)}</h3><p>${esc(text)}</p>
         <div class="row"><button class="btn ghost" data-cf="no">${esc(no)}</button><button class="btn ${danger ? 'danger solid' : ''}" data-cf="yes">${esc(yes)}</button></div>`;
@@ -379,6 +425,8 @@ export class UIManager {
       $('confirm-card').querySelector('[data-cf="no"]').onclick = () => this.resolveConfirm(false);
       $('confirm-card').querySelector('[data-cf="yes"]').onclick = () => this.resolveConfirm(true);
       $('confirm').onpointerdown = (e) => { if (e.target === $('confirm')) this.resolveConfirm(false); };
+      this.syncBlocking();
+      $('confirm-card').querySelector('[data-cf="no"]').focus({ preventScroll: true }); // the safe answer is focused first
     });
   }
   resolveConfirm(v) {
@@ -386,6 +434,9 @@ export class UIManager {
     if (!r) return;
     this.confirmOpen = null;
     $('confirm').classList.add('hidden');
+    this.syncBlocking();
+    const back = this._confirmReturn; this._confirmReturn = null;
+    if (back && back.isConnected && typeof back.focus === 'function') { try { back.focus({ preventScroll: true }); } catch (e) { /* gone */ } }
     r(v);
   }
   /** Run `fn` straight away for cheap actions; ask first when the price reaches CONFIRM_COST. */
