@@ -1,0 +1,185 @@
+/* =====================================================================================================================
+   ARCADE .IO SKIN (inspired by Hole.io): heavy rounded display font, white text with a dark outline, saturated flat-colour
+   buttons with a darker lip, dark translucent in-game HUD (like a leaderboard), white menu cards with colourful header ribbons.
+   Loaded after ui-system.css. Pure CSS: remove the <link> to get the previous skin back (ui-3d.css is kept as an alternative).
+   ===================================================================================================================== */
+:root {
+  --ink: #1b2a5e;                                   /* outline colour */
+  --hud: rgba(14, 22, 48, .62);                     /* dark translucent HUD glass */
+  --hud-line: rgba(255, 255, 255, .22);
+  --card: #ffffff;
+  --blue: #2f8bff; --blue-d: #1c63d0; --blue-l: #6db1ff;
+  --green: #35d159; --green-d: #1f9a3d; --green-l: #7ceb95;
+  --orange: #ff9a1f; --orange-d: #c96a00; --orange-l: #ffc266;
+  --red: #ff4b55; --red-d: #bf2530; --red-l: #ff8a90;
+  --purple: #9b5cff; --purple-d: #6b34c8;
+  --yellow: #ffd23c; --yellow-d: #d49b00;
+  --font-d: 'Lilita One', 'Fredoka', system-ui, sans-serif;
+  --stroke: 1.5px 0 0 var(--ink), -1.5px 0 0 var(--ink), 0 1.5px 0 var(--ink), 0 -1.5px 0 var(--ink), 1px 1px 0 var(--ink), -1px 1px 0 var(--ink), 1px -1px 0 var(--ink), -1px -1px 0 var(--ink), 0 3px 0 rgba(0, 0, 0, .25);
+  --lip: 5px;
+}
+
+/* ---------- display font for everything that should feel like a game ---------- */
+.btn, .tbtn, .tab, .sc small, .pill, #v-loc, #modal-card > h2, .sel-head h3, .toast, .d-stat b, .d-stat small, #m-title, .m-head, .d-dm, #confirm-card h3, .act, #term-open, .sect, .tile b, .tile small {
+  font-family: var(--font-d); letter-spacing: .3px;
+}
+
+/* =====================================================================================================================
+   BUTTONS: flat saturated colour, a darker lip underneath, white outlined text
+   ===================================================================================================================== */
+.btn { --f: var(--blue); --fl: var(--blue-l); --fd: var(--blue-d); }
+.btn.ghost { --f: #eef2fb; --fl: #ffffff; --fd: #b9c3dd; }
+.btn.warn, .btn[data-bay-act="stop"] { --f: var(--orange); --fl: var(--orange-l); --fd: var(--orange-d); }
+.btn.danger { --f: #fff0f0; --fl: #ffffff; --fd: #f0b3b6; }
+.btn.danger.solid { --f: var(--red); --fl: var(--red-l); --fd: var(--red-d); }
+.btn.success, .btn[data-emp-act^="hire"], .btn[data-up], .btn[data-svc], .btn[data-bay-act="build"], .btn[data-bay-act="start"], .btn[data-upgrade],
+.btn[data-map], .btn[data-prop], .btn[data-district], .btn[data-hub], .btn[data-contract], .btn[data-emp-act^="train"] { --f: var(--green); --fl: var(--green-l); --fd: var(--green-d); }
+
+.btn, .btn.blue, .btn.ghost, .btn.danger, .btn.success, .btn.warn {
+  position: relative; border: 0; border-radius: 14px;
+  background: linear-gradient(180deg, var(--fl) 0%, var(--f) 38%, var(--f) 100%);
+  color: #fff; font-size: 16px; font-weight: 400; text-shadow: var(--stroke);
+  box-shadow: 0 var(--lip) 0 var(--fd), 0 calc(var(--lip) + 5px) 10px rgba(0, 0, 0, .25), inset 0 2px 0 rgba(255, 255, 255, .55);
+  margin-bottom: var(--lip);
+  transition: transform .07s ease, box-shadow .07s ease, filter .1s;
+}
+.btn.ghost { color: var(--ink); text-shadow: none; }
+.btn.danger { color: var(--red-d); text-shadow: none; }
+.btn::after { content: none; }
+.btn:hover:not([disabled]) { filter: brightness(1.06); transform: translateY(-1px); box-shadow: 0 calc(var(--lip) + 1px) 0 var(--fd), 0 calc(var(--lip) + 7px) 12px rgba(0, 0, 0, .28), inset 0 2px 0 rgba(255, 255, 255, .55); }
+.btn:active:not([disabled]) { transform: translateY(calc(var(--lip) - 1px)); filter: brightness(.97); box-shadow: 0 1px 0 var(--fd), inset 0 2px 4px rgba(0, 0, 0, .18); }
+.btn[disabled], button.btn:disabled { --f: #cfd6e6; --fl: #e4e9f4; --fd: #aab3c8; color: #7c87a3; text-shadow: none; filter: none; transform: none; box-shadow: 0 var(--lip) 0 var(--fd); }
+.btn.on, .btn.ghost.on { --f: var(--blue); --fl: var(--blue-l); --fd: var(--blue-d); color: #fff; text-shadow: var(--stroke); }
+
+/* round icon buttons (top bar, camera bar): dark glass discs with white icons */
+.ibtn, .round, #topbar .ibtn, #cam-bar .ibtn {
+  background: var(--hud); color: #fff; border: 2px solid var(--hud-line); border-radius: 50%;
+  box-shadow: 0 4px 0 rgba(0, 0, 0, .35), inset 0 2px 0 rgba(255, 255, 255, .18); margin-bottom: 4px;
+  transition: transform .07s, box-shadow .07s, background .1s;
+}
+.ibtn:hover:not([disabled]) { background: rgba(47, 139, 255, .75); transform: translateY(-1px); }
+.ibtn:active:not([disabled]) { transform: translateY(3px); box-shadow: 0 1px 0 rgba(0, 0, 0, .35); }
+.ibtn.on, .ibtn[aria-pressed="true"], #topbar .ibtn.on, #cam-bar .ibtn.on { background: linear-gradient(180deg, var(--blue-l), var(--blue)); box-shadow: 0 4px 0 var(--blue-d), inset 0 2px 0 rgba(255, 255, 255, .5); transform: none; color: #fff; }
+#cam-bar #btn-mgmt { border-radius: 18px; }
+.ibtn small { font-family: var(--font-d); font-size: 9px; letter-spacing: .3px; }
+
+/* bottom navigation: a dark bar with one bright coloured key per section */
+#shortcuts { background: var(--hud); border: 2px solid var(--hud-line); border-radius: 26px; box-shadow: 0 6px 0 rgba(0, 0, 0, .3), 0 14px 24px rgba(0, 0, 0, .25); backdrop-filter: blur(6px); }
+.sc { --f: var(--blue); --fd: var(--blue-d); --fl: var(--blue-l); color: #fff; border: 0; border-radius: 18px; background: linear-gradient(180deg, var(--fl), var(--f) 40%, var(--f)); box-shadow: 0 4px 0 var(--fd), inset 0 2px 0 rgba(255, 255, 255, .5); margin: 0 3px 4px; transition: transform .07s, box-shadow .07s, filter .1s; }
+.sc:nth-child(1) { --f: #2f8bff; --fl: #6db1ff; --fd: #1c63d0; }
+.sc:nth-child(2) { --f: #ff9a1f; --fl: #ffc266; --fd: #c96a00; }
+.sc:nth-child(3) { --f: #35d159; --fl: #7ceb95; --fd: #1f9a3d; }
+.sc:nth-child(4) { --f: #ff4b8a; --fl: #ff8db5; --fd: #c02462; }
+.sc:nth-child(5) { --f: #9b5cff; --fl: #c09bff; --fd: #6b34c8; }
+.sc small { color: #fff; font-size: 11px; text-shadow: 0 1.5px 0 rgba(0, 0, 0, .45); }
+.sc:hover { filter: brightness(1.08); background: linear-gradient(180deg, var(--fl), var(--f) 40%, var(--f)); transform: translateY(-1px); }
+.sc:active, .sc.on { transform: translateY(3px); box-shadow: 0 1px 0 var(--fd), inset 0 3px 6px rgba(0, 0, 0, .25); }
+.sc.on { background: linear-gradient(180deg, var(--f), var(--fd)); }
+.sc span, .sc svg, .sc [data-icon] { color: #fff !important; stroke: #fff; }
+.sc svg { filter: drop-shadow(0 2px 0 rgba(0, 0, 0, .35)); }
+
+/* touch action buttons */
+.act { background: linear-gradient(180deg, #ffe27a, var(--yellow) 45%, #ffb800); color: var(--ink); border: 0; box-shadow: 0 5px 0 var(--yellow-d), 0 10px 14px rgba(0, 0, 0, .3), inset 0 2px 0 rgba(255, 255, 255, .7); font-size: 22px; }
+.act:active { transform: translateY(4px); box-shadow: 0 1px 0 var(--yellow-d); }
+.act.small { background: var(--hud); color: #fff; border: 2px solid var(--hud-line); box-shadow: 0 4px 0 rgba(0, 0, 0, .35); }
+.act.small.on { background: linear-gradient(180deg, var(--blue-l), var(--blue)); box-shadow: 0 4px 0 var(--blue-d); }
+
+/* menu rows, tabs */
+.mi { color: #fff; font-family: var(--font-d); font-size: 15px; letter-spacing: .3px; border-radius: 12px; }
+.mi:hover { background: rgba(255, 255, 255, .16); box-shadow: none; }
+.mi [data-icon] { color: var(--yellow); }
+.tab { font-family: var(--font-d); font-size: 14px; letter-spacing: .3px; color: var(--ink); background: #e8eefb; border: 0; border-radius: 999px; box-shadow: 0 3px 0 #b9c3dd; margin-bottom: 3px; transition: transform .07s, box-shadow .07s; }
+.tab:active { transform: translateY(2px); box-shadow: 0 1px 0 #b9c3dd; }
+.tab.on { background: linear-gradient(180deg, var(--blue-l), var(--blue)); color: #fff; text-shadow: 0 1.5px 0 rgba(0, 0, 0, .35); box-shadow: 0 3px 0 var(--blue-d); transform: none; }
+.tbtn.primary { background: linear-gradient(180deg, var(--green-l), var(--green)); color: #fff; border: 0; border-radius: 14px; font-size: 16px; text-shadow: var(--stroke); box-shadow: 0 4px 0 var(--green-d), inset 0 2px 0 rgba(255, 255, 255, .5); margin-bottom: 4px; }
+.tbtn.primary:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--green-d); }
+#term-open { background: linear-gradient(180deg, #ffe27a, var(--yellow) 45%, #ffb800); color: var(--ink); border: 0; font-size: 17px; box-shadow: 0 5px 0 var(--yellow-d), 0 12px 16px rgba(0, 0, 0, .3), inset 0 2px 0 rgba(255, 255, 255, .7); }
+
+/* =====================================================================================================================
+   HUD: dark translucent glass, white bold numbers with an outline
+   ===================================================================================================================== */
+#topbar, #cam-bar { background: transparent; border: 0; box-shadow: none; backdrop-filter: none; }
+#topbar .pill, #topbar .pill.cash, #topbar .pill.gems, #topbar .pill.rep, #topbar .pill.time {
+  background: var(--hud); border: 2px solid var(--hud-line); color: #fff; backdrop-filter: blur(6px);
+  box-shadow: 0 4px 0 rgba(0, 0, 0, .3); margin-bottom: 4px; font-size: 17px; font-weight: 400; padding: 2px 14px 2px 4px; border-radius: 999px;
+}
+#topbar .pill .ic { background: rgba(255, 255, 255, .14); border: 0; filter: drop-shadow(0 2px 0 rgba(0, 0, 0, .35)); }
+#topbar .pill.cash .ic { color: #7dff95; } #topbar .pill.gems .ic { color: #8fd2ff; } #topbar .pill.rep .ic { color: #ffe17a; } #topbar .pill.time .ic { background: none; color: #ffd23c; }
+#topbar .pill b, #topbar .pill span { color: #fff; text-shadow: 0 2px 0 rgba(0, 0, 0, .5); }
+#topbar .pill.cash b { color: #8dff9f; } #topbar .pill.gems b { color: #9bd8ff; } #topbar .pill.rep b { color: #ffe17a; }
+#topbar .pill.time span:last-child { color: #cfe0ff; }
+#topbar .loc, #v-loc { background: linear-gradient(180deg, var(--blue-l), var(--blue)); color: #fff; text-shadow: var(--stroke); box-shadow: 0 3px 0 var(--blue-d); border: 0; font-family: var(--font-d); font-size: 13px; font-weight: 400; padding: 3px 12px; }
+#cam-bar { gap: 6px; padding: 0; }
+/* the daily overview: a dark panel (like Hole.io's leaderboard) holding bright rows */
+#daily { background: var(--hud); border: 2px solid var(--hud-line); border-radius: 20px; box-shadow: 0 6px 0 rgba(0, 0, 0, .28), 0 14px 22px rgba(0, 0, 0, .22); backdrop-filter: blur(6px); }
+.d-stat { border: 0; border-radius: 14px; box-shadow: 0 3px 0 rgba(0, 0, 0, .22), inset 0 2px 0 rgba(255, 255, 255, .8); }
+.d-stat b { font-size: 15px; font-weight: 400; }
+#mission { border: 0; border-radius: 14px; box-shadow: 0 3px 0 rgba(0, 0, 0, .22), inset 0 2px 0 rgba(255, 255, 255, .8); }
+#m-title { font-size: 16px; }
+.d-dm { border: 0; border-radius: 14px; box-shadow: 0 4px 0 rgba(0, 0, 0, .25), inset 0 2px 0 rgba(255, 255, 255, .8); margin-bottom: 4px; }
+.d-dm:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(0, 0, 0, .25); }
+.d-detail { background: rgba(255, 255, 255, .94); border: 0; box-shadow: inset 0 3px 6px rgba(14, 22, 48, .2); }
+
+/* hints and toasts: dark glass, white outlined text */
+#prompt, #mgmt-hint { background: var(--hud); color: #fff; border: 2px solid var(--hud-line); border-radius: 18px; box-shadow: 0 4px 0 rgba(0, 0, 0, .3); backdrop-filter: blur(6px); font-family: var(--font-d); letter-spacing: .3px; }
+kbd, #prompt kbd { background: linear-gradient(180deg, #ffe27a, var(--yellow)); color: var(--ink); border: 0; border-radius: 8px; box-shadow: 0 3px 0 var(--yellow-d); }
+.toast { background: var(--hud); border: 2px solid var(--hud-line); color: #fff; box-shadow: 0 5px 0 rgba(0, 0, 0, .3); backdrop-filter: blur(6px); font-size: 15px; font-weight: 400; text-shadow: 0 2px 0 rgba(0, 0, 0, .45); margin-bottom: 4px; }
+.toast.good { background: linear-gradient(180deg, #46dd6c, #22a449); border-color: rgba(255, 255, 255, .45); }
+.toast.warn { background: linear-gradient(180deg, #ffb04a, #e07a10); border-color: rgba(255, 255, 255, .45); }
+.toast.error { background: linear-gradient(180deg, #ff6c74, #d63a45); border-color: rgba(255, 255, 255, .45); }
+.floater { font-family: var(--font-d); font-weight: 400; font-size: 22px; color: #fff; text-shadow: var(--stroke); }
+
+/* progress bars: dark track, bright gradient fill (Hole.io style growth bar) */
+.prog { background: rgba(14, 22, 48, .35); border: 0; border-radius: 999px; box-shadow: inset 0 2px 4px rgba(0, 0, 0, .35); }
+.prog i { border-radius: 999px; background: linear-gradient(90deg, #35d159, #b4f04a 60%, #ffd23c); box-shadow: inset 0 2px 0 rgba(255, 255, 255, .5); }
+.d-dm-bar { background: rgba(14, 22, 48, .25); box-shadow: inset 0 2px 3px rgba(0, 0, 0, .3); }
+.d-dm-bar u { background: linear-gradient(90deg, #35d159, #b4f04a); }
+#tut-fill, .tut-bar i { background: linear-gradient(90deg, #35d159, #b4f04a 60%, #ffd23c); box-shadow: inset 0 2px 0 rgba(255, 255, 255, .5); }
+
+/* joystick: translucent white ring, solid white ball */
+#joy-base { background: rgba(255, 255, 255, .22); border: 3px solid rgba(255, 255, 255, .7); box-shadow: inset 0 4px 10px rgba(0, 0, 0, .25); }
+#joy-knob { background: radial-gradient(circle at 35% 30%, #ffffff, #dbe7ff 60%, #b3c8f5); border: 0; box-shadow: 0 5px 0 rgba(0, 0, 0, .3), 0 10px 14px rgba(0, 0, 0, .25), inset 0 2px 0 #fff; }
+
+/* =====================================================================================================================
+   BOARDS: white cards, big rounded corners, a colourful header ribbon
+   ===================================================================================================================== */
+#modal-card, #selection, #confirm-card, #decor-bar {
+  background: var(--card); border: 0; border-radius: 24px; color: var(--ink);
+  box-shadow: 0 7px 0 rgba(0, 0, 0, .18), 0 18px 34px rgba(0, 0, 0, .32);
+  backdrop-filter: none;
+}
+#more-menu { background: var(--hud); border: 2px solid var(--hud-line); border-radius: 20px; box-shadow: 0 6px 0 rgba(0, 0, 0, .3), 0 14px 22px rgba(0, 0, 0, .25); backdrop-filter: blur(8px); }
+#modal-card { padding-top: 0; margin-bottom: 8px; }
+@media (min-width: 761px) {
+  #modal-card, #confirm-card { animation: popIn .24s cubic-bezier(.2, 1.2, .3, 1); transform-origin: 50% 60%; }
+}
+@keyframes popIn { from { opacity: 0; transform: scale(.82); } to { opacity: 1; transform: scale(1); } }
+
+/* the title becomes a full-width ribbon */
+#modal-card > h2 {
+  margin: 0 -16px 12px; padding: 14px 60px 12px 18px; font-size: 24px; font-weight: 400; color: #fff; text-shadow: var(--stroke);
+  background: linear-gradient(180deg, var(--blue-l), var(--blue)); border-radius: 24px 24px 0 0; box-shadow: inset 0 -4px 0 rgba(0, 0, 0, .14), inset 0 2px 0 rgba(255, 255, 255, .5);
+}
+#modal-card .x, .sel-head .x { background: linear-gradient(180deg, var(--red-l), var(--red)); color: #fff; border: 0; border-radius: 50%; box-shadow: 0 3px 0 var(--red-d), inset 0 2px 0 rgba(255, 255, 255, .5); }
+#modal-card .x:active, .sel-head .x:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--red-d); }
+#modal-card .x { top: 10px; right: 12px; }
+.sel-head h3, #confirm-card h3 { font-size: 20px; font-weight: 400; color: var(--blue-d); }
+.sect { font-size: 14px; color: var(--blue-d); letter-spacing: .6px; }
+
+/* content blocks inside boards */
+.tile { background: linear-gradient(180deg, #ffffff, #eef3ff); border: 0; border-radius: 16px; box-shadow: 0 4px 0 #cfd8ee, inset 0 2px 0 #fff; margin-bottom: 4px; }
+.tile b { font-weight: 400; font-size: 20px; }
+.bay, .emp, .mrow, .contract, .prop-card { border-radius: 16px; }
+.sel-why { border: 0; border-radius: 12px; box-shadow: 0 3px 0 rgba(201, 106, 0, .35); }
+
+/* tutorial panel: same dark glass as the HUD */
+#tutorial { background: var(--hud); border: 2px solid var(--hud-line); border-radius: 20px; box-shadow: 0 6px 0 rgba(0, 0, 0, .3), 0 14px 22px rgba(0, 0, 0, .25); backdrop-filter: blur(8px); color: #fff; }
+#tut-title { font-family: var(--font-d); font-size: 17px; letter-spacing: .3px; text-shadow: 0 2px 0 rgba(0, 0, 0, .4); }
+
+/* focus rings stay visible */
+.btn:focus-visible, .ibtn:focus-visible, .sc:focus-visible, .act:focus-visible, .tab:focus-visible, .mi:focus-visible { outline: 3px solid #fff; outline-offset: 3px; box-shadow: 0 0 0 6px var(--blue); }
+
+@media (prefers-reduced-motion: reduce) {
+  #modal-card, #confirm-card { animation: none; }
+  .btn, .ibtn, .sc, .tab, .act { transition: none; }
+}
