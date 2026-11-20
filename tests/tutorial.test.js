@@ -15,7 +15,7 @@ function setup({ saved = null, isNew = true, touch = false, bays = null } = {}) 
   delete window.__NO_TUTORIAL;
   const bus = new EventBus(), scene = new THREE.Scene();
   const game = {
-    paused: false, touch, save: vi.fn(),
+    paused: false, touch, save: vi.fn(), stats: { total: { served: 0 } },
     stationView: { interactables: [{ id: 'bay0', pos: { x: -5, z: 0 } }, { id: 'bay1', pos: { x: 5, z: 0 } }, { id: 'bay2', pos: { x: -15, z: 0 } }], terminalPos: { x: -14, z: -11 } },
     station: { bays: bays || [{ unlocked: true, state: 'empty' }, { unlocked: true, state: 'empty' }, { unlocked: false, state: 'empty' }] },
     player: { pos: { x: 0, z: 0 } }, ui: { modal: null, confirmOpen: null }, employees: { employees: [] },
@@ -148,7 +148,7 @@ describe('tutorial: saving, skipping, replaying', () => {
     const a = setup();
     a.t.begin(4, false);
     const s = a.t.serialize();
-    expect(s).toEqual({ done: false, step: 4 });
+    expect(s).toMatchObject({ done: false, step: 4, v: 2 });
     a.t.dispose();
     const b = setup({ saved: { done: false, step: 999 }, isNew: false });
     expect(b.t.step).toBe(7);
@@ -210,5 +210,112 @@ describe('tutorial: listeners and cleanup', () => {
     expect(scene.children).not.toContain(t.marker);
     expect(document.body.classList.contains('tut-on')).toBe(false);
     expect(rm.mock.calls.map((c) => c[0])).toEqual(expect.arrayContaining(['resize', 'pointerdown']));
+  });
+});
+
+describe('tutorial: persistence across save and load', () => {
+  const reload = (saved, extra = {}) => setup({ saved: JSON.parse(JSON.stringify(saved)), isNew: false, ...extra });
+
+  it('saves the step, the event counters and the pending success state, and restores them', () => {
+    const a = setup();
+    a.t.begin(2, false);
+    a.bus.emit('charging:start', {}); a.bus.emit('customer:paid', {});
+    const saved = a.t.serialize();
+    expect(saved).toMatchObject({ v: 2, done: false, step: 2, state: 'active' });
+    expect(saved.n).toMatchObject({ charge: 1, paid: 1 });
+    a.t.dispose();
+    const b = reload(saved);
+    expect(b.t.step).toBe(2);
+    expect(b.t.n).toMatchObject({ charge: 1, paid: 1 });
+    b.t.dispose();
+  });
+
+  it('a save made during the success moment resumes it and still advances (no lost transition)', () => {
+    const a = setup();
+    a.t.begin(1, false); a.t.state = 'ok'; a.t.okTimer = 0.6;
+    const saved = a.t.serialize();
+    expect(saved).toMatchObject({ step: 1, state: 'ok', okTimer: 0.6 });
+    a.t.dispose();
+    const b = reload(saved);
+    expect(b.t.state).toBe('ok');
+    expect(document.getElementById('tut-obj').textContent).toBe('Charging started!'); // the success text is shown again
+    for (let i = 0; i < 4; i++) b.t.update(0.1); expect(b.t.step).toBe(1);
+    for (let i = 0; i < 4; i++) b.t.update(0.1); expect(b.t.step).toBe(2);
+    b.t.dispose();
+  });
+
+  it('a "get paid" step cannot be missed: a customer served before the save / after the load still completes it', () => {
+    const a = setup();
+    a.t.begin(2, false);
+    const saved = a.t.serialize(); // saved with no payment yet
+    a.t.dispose();
+    const b = reload(saved);
+    b.t.update(0.1); expect(b.t.state).toBe('active');
+    b.game.stats.total.served += 1; // the payment happens through some other path (no customer:paid event reaches the tutorial)
+    b.t.update(0.1);
+    expect(b.t.state).toBe('ok');
+    b.t.dispose();
+  });
+
+  it('a payment that already happened is in the saved counters, so the step completes right after loading', () => {
+    const a = setup();
+    a.t.begin(2, false); a.bus.emit('customer:paid', {});
+    const saved = a.t.serialize();
+    a.t.dispose();
+    const b = reload(saved);
+    b.t.update(0.1);
+    expect(b.t.state).toBe('ok');
+    b.t.dispose();
+  });
+
+  it('the connect step also completes from game state alone (a car is already charging after the load)', () => {
+    const a = setup();
+    a.t.begin(1, false);
+    const saved = a.t.serialize(); a.t.dispose();
+    const b = reload(saved);
+    b.game.station.bays[0].state = 'charging';
+    b.t.update(0.1);
+    expect(b.t.state).toBe('ok');
+    b.t.dispose();
+  });
+
+  it('older saves ({done, step} only) load with safe defaults', () => {
+    const b = reload({ done: false, step: 3 });
+    expect(b.t.step).toBe(3);
+    expect(b.t.state).toBe('active');
+    expect(b.t.n.walked).toBe(0);
+    expect(() => { b.t.update(0.1); b.t.serialize(); }).not.toThrow();
+    b.t.dispose();
+    const done = reload({ done: true, step: 7 });
+    expect(done.t.done).toBe(true);
+    done.t.dispose();
+  });
+
+  it('corrupt counters are ignored instead of poisoning the tutorial', () => {
+    const b = reload({ v: 2, done: false, step: 1, state: 'weird', okTimer: 'x', n: { walked: 'lots', charge: -4, paid: null, hired: NaN, ok: 2 } });
+    expect(b.t.state).toBe('active');
+    expect(b.t.n.walked).toBe(0);
+    expect(b.t.n.charge).toBeUndefined();
+    expect(b.t.n.hired).toBeUndefined();
+    expect(b.t.n.ok).toBe(2);
+    b.t.dispose();
+  });
+
+  it('progress survives pause: the saved state while paused is the same as before pausing', () => {
+    const a = setup();
+    a.t.begin(2, false); a.bus.emit('charging:start', {});
+    const before = JSON.stringify(a.t.serialize());
+    a.game.paused = true; for (let i = 0; i < 50; i++) a.t.update(0.1);
+    expect(JSON.stringify(a.t.serialize())).toBe(before);
+    a.t.dispose();
+  });
+
+  it('every step can be reached and saved/restored without throwing', () => {
+    for (let i = 0; i < 8; i++) {
+      const a = setup(); a.t.begin(i, false);
+      const b = reload(a.t.serialize());
+      expect(b.t.step).toBe(i);
+      a.t.dispose(); b.t.dispose();
+    }
   });
 });

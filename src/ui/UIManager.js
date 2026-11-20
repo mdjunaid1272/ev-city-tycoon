@@ -255,7 +255,10 @@ export class UIManager {
     this.closeMore();
     if (this.confirmOpen) this.resolveConfirm(false);
     if (this.selectionFn) this.clearSelection(); // one panel at a time
-    const keepPaused = this.modal === 'pause' && MORE_MODALS.includes(name); // pause -> settings / help / save stays paused
+    // Pause -> Settings / Help / Save / Statistics: the child remembers its parent, stays paused, and closing it returns to Pause
+    const child = name !== 'pause' && MORE_MODALS.includes(name) && (this.modal === 'pause' || this._modalParent === 'pause');
+    this._modalParent = child ? 'pause' : null;
+    const keepPaused = child;
     if (!this.modal) this._returnFocus = document.activeElement; // where focus goes back to when the board closes
     this.modal = name;
     this._pauseRendered = false; this._modalHtml = null; this._dirty = false;
@@ -268,7 +271,15 @@ export class UIManager {
   }
   closeModal() {
     if (this.modal === 'offline' && this.game.pendingOffline) { this.offline.apply(this.game.pendingOffline, 1); this.game.pendingOffline = null; this.toast('Offline earnings collected', 'good'); }
+    // closing a child of the Pause menu goes back to Pause (still paused); only closing Pause itself resumes the game
+    if (this._modalParent && this.modal && this.modal !== this._modalParent) {
+      const parent = this._modalParent;
+      this._modalParent = null;
+      this.open(parent);
+      return;
+    }
     const wasOffline = this.modal === 'offline';
+    this._modalParent = null;
     this.modal = null;
     $('modal').classList.add('hidden');
     this.game.setPaused(false);

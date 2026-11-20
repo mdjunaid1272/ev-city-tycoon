@@ -17,13 +17,13 @@ const STEPS = [
   },
   {
     id: 'connect', title: 'First customer', text: 'A car is pulling in. Stand beside its glowing charger.', goal: 'Connect a car', ok: 'Charging started!',
-    hint: 'Stand still at the bay: the car connects by itself', hintTouch: 'Walk to the bay with the joystick and stand still: the car connects by itself',
-    target: (g, t) => t.bay(['waiting', 'charging']), done: (g, n, t) => n.charge > 0 || t.anyBay(['charging', 'done']),
+hint: 'Stand still at the bay: the car connects by itself', hintTouch: 'Walk to the bay with the joystick and stand still: the car connects by itself',
+    target: (g, t) => t.bay(['waiting', 'charging']), done: (g, n, t) => n.charge > 0 || t.anyBay(['charging', 'done']) || (g.stats?.total?.served ?? 0) > (n.servedAtStart ?? Infinity),
   },
   {
     id: 'paid', title: 'Get paid', text: 'Stay close while it charges. Billing happens when the car is full.', goal: 'Collect your first payment', ok: 'Cash earned!',
     hint: 'Tip: click a charging charger to stop and bill early', hintTouch: 'Tip: tap a charging charger to stop and bill early',
-    target: (g, t) => t.bay(['charging', 'done', 'waiting']), done: (g, n) => n.paid > 0,
+    target: (g, t) => t.bay(['charging', 'done', 'waiting']), done: (g, n) => n.paid > 0 || (g.stats?.total?.served ?? 0) > (n.servedAtStart ?? Infinity),
   },
   {
     id: 'terminal', title: 'Station terminal', text: 'Prices, bays and upgrades are managed at the terminal.', goal: 'Open the Station Manager', ok: 'Manager opened',
@@ -76,7 +76,9 @@ export class TutorialManager {
     this.layout();
     this.onResize = () => this.layout();
     addEventListener('resize', this.onResize);
-    if (!this.done) this.begin(this.step, false);
+    // everything needed to continue exactly where the player was: counters, and the short success moment between two steps
+    const restore = saved && !saved.done ? { n: saved.n, state: saved.state, okTimer: saved.okTimer } : null;
+    if (!this.done) this.begin(this.step, false, restore);
     else this.render();
   }
 
@@ -199,11 +201,17 @@ export class TutorialManager {
   }
 
   // ---------- flow ----------
-  begin(i, persist = true) {
+  /** Customers served so far: event-based steps also compare against this, so they can never be missed (e.g. across a reload). */
+  served() { return this.g.stats?.total?.served ?? 0; }
+
+  begin(i, persist = true, restore = null) {
     this.step = i;
-    this.n = { walked: 0 };
+    this.n = { walked: 0, servedAtStart: this.served() };
+    // saved counters (only finite numbers are trusted; older saves have none)
+    if (restore?.n && typeof restore.n === 'object') for (const [k, v] of Object.entries(restore.n)) if (Number.isFinite(v) && v >= 0) this.n[k] = v;
     this.lastPos = null;
-    this.state = 'active';
+    this.state = restore?.state === 'ok' ? 'ok' : 'active';
+    this.okTimer = this.state === 'ok' ? Math.min(1.1, Math.max(0, Number.isFinite(restore.okTimer) ? restore.okTimer : 0.5)) : 0;
     this.done = false;
     this.render();
     if (persist) this.save();
@@ -228,7 +236,10 @@ export class TutorialManager {
   restart() { this.begin(0); }
 
   save() { this.g.save?.(); }
-  serialize() { return { done: this.done, step: this.step }; }
+  serialize() {
+    // v2: step + counters + pending success state. Older saves only had { done, step }: the missing fields default sensibly.
+    return { v: 2, done: this.done, step: this.step, state: this.state === 'ok' ? 'ok' : 'active', okTimer: this.state === 'ok' ? +this.okTimer.toFixed(2) : 0, n: { ...this.n } };
+  }
 
   clearGuides() {
     this.marker.visible = false;
@@ -291,6 +302,7 @@ export class TutorialManager {
       this.state = 'ok';
       this.okTimer = 1.1;
       this.render();
+      this.save(); // the success moment is part of the saved state
       return;
     }
     this.updateGuides(s, g);

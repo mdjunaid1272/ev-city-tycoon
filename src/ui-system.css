@@ -605,3 +605,6 @@ button:focus-visible, [role="button"]:focus-visible, .btn:focus-visible, .ibtn:f
 /* why an action is disabled */
 .sel-why { margin-top: 8px; padding: 6px 8px; border-radius: var(--r-sm); background: #fff4e0; border: 2px solid var(--warn); font-size: 11.5px; line-height: 1.35; color: var(--text); }
 .sel-why b { font-weight: 800; }
+
+/* five breakdown items: the odd one out spans the full width */
+.d-detail span:last-child:nth-child(odd) { grid-column: 1 / -1; }

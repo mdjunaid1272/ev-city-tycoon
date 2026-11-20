@@ -1,35 +1,9 @@
 // @vitest-environment jsdom
-import fs from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { UIManager } from '../src/ui/UIManager.js';
-import { StatsTracker } from '../src/progression/StatsTracker.js';
 import { aggregateStats } from '../src/customers/SiteCounts.js';
-import { makeWorld, spawnCustomer, parkAndPlug } from './helpers.js';
+import { spawnCustomer, parkAndPlug } from './helpers.js';
+import { makeUI, emptyBiz } from './ui-helpers.js';
 
-const html = fs.readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'index.html'), 'utf8');
-const BODY = html.match(/<body>([\s\S]*)<\/body>/)[1].replace(/<script[\s\S]*?<\/script>/g, '');
-
-const emptyBiz = (stats = {}) => ({ customers: new Map(), bays: [], queue: [], stats: { lost: 0, tips: 0, satSum: 0, satN: 0, ...stats } });
-
-/** A UIManager wired to a real headless game state (economy, station, customers, stats tracker) and the real index.html markup. */
-function makeUI() {
-  document.body.innerHTML = BODY;
-  const w = makeWorld({ cash: 0 });
-  const stats = new StatsTracker(w.bus);
-  const ui = Object.create(UIManager.prototype);
-  Object.assign(ui, {
-    bus: w.bus, economy: w.economy, station: w.station, customers: w.customers, stats,
-    wash: emptyBiz(), garage: emptyBiz(), hubs: {}, properties: { ownedCount: 0 },
-    goals: { daily: [{ done: true }, { done: false }, { done: false }] },
-    game: { paused: false, selectionRing: { visible: false }, setSelectionOutline() {}, setPaused() {} },
-    camera: { inManagement: false }, employees: { cfg: { roles: {} } },
-    modal: null, tab: { business: 'overview', missions: 'main' }, selectionFn: null, _offs: [], _listeners: [],
-  });
-  ui.bindEvents();
-  return { ui, w, stats };
-}
 const text = (sel) => document.querySelector(sel).textContent;
 const kv = (label) => [...document.querySelectorAll('#modal-card .kv, #modal-card .tile')].find((e) => e.textContent.includes(label));
 
@@ -46,10 +20,10 @@ describe('HUD: active customers (Daily overview)', () => {
     const shown = Number(text('#d-cust'));
     expect(shown).toBe(w.customers.customers.size);
     expect(shown).not.toBe(w.customers.customers.size + w.customers.queue.length);
-    const parts = ['dd-queued', 'dd-waiting', 'dd-charging', 'dd-service'].map((id) => Number(text(`#${id}`)));
-    expect(parts.reduce((a, b) => a + b, 0)).toBeLessThanOrEqual(shown);
-    expect(parts[0]).toBe(w.customers.queue.length);
-    expect(parts[2]).toBe(1);
+    const parts = ['dd-arriving', 'dd-queued', 'dd-waiting', 'dd-charging', 'dd-service'].map((id) => Number(text(`#${id}`)));
+    expect(parts.reduce((a, b) => a + b, 0)).toBe(shown); // the categories add up to the total exactly
+    expect(parts[1]).toBe(w.customers.queue.length);
+    expect(parts[3]).toBe(1);
   });
 
   it('shows revenue today, satisfaction (all businesses) and daily mission progress', () => {
@@ -151,5 +125,37 @@ describe('modal refresh keeps the player\'s place', () => {
     ui.renderModal();
     expect(kv('Total revenue').textContent).toContain('$77');
     expect(ui._dirty).toBe(true);
+  });
+});
+
+describe('HUD: customer breakdown stays consistent while the simulation runs', () => {
+  it('total == arriving + queued + waiting + charging + service at every step of a busy period (no double counting)', () => {
+    const { ui, w } = makeUI();
+    const ids = ['dd-arriving', 'dd-queued', 'dd-waiting', 'dd-charging', 'dd-service'];
+    for (let step = 0; step < 400; step++) {
+      if (step % 7 === 0) { const c = spawnCustomer(w); if (step % 14 === 0) w.customers.arrived(c); }
+      for (const c of [...w.customers.customers.values()]) {
+        if (c.state === 'assigned' && step % 3 === 0) { w.station.vehicleParked(c.bayId); w.customers.parkedAtBay(c); }
+        if (c.state === 'waiting') w.station.startCharging(c.bayId);
+      }
+      w.station.update(2); w.customers.update(1);
+      for (const b of w.station.bays) if (b.state === 'done') { w.station.release(b.id); w.station.vehicleLeft(b.id); }
+      ui.updateDaily();
+      const shown = Number(text('#d-cust'));
+      const parts = ids.reduce((n, id) => n + Number(text(`#${id}`)), 0);
+      expect(parts).toBe(shown);
+      expect(shown).toBe(w.customers.customers.size);
+    }
+  });
+
+  it('only changed numbers are written: unchanged values keep their text node', () => {
+    const { ui, w } = makeUI();
+    spawnCustomer(w);
+    ui.updateDaily();
+    const node = document.getElementById('dd-queued').firstChild;
+    const before = node.nodeValue;
+    ui.updateDaily();
+    expect(document.getElementById('dd-queued').firstChild).toBe(node);
+    expect(node.nodeValue).toBe(before);
   });
 });

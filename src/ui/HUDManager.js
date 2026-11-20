@@ -34,7 +34,7 @@ export const HUDManager = {
     const c = siteCounts([this.customers, this.wash, this.garage, ...Object.values(this.hubs || {})]);
     const active = c.onSite;
     const setT = (id, v) => { const e = $(id); if (e && e.textContent !== String(v)) e.textContent = v; };
-    setT('dd-queued', c.queued); setT('dd-waiting', c.waiting); setT('dd-charging', c.charging); setT('dd-service', c.service);
+    setT('dd-arriving', c.arriving); setT('dd-queued', c.queued); setT('dd-waiting', c.waiting); setT('dd-charging', c.charging); setT('dd-service', c.service);
     const sat = aggregateStats([this.customers, this.wash, this.garage, ...Object.values(this.hubs || {})]).avgSatisfaction; // all businesses
     $('d-rev').textContent = money(Math.round(this.economy.todayRevenue));
     setT('d-cust', active);
