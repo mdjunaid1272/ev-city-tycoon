@@ -53,10 +53,20 @@ export const ProfilePanel = {
     }).join('');
     let html = `<div class="sect">Stages (${pr.stage}/${pr.stages.length})</div><ol class="stage-track">${track}</ol>
       <div class="prof-stage"><b>Stage ${pr.stage} · ${esc(cur.name)}</b><div class="sub">${esc(cur.blurb || '')}</div></div>`;
-    if (nxt) {
-      const goals = pr.goalsFor(nxt.stage), done = goals.filter((g) => g.done).length;
-      html += `<div class="prof-next"><b>Next: Stage ${nxt.stage} · ${esc(nxt.name)}</b> <small>(${done}/${goals.length} goals)</small></div>` + goals.map((g) => `<div class="mrow ${g.done ? 'done' : 'cur'}"><div class="chk">${g.done ? '✓' : ''}</div><div style="flex:1"><b>${esc(g.label)}</b><small>${Math.floor(g.value).toLocaleString('en-US')} / ${g.target.toLocaleString('en-US')}</small>${this.bar(g.value / g.target)}</div></div>`).join('')
-        + `<div class="sub" style="margin-top:6px">Reward <b>${this.rewardHtml(nxt.reward)}</b>${nxt.unlocks?.length ? ` · unlocks: ${esc(nxt.unlocks.join(', '))}` : ''}</div>`;
+    const future = pr.stages.filter((x) => x.stage > pr.stage);
+    if (future.length) {
+      this._profOpen = this._profOpen || new Map(); // the player's own expand / collapse choices survive the live refresh
+      html += '<div class="sect">Stage targets</div>' + future.map((x) => {
+        const goals = pr.goalsFor(x.stage), done = goals.filter((g) => g.done).length;
+        const frac = goals.length ? goals.reduce((t, g) => t + Math.min(1, g.value / g.target), 0) / goals.length : 1;
+        const isNext = nxt && x.stage === nxt.stage;
+        const open = this._profOpen.has(x.stage) ? this._profOpen.get(x.stage) : isNext;
+        return `<details class="stage-board${isNext ? ' next' : ''}" data-stage-n="${x.stage}"${open ? ' open' : ''}>
+          <summary${isNext ? ' class="prof-next"' : ''}><b>${isNext ? 'Next: ' : ''}Stage ${x.stage} · ${esc(x.name)}</b><em>${done}/${goals.length} goals · ${Math.round(frac * 100)}%</em>${this.bar(frac)}</summary>
+          ${goals.map((g) => `<div class="mrow ${g.done ? 'done' : 'cur'}"><div class="chk">${g.done ? '✓' : ''}</div><div style="flex:1"><b>${esc(g.label)}</b><small>${Math.floor(g.value).toLocaleString('en-US')} / ${g.target.toLocaleString('en-US')}</small>${this.bar(g.value / g.target)}</div></div>`).join('')}
+          <div class="sub" style="margin-top:6px">Reward <b>${this.rewardHtml(x.reward)}</b>${x.unlocks?.length ? ` · unlocks: ${esc(x.unlocks.join(', '))}` : ''}</div>
+        </details>`;
+      }).join('');
     } else html += '<div class="sub">Maximum stage reached: you run a City EV Empire.</div>';
     return html;
   },
@@ -75,6 +85,7 @@ export const ProfilePanel = {
       if (e.key !== 'Escape' && e.key !== 'Tab') e.stopPropagation(); // typing W A S D must never walk the player
     };
     input.onkeyup = (e) => e.stopPropagation();
+    card.querySelectorAll('details[data-stage-n]').forEach((d) => (d.ontoggle = () => { (this._profOpen = this._profOpen || new Map()).set(+d.dataset.stageN, d.open); }));
     card.querySelectorAll('[data-profile]').forEach((b) => (b.onclick = () => {
       const [kind, value] = b.dataset.profile.split(':');
       const changed = kind === 'avatar' ? p.setAvatar(value) : p.setOutfit(value);

@@ -220,3 +220,13 @@ kbd, #prompt kbd { background: linear-gradient(180deg, #ffe27a, var(--yellow)); 
 .stage-track .st.cur i { background: #ffc43d; border-color: #b98a10; }
 .prof-stage, .prof-next { margin: 4px 0; }
 .prof-next { margin-top: 10px; }
+.stage-board { margin: 6px 0; border-radius: 12px; border: 2px solid var(--line-2, #d5ddec); background: #f7f9fd; padding: 0 10px 8px; }
+.stage-board.next { border-color: #e8c24a; background: #fffbea; }
+.stage-board > summary { list-style: none; cursor: pointer; padding: 8px 0 6px; display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; align-items: center; min-height: 44px; }
+.stage-board > summary::-webkit-details-marker { display: none; }
+.stage-board > summary::before { content: '▸'; position: absolute; margin-left: -2px; opacity: 0; }
+.stage-board > summary b { font-size: 13.5px; }
+.stage-board > summary em { font-style: normal; font-size: 11.5px; opacity: .75; white-space: nowrap; }
+.stage-board > summary > :nth-child(3) { grid-column: 1 / -1; }
+.stage-board[open] > summary { border-bottom: 1px dashed var(--line-2, #d5ddec); margin-bottom: 6px; }
+.stage-board > summary:focus-visible { outline: 3px solid #5cc8ff; outline-offset: 2px; border-radius: 8px; }

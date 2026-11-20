@@ -24,9 +24,17 @@ const open1 = await p.evaluate(() => ({ modal: __game.ui.modal, h2: document.que
 check('the avatar button opens the Profile board (game keeps running)', open1.modal === 'profile' && open1.h2 === 'Profile' && open1.name === 'Player' && open1.badges === 9 && open1.avatars === 8 && open1.outfits === 6 && !open1.paused, JSON.stringify(open1));
 
 // stages section: track, current stage, next-stage goals with live progress, updates on stage-up
-const st1 = await p.evaluate(() => ({ items: [...document.querySelectorAll('.stage-track .st')].map((e) => e.className.replace('st ', '')), cur: document.querySelector('.prof-stage b')?.textContent, next: document.querySelector('.prof-next b')?.textContent, goals: document.querySelectorAll('#modal-card .mrow').length, head: document.querySelector('.prof-title')?.textContent }));
-check('Profile shows the stage track, current stage and next-stage goals', st1.items.length === 4 && st1.items[0] === 'cur' && st1.items.slice(1).every((c) => c === 'lock') && /Stage 1 · Small EV Station/.test(st1.cur) && /Next: Stage 2/.test(st1.next) && st1.goals === 4 && /Stage 1/.test(st1.head), JSON.stringify(st1));
+const st1 = await p.evaluate(() => ({ items: [...document.querySelectorAll('.stage-track .st')].map((e) => e.className.replace('st ', '')), cur: document.querySelector('.prof-stage b')?.textContent, next: document.querySelector('.prof-next b')?.textContent, goals: document.querySelectorAll('#modal-card details[open] .mrow').length, boards: document.querySelectorAll('details.stage-board').length, openBoards: document.querySelectorAll('details.stage-board[open]').length, all: document.querySelectorAll('#modal-card details .mrow').length, head: document.querySelector('.prof-title')?.textContent }));
+check('Profile shows the stage track, current stage and next-stage goals', st1.items.length === 4 && st1.items[0] === 'cur' && st1.items.slice(1).every((c) => c === 'lock') && /Stage 1 · Small EV Station/.test(st1.cur) && /Next: Stage 2/.test(st1.next) && st1.goals === 4 && st1.boards === 3 && st1.openBoards === 1 && st1.all > 8 && /Stage 1/.test(st1.head), JSON.stringify(st1));
 const until = (fn, arg) => p.waitForFunction(fn, arg, { timeout: 15000 }).then(() => true, () => false); // headless frames are slow: wait for the refresh instead of a fixed time
+// every stage's targets are listed; the player's expand / collapse choice survives the live refresh
+await p.click('details[data-stage-n="3"] > summary'); await p.waitForTimeout(300);
+const tog = await p.evaluate(() => ({ open3: document.querySelector('details[data-stage-n="3"]').open, open2: document.querySelector('details[data-stage-n="2"]').open, s3: document.querySelector('details[data-stage-n="3"] summary em')?.textContent }));
+check('stage 3 and 4 targets can be expanded, each with goals count and percent', tog.open3 && tog.open2 && /\d\/\d goals · \d+%/.test(tog.s3), JSON.stringify(tog));
+await p.click('details[data-stage-n="2"] > summary'); await p.waitForTimeout(300);
+await p.waitForTimeout(5000);
+check('collapsed / expanded choices persist through the live refresh', await p.evaluate(() => document.querySelector('details[data-stage-n="3"]').open && !document.querySelector('details[data-stage-n="2"]').open));
+await p.click('details[data-stage-n="2"] > summary'); await p.waitForTimeout(300);
 await p.evaluate(() => { __game.economy.reputation = 12; });
 check('the open Profile board refreshes goal progress live', await until(() => [...document.querySelectorAll('#modal-card .mrow')].some((r) => r.classList.contains('done'))));
 await p.evaluate(() => { __game.progression.stage = 3; });
