@@ -34,8 +34,11 @@ const b2 = await p.evaluate(() => ({ modal: __game.ui.modal, paused: __game.paus
 check('pause blocks the HUD behind it', b1.inert && b1.paused, JSON.stringify(b1));
 check('pause -> settings stays paused, still blocking', b2.modal === 'settings' && b2.paused && b2.inert, JSON.stringify(b2));
 await p.evaluate(() => __game.ui.closeModal()); await p.waitForTimeout(150);
+const b2b = await p.evaluate(() => ({ modal: __game.ui.modal, paused: __game.paused, inert: document.getElementById('hud').inert }));
+check('closing Settings returns to Pause (still paused, still blocking)', b2b.modal === 'pause' && b2b.paused && b2b.inert, JSON.stringify(b2b));
+await p.evaluate(() => __game.ui.closeModal()); await p.waitForTimeout(150);
 const b3 = await p.evaluate(() => ({ inert: document.getElementById('hud').inert, paused: __game.paused }));
-check('closing resumes and unblocks the HUD', !b3.inert && !b3.paused, JSON.stringify(b3));
+check('closing Pause resumes and unblocks the HUD', !b3.inert && !b3.paused, JSON.stringify(b3));
 // non-blocking boards keep the nav usable
 await p.evaluate(() => __game.ui.open('staff')); await p.waitForTimeout(150);
 check('normal boards do not block the HUD (nav still works)', await p.evaluate(() => !document.getElementById('hud').inert));

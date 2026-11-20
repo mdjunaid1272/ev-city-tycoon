@@ -14,7 +14,7 @@
 let seq = 0;
 const rnd = (a, b) => a + Math.random() * (b - a);
 const BODY_R = 0.28; // staff body radius (smaller than the nav grid's 0.5 clearance, so planned paths are never pushed)
-const TASK_DEPT = { attendant: 'charging', washer: 'wash', mechanic: 'garage' };
+const TASK_DEPT = { attendant: 'charging', washer: 'wash', mechanic: 'garage', barista: 'cafe' };
 
 export class EmployeeManager {
   constructor({ bus, economy, tasks, config, getReputation, getCapacity, saved = null }) {
@@ -29,6 +29,7 @@ export class EmployeeManager {
     this.candidates = [];
     this.pendingSave = saved;
     this.stats = { hired: 0, fired: 0, quit: 0, payroll: 0 };
+    this.efficiencyLevel = Math.max(0, Math.min((config.efficiencyProgram || []).length, Math.floor(Number(saved?.efficiencyLevel) || 0))); // team training program (see efficiencyBonus)
     if (saved?.stats) Object.assign(this.stats, saved.stats);
   }
 
@@ -95,8 +96,83 @@ export class EmployeeManager {
     return Math.min(10, Math.floor(e.xp / 60));
   }
   speed(e) {
-    return (0.7 + 0.15 * e.skill) * (1 + this.level(e) * 0.02) * e.eff * (e.unpaidDays ? 0.6 : 1);
+    return (0.7 + 0.15 * e.skill) * (1 + this.level(e) * 0.02) * e.eff * (1 + this.efficiencyBonus) * (e.unpaidDays ? 0.6 : 1);
   }
+  // ---------- team training program ----------
+  /** Speed bonus of the whole team from the training program (0 .. 0.15). */
+  get efficiencyBonus() {
+    const lv = this.cfg.efficiencyProgram || [];
+    return this.efficiencyLevel > 0 ? lv[this.efficiencyLevel - 1].bonus : 0;
+  }
+  nextEfficiency() { return (this.cfg.efficiencyProgram || [])[this.efficiencyLevel] || null; }
+  buyEfficiency() {
+    const n = this.nextEfficiency();
+    if (!n) return { ok: false, reason: 'Fully trained' };
+    if (!this.economy.spend(n.cost, 'training')) return { ok: false, reason: 'Not enough cash' };
+    this.efficiencyLevel++;
+    this.bus.emit('employee:changed');
+    return { ok: true };
+  }
+
+  // ---------- workload ----------
+  /** Open work in one department: tasks that are waiting, taken or being worked on, against the staff that can do them. */
+  workload(dept) {
+    let tasks = 0;
+    for (const t of this.tasks.tasks.values()) if (t.dept === dept && t.state !== 'done' && t.state !== 'cancelled') tasks++;
+    const staff = this.employees.filter((e) => !e.leaving && e.dept !== 'off' && this.taskDept(e) === dept).length;
+    return { dept, tasks, staff, perStaff: staff ? tasks / staff : tasks * 2 };
+  }
+
+  /** Department with the highest work per employee among those an employee of this role may work in (built ones). */
+  busiestDept(role, fallback) {
+    const probe = { role, home: fallback, dept: fallback, leaving: false };
+    const list = this.eligibleDepts(probe);
+    if (list.length < 2) return fallback;
+    let best = fallback, score = -1;
+    for (const d of list) {
+      const w = this.workload(d);
+      const s = w.tasks / (w.staff + 1); // load per employee once the new one has joined
+      if (s > score + 1e-9) { best = d; score = s; }
+    }
+    return best;
+  }
+
+  /**
+   * Move idle, flexible staff (attendants, managers, cashiers) to where the work is. An employee only moves when the other
+   * place is clearly busier, and never leaves a department that still has open work empty. Returns how many moved.
+   */
+  balance() {
+    let moved = 0;
+    for (const e of [...this.employees]) {
+      if (e.leaving || e.dept === 'off' || e.state !== 'idle' || e.task) continue;
+      if (!['attendant', 'manager', 'cashier'].includes(e.role)) continue;
+      const list = this.eligibleDepts(e);
+      if (list.length < 2) continue;
+      const cur = this.homeOf(e), here = this.workload(cur);
+      const others = list.filter((d) => d !== cur).map((d) => this.workload(d)).sort((a, b) => b.perStaff - a.perStaff);
+      const best = others[0];
+      if (!best || best.tasks === 0) continue;
+      const stays = here.staff - 1;
+      if (stays <= 0 && here.tasks > 0) continue; // do not abandon a department that has work
+      const loadHere = stays > 0 ? here.tasks / stays : 0;
+      if (best.perStaff < loadHere + 1) continue; // not clearly busier
+      if (this.assign(e.id, best.dept)) moved++;
+    }
+    return moved;
+  }
+
+  /** What an employee is doing right now, in words (for the Staff board). */
+  describe(e) {
+    if (e.leaving) return 'Leaving';
+    if (e.dept === 'off') return 'Off duty';
+    const t = e.task;
+    const what = t ? ({ connect: 'Connecting a car', unplug: 'Unplugging a car', wash: 'Washing a car', 'wash-start': 'Starting the tunnel', diagnose: 'Diagnosing a car', repair: 'Repairing a car', 'cafe-order': 'Preparing an order' }[t.type] || 'Working') : null;
+    if (e.state === 'perform') return what || 'Working';
+    if (e.state === 'move') return 'Heading to task' + (what ? ': ' + what.toLowerCase() : '');
+    if (e.state === 'idle') return 'Waiting for work';
+    return ({ complete: 'Finishing', recover: 'Re-planning route', arriving: 'Starting shift', return: 'Back to post', offduty: 'Going on break' }[e.state]) || e.state;
+  }
+
   /** Best on-duty manager's team bonus (0 if none). */
   get teamBonus() {
     const m = this.employees.filter((e) => e.role === 'manager' && this.onDuty(e)).sort((a, b) => b.skill - a.skill)[0];
@@ -167,8 +243,9 @@ export class EmployeeManager {
   /** Which department a new hire starts in. */
   startDept(role) {
     const d = TASK_DEPT[role];
-    if (d) return d;
-    return ['charging', 'wash', 'garage'].find((x) => this.facilityBuilt(x)) || 'charging';
+    if (d && role !== 'attendant') return d;
+    const first = d || ['charging', 'wash', 'garage'].find((x) => this.facilityBuilt(x)) || 'charging';
+    return this.busiestDept(role, first); // attendants / managers / cashiers start where the workload is highest
   }
 
   hire(candId) {
@@ -455,6 +532,7 @@ export class EmployeeManager {
     return {
       employees: [...live.map((e) => ({ id: e.id, name: e.name, role: e.role, skill: e.skill, eff: e.eff, salary: e.salary, xp: e.xp, tasksDone: e.tasksDone, unpaidDays: e.unpaidDays, dept: e.dept, home: this.homeOf(e) })), ...keep],
       stats: this.stats,
+      efficiencyLevel: this.efficiencyLevel,
     };
   }
 }

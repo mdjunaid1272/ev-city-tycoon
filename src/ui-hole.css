@@ -20,7 +20,7 @@
 }
 
 /* ---------- display font for everything that should feel like a game ---------- */
-.btn, .tbtn, .tab, .sc small, .pill, #v-loc, #modal-card > h2, .sel-head h3, .toast, .d-stat b, .d-stat small, #m-title, .m-head, .d-dm, #confirm-card h3, .act, #term-open, .sect, .tile b, .tile small {
+.btn, .tbtn, .tab, .sc small, .pill, #v-loc, #modal-card > h2, .sel-head h3, .toast, .d-stat b, .d-stat small, #m-title, .m-head, .d-dm, #confirm-card h3, .act, #term-open, #cafe-open, .sect, .tile b, .tile small {
   font-family: var(--font-d); letter-spacing: .3px;
 }
 
@@ -93,7 +93,7 @@
 .tab.on { background: linear-gradient(180deg, var(--blue-l), var(--blue)); color: #fff; text-shadow: 0 1.5px 0 rgba(0, 0, 0, .35); box-shadow: 0 3px 0 var(--blue-d); transform: none; }
 .tbtn.primary { background: linear-gradient(180deg, var(--green-l), var(--green)); color: #fff; border: 0; border-radius: 14px; font-size: 16px; text-shadow: var(--stroke); box-shadow: 0 4px 0 var(--green-d), inset 0 2px 0 rgba(255, 255, 255, .5); margin-bottom: 4px; }
 .tbtn.primary:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--green-d); }
-#term-open { background: linear-gradient(180deg, #ffe27a, var(--yellow) 45%, #ffb800); color: var(--ink); border: 0; font-size: 17px; box-shadow: 0 5px 0 var(--yellow-d), 0 12px 16px rgba(0, 0, 0, .3), inset 0 2px 0 rgba(255, 255, 255, .7); }
+#term-open, #cafe-open { background: linear-gradient(180deg, #ffe27a, var(--yellow) 45%, #ffb800); color: var(--ink); border: 0; font-size: 17px; box-shadow: 0 5px 0 var(--yellow-d), 0 12px 16px rgba(0, 0, 0, .3), inset 0 2px 0 rgba(255, 255, 255, .7); }
 
 /* =====================================================================================================================
    HUD: dark translucent glass, white bold numbers with an outline

@@ -12,12 +12,13 @@ import { MissionPanel } from './MissionPanel.js';
 import { BusinessPanel } from './BusinessPanel.js';
 import { BuildPanel } from './BuildPanel.js';
 import { SystemPanels } from './SystemPanels.js';
+import { CafePanel } from './CafePanel.js';
 
 export { money };
 
 // panels that show continuously changing values (progress, timers) refresh a few times a second; the others refresh from events,
 // with a slow safety net for values that depend only on the clock
-const LIVE_MODALS = new Set(['station', 'wash', 'garage']);
+const LIVE_MODALS = new Set(['station', 'wash', 'garage', 'cafe']);
 const SLOW_MODALS = new Set(['finance', 'staff', 'business', 'map', 'missions', 'stats']);
 
 /** HTML/CSS overlay: HUD, prompts, panels, pause menu. Reads state, never owns it. */
@@ -52,7 +53,8 @@ export class UIManager {
     for (const [t, type, fn, opts] of this._listeners) t.removeEventListener(type, fn, opts);
     this._listeners.length = 0;
     clearTimeout(this._rq); this._rq = null;
-    this.termBtn?.remove(); this.termBtn = null;
+    for (const b of Object.values(this._floatBtns || {})) b.remove();
+    this._floatBtns = {};
     this.clearSelection();
     for (const id of ['hud', 'modal']) { const e = document.getElementById(id); if (e) e.inert = false; }
   }
@@ -130,6 +132,11 @@ export class UIManager {
     b.on('contract:done', ({ contract }) => this.toast(`🤝 Contract complete! +${money(contract.reward)} +${contract.rep}⭐`, 'good'));
     b.on('contract:failed', ({ contract }) => this.toast(`Contract failed: ${contract.label} (reputation −${this.contracts.cfg.failRep})`));
     b.on('contract:changed', () => { if (this.modal === 'business') this.renderModal(); });
+    // the cafe: notifications for problems and a live board while it is open
+    b.on('cafe:shortage', ({ label }) => this.toast(`\u26a0 Caf\u00e9: out of ${label}`, 'warn'));
+    b.on('cafe:problem', ({ text }) => this.toast(text, 'warn'));
+    b.on('cafe:upgraded', ({ kind }) => this.toast(`Caf\u00e9 upgrade installed: ${kind}`, 'good'));
+    b.on('cafe:changed', () => { if (this.modal === 'cafe') this.scheduleRender(); });
     b.on('hub:built', ({ key }) => this.toast(`${this.hub.cfg[key].icon} ${this.hub.cfg[key].label} is open!`, 'good'));
     b.on('hub:sale', ({ key, amount }) => this.floater(`${this.hub.cfg[key].icon} +${money(amount, 2)}`));
     b.on('station:power', ({ kind }) => this.toast(`Power upgrade installed: ${kind}`, 'good'));
@@ -153,7 +160,7 @@ export class UIManager {
     b.on('station:changed', () => { if (this.modal === 'station') this.renderModal(); this.refreshSelection(); });
     b.on('economy:changed', () => { if (this.modal === 'finance') this.renderModal(); });
     // Statistics: refresh the moment anything it shows changes (coalesced, so a burst of events renders once)
-    for (const ev of ['customer:paid', 'customer:lost', 'svc:paid', 'svc:lost', 'charging:complete', 'cash:earned', 'reputation:changed', 'contract:done', 'property:changed', 'economy:changed', 'employee:task-complete']) {
+    for (const ev of ['customer:paid', 'customer:lost', 'svc:paid', 'svc:lost', 'charging:complete', 'cash:earned', 'reputation:changed', 'contract:done', 'property:changed', 'economy:changed', 'employee:task-complete', 'cafe:served']) {
       b.on(ev, () => { if (this.modal === 'stats') this.scheduleRender(); });
     }
     b.on('toast', ({ text, kind }) => this.toast(text, kind));
@@ -254,6 +261,7 @@ export class UIManager {
   /** Opens one management board at a time (opening another replaces it). 'upgrades' is the Business board's Upgrades tab. */
   open(name) {
     if (name === 'upgrades') { this.tab.business = 'upgrades'; name = 'business'; }
+    if (typeof name === 'string' && name.startsWith('cafe:')) { this.tab.cafe = name.slice(5); name = 'cafe'; } // 'cafe:stock' opens the cafe board on its Stock tab
     this.closeMore();
     if (this.confirmOpen) this.resolveConfirm(false);
     if (this.selectionFn) this.clearSelection(); // one panel at a time
@@ -313,7 +321,7 @@ export class UIManager {
     const body = ({
       settings: () => this.tplSettings(), stats: () => this.tplStats(), help: () => this.tplHelp(), save: () => this.tplSave(),
       station: () => this.tplStation(), staff: () => this.tplStaff(), finance: () => this.tplFinance(),
-      business: () => this.tplBusinessTabs(), wash: () => this.tplWash(), garage: () => this.tplGarage(),
+      business: () => this.tplBusinessTabs(), cafe: () => this.tplCafe(), wash: () => this.tplWash(), garage: () => this.tplGarage(),
       offline: () => this.tplOffline(), login: () => this.tplLogin(), stageup: () => this.tplStageUp(), map: () => this.tplMap(), missions: () => this.tplMissionsTabs(),
       pause: () => this.tplPause(), report: () => this.tplReport(),
     }[m] || (() => (String(m).startsWith('hub_') ? this.tplHub(m.slice(4)) : '')))();
@@ -353,6 +361,7 @@ export class UIManager {
     card.querySelectorAll('[data-district]').forEach((b) => (b.onclick = () => this.mapAction('district', b.dataset.district)));
     card.querySelectorAll('[data-prop]').forEach((b) => (b.onclick = () => this.mapAction('prop', b.dataset.prop)));
     card.querySelectorAll('[data-travel]').forEach((b) => (b.onclick = () => this.mapAction('travel', b.dataset.travel)));
+    card.querySelectorAll('[data-cafe]').forEach((b) => (b.onclick = () => this.cafeAction(b.dataset.cafe)));
     card.querySelectorAll('[data-hub]').forEach((b) => (b.onclick = () => this.hubAction(b.dataset.hub)));
     card.querySelectorAll('[data-tab]').forEach((b) => (b.onclick = () => { const [n, t] = b.dataset.tab.split(':'); this.tab[n] = t; this.renderModal(); }));
     card.querySelectorAll('[data-up]').forEach((b) => (b.onclick = () => {
@@ -389,6 +398,6 @@ export class UIManager {
 }
 
 // the panel modules own their methods; copy them (getters included) onto the UIManager prototype
-for (const mixin of [NotificationManager, ModalManager, HUDManager, StaffPanel, FinancePanel, MissionPanel, BusinessPanel, BuildPanel, SystemPanels]) {
+for (const mixin of [NotificationManager, ModalManager, HUDManager, StaffPanel, FinancePanel, MissionPanel, BusinessPanel, BuildPanel, SystemPanels, CafePanel]) {
   Object.defineProperties(UIManager.prototype, Object.getOwnPropertyDescriptors(mixin));
 }

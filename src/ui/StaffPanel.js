@@ -8,10 +8,10 @@ export const StaffPanel = {
   tplStaff() {
     const m = this.employees, eco = this.economy, cfg = m.cfg;
     const stars = (n) => '★'.repeat(n) + '☆'.repeat(cfg.maxSkill - n);
-    const stateText = { idle: 'Waiting for work', move: 'Heading to task', perform: 'Working', complete: 'Done', recover: 'Re-planning route', arriving: 'Starting shift', return: 'Back to post', offduty: 'Off duty', leaving: 'Leaving' };
     const emps = m.employees.filter((e) => !e.leaving).map((e) => {
       const def = cfg.roles[e.role], tc = m.trainCost(e), lv = m.level(e);
-      const status = e.dept === 'off' ? '<span class="tag">Off duty</span>' : e.state === 'perform' || e.state === 'move' ? `<span class="tag busy">${esc(stateText[e.state])}</span>` : `<span class="tag on">${esc(stateText[e.state] || e.state)}</span>`;
+      const doing = m.describe(e);
+      const status = e.dept === 'off' ? '<span class="tag">Off duty</span>' : e.state === 'perform' || e.state === 'move' ? `<span class="tag busy">${esc(doing)}</span>` : `<span class="tag on">${esc(doing)}</span>`;
       const xpPct = ((e.xp % 60) / 60) * 100;
       const place = e.dept === 'off' ? 'Off duty' : (m.facilities[m.homeOf(e)]?.label || m.homeOf(e));
       return `<div class="emp ${e.dept === 'off' ? 'off' : ''}">
@@ -36,11 +36,32 @@ export const StaffPanel = {
     const locked = Object.entries(cfg.roles).filter(([k]) => !m.roleAvailable(k)).map(([, r]) => `<div class="emp locked"><div class="emp-h"><span class="ic">${r.icon}</span><b>${esc(r.label)}</b><small>🔒 ${esc(r.unlock)}</small></div></div>`).join('');
     return `<h2>👥 Staff</h2>
       <div class="sub">${m.employees.filter((e) => !e.leaving).length}/${m.maxStaff} employees · payroll <b>${money(m.dailyPayroll)}</b>/day${m.hasManager ? ` · team bonus <b>+${Math.round(m.teamBonus * 100)}%</b>` : ''}${m.satisfactionBonus ? ` · cashier <b>+${m.satisfactionBonus.toFixed(1)}</b> satisfaction` : ''}</div>
+      ${this.staffOverview()}
       <div class="sect">Your team</div>${emps}
       <div class="sect">Candidates for hire</div>${cands}
       <button class="btn ghost" data-emp-act="refresh">Find new candidates · ${money(cfg.refreshCandidatesCost)}</button>
       <div class="sub" style="margin-top:6px">Staff limit grows with your bays (${m.maxStaff} now). Candidates refresh every day; better reputation brings better applicants.</div>
       <div class="sect">Coming later</div>${locked}`;
+  },
+
+  /** Workload per department, payroll by department and the team training program. */
+  staffOverview() {
+    const m = this.employees, eco = this.economy;
+    const depts = Object.keys(m.facilities).filter((d) => m.facilityBuilt(d));
+    const rows = depts.map((d) => {
+      const w = m.workload(d), pay = m.employees.filter((e) => !e.leaving && m.homeOf(e) === d).reduce((s, e) => s + e.salary, 0);
+      const tag = w.staff === 0 ? (w.tasks ? '<span class="tag busy">No staff</span>' : '<span class="tag">No staff</span>') : w.perStaff >= 2 ? '<span class="tag busy">Overloaded</span>' : w.tasks === 0 ? '<span class="tag">Quiet</span>' : '<span class="tag on">Balanced</span>';
+      return `<div class="kv"><span>${esc(m.facilities[d].label)} ${tag}</span><b>${w.staff} staff · ${w.tasks} open task${w.tasks === 1 ? '' : 's'} · ${money(pay)}/day</b></div>`;
+    }).join('');
+    const n = m.nextEfficiency();
+    const bonus = Math.round(m.efficiencyBonus * 100);
+    const train = n
+      ? `<button class="btn" data-emp-act="efficiency" ${eco.canAfford(n.cost) ? '' : 'disabled'}>Team training program · +${Math.round(n.bonus * 100)}% speed · ${money(n.cost)}</button>${eco.canAfford(n.cost) ? '' : `<div class="sub">Not enough cash: ${money(Math.max(0, Math.ceil(n.cost - eco.cash)))} more needed.</div>`}`
+      : '<div class="sub">Team training program: fully trained.</div>';
+    return `<div class="sect">Workload</div>${rows || '<div class="sub">No departments yet.</div>'}
+      <button class="btn ghost" data-emp-act="balance">Balance the team</button>
+      <div class="sect">Team training</div>
+      <div class="kv"><span>Training level</span><b>${m.efficiencyLevel}/${(m.cfg.efficiencyProgram || []).length} · +${bonus}% team speed</b></div>${train}`;
   },
 
   empAction(a) {
@@ -58,6 +79,12 @@ export const StaffPanel = {
       return;
     } else if (act === 'refresh') {
       if (!m.refreshCandidates(true)) this.toast('Not enough cash', 'warn');
+    } else if (act === 'balance') {
+      const n = m.balance();
+      this.toast(n ? `Moved ${n} employee${n > 1 ? 's' : ''} to where the work is` : 'The team is already balanced', n ? 'good' : 'info');
+    } else if (act === 'efficiency') {
+      const r = m.buyEfficiency();
+      if (!r.ok) this.toast(r.reason, 'warn'); else this.toast('Team training complete: the whole team works faster', 'good');
     }
     this.renderModal();
   },

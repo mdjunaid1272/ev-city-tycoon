@@ -25,6 +25,11 @@ const MISSIONS = [
   { id: 'm_contract', title: 'Complete a fleet contract', desc: 'Business 🏢 → Contracts: accept a job and serve the fleet customers before the deadline.', target: 1, event: 'contract:done', reward: { cash: 2500, gems: 15, reputation: 10 } },
   { id: 'm_stage4', title: 'Reach Stage 4: City EV Empire', desc: 'VIP customers arrive. Check the Stage tab for the goals.', target: 1, event: 'stage:up', test: (p) => p.stage === 4, reward: { cash: 5000, gems: 25 } },
   { id: 'm_rev', title: 'Earn $1,500 in revenue', desc: 'Total charging revenue counts.', target: 1500, event: 'cash:earned', amount: true, reward: { cash: 1500, gems: 15, reputation: 25 } },
+  // cafe missions are appended at the END so the position of older saves in this list never changes
+  { id: 'm_barista', title: 'Hire a barista', desc: 'Open Staff and hire a Barista: they prepare the cafe orders so you do not have to.', target: 1, event: 'employee:hired', test: (p) => p.employee?.role === 'barista', have: 'baristas', reward: { cash: 800, reputation: 3 } },
+  { id: 'm_cafe10', title: 'Serve 10 cafe orders', desc: 'Keep the cafe stocked (Cafe board > Stock) and the queue short.', target: 10, event: 'cafe:served', reward: { cash: 1200, gems: 8, reputation: 6 } },
+  { id: 'm_cafe_up', title: 'Upgrade the cafe', desc: 'Cafe board > Upgrades: a faster machine, more seats, more storage or a bigger menu.', target: 1, event: 'cafe:upgraded', reward: { cash: 1000, gems: 5 } },
+  { id: 'm_cafe_money', title: 'Earn $300 from the cafe', desc: 'Sell more, or raise prices on your best products (Cafe board > Menu).', target: 300, event: 'cafe:served', amount: true, reward: { cash: 1500, gems: 10, reputation: 8 } },
 ];
 
 export class MissionManager {

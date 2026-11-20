@@ -12,21 +12,24 @@
  *   charging - connected to a charger (station or charging hub)
  *   service  - being washed, diagnosed or repaired
  *   arriving - driving in / being assigned a bay (everything else)
+ *   cafe     - walk-in customers inside the cafe (drivers who order a coffee while charging stay in their charging category)
  * The cafe / store are purchases made while charging, nobody walks inside, so there is no "in the cafe" metric.
  */
 const SERVICE_BAY_STATES = new Set(['working', 'auto', 'diagnosing', 'repairing', 'ready', 'blocked']);
 
 export function siteCounts(businesses) {
   const seen = new Set();
-  const out = { onSite: 0, queued: 0, waiting: 0, charging: 0, service: 0, arriving: 0 };
+  const out = { onSite: 0, queued: 0, waiting: 0, charging: 0, service: 0, arriving: 0, cafe: 0 };
   for (const biz of businesses) {
     if (!biz || !biz.customers) continue;
     for (const c of biz.customers.values()) {
+      if (c.kind === 'charging') continue; // a driver who walked to the cafe is already counted as a charging customer
       if (seen.has(c.id)) continue; // never count the same customer twice
       seen.add(c.id);
       out.onSite++;
       const bay = c.bayId != null && biz.bays ? biz.bays[c.bayId] : null;
-      if (c.state === 'queue') out.queued++;
+      if (c.kind === 'walkin') out.cafe++; // walk-in cafe customers (queueing, waiting for the order or eating)
+      else if (c.state === 'queue') out.queued++;
       else if (c.state === 'charging' || bay?.state === 'charging') out.charging++;
       else if (bay && SERVICE_BAY_STATES.has(bay.state)) out.service++;
       else if (c.state === 'waiting') out.waiting++;

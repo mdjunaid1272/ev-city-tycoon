@@ -4,7 +4,7 @@
  */
 /** Satisfaction at which a customer counts as happy (goals, missions, tips). Early-game satisfaction averages ~65, so 70 is reachable; 80+ still earns reputation. */
 export const HAPPY_SCORE = 70;
-const KEYS = ['charged', 'washed', 'repaired', 'served', 'happy', 'vipServed', 'premiumServed', 'tips', 'revenue', 'tasks', 'hired', 'contractsDone', 'days', 'upgrades'];
+const KEYS = ['charged', 'washed', 'repaired', 'served', 'happy', 'vipServed', 'premiumServed', 'tips', 'revenue', 'tasks', 'hired', 'contractsDone', 'days', 'upgrades', 'cafeOrders', 'cafeRevenue'];
 const blank = () => Object.fromEntries(KEYS.map((k) => [k, 0]));
 
 export class StatsTracker {
@@ -27,6 +27,7 @@ export class StatsTracker {
       inc('revenue', amount);
       if (source === 'tips') inc('tips', amount);
     });
+    bus.on('cafe:served', ({ amount }) => { inc('cafeOrders'); inc('cafeRevenue', amount || 0); }); // counted separately: a driver who also buys a coffee is not a second 'customer served'
     bus.on('employee:task-complete', () => inc('tasks'));
     bus.on('employee:hired', () => inc('hired'));
     bus.on('cash:spent', ({ category }) => { if (category === 'equipment') inc('upgrades'); });

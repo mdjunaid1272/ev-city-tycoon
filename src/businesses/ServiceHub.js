@@ -55,6 +55,7 @@ export class ServiceHub {
     const cashier = this.getEmployees().satisfactionBonus > 0 ? 1.25 : 1;
     for (const key of ['store', 'coffee']) {
       if (!this.built[key]) continue;
+      if (key === 'coffee' && this.coffeeHandledByCafe) continue; // the Café turns this chance into a real order (see Cafe.js)
       const p = this.cfg[key].chance * (TYPE_FACTOR[c.type] ?? 1) * cashier;
       if (Math.random() < p) this.pending.push({ at: this.time + 4 + Math.random() * 14, c, key });
     }

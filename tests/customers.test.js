@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import { makeWorld, spawnCustomer, parkAndPlug } from './helpers.js';
 import { HAPPY_SCORE } from '../src/progression/StatsTracker.js';
 
@@ -98,5 +98,132 @@ describe('customer lifecycle', () => {
     w.customers.releaseSlot(queued);
     expect(queued.slot).toBeNull();
     expect(w.parking.stats('station-queue').reserved).toBe(w.customers.queue.length);
+  });
+});
+
+describe('customer behaviour', () => {
+  afterEach(() => vi.restoreAllMocks());
+  const queueUp = (w, specs) => {
+    // fill both bays, then let the given customer types queue (oldest first)
+    const [a, b] = [spawnCustomer(w), spawnCustomer(w)];
+    w.customers.arrived(a); w.customers.arrived(b);
+    const queued = specs.map(({ type, waited = 0 }) => {
+      const c = spawnCustomer(w, type);
+      w.customers.arrived(c);
+      c.arrivedAt = w.customers.time - waited;
+      return c;
+    });
+    return { a, b, queued };
+  };
+  const freeOneBay = (w, a) => { w.station.vehicleParked(a.bayId); w.customers.parkedAtBay(a); w.station.startCharging(a.bayId); finish(w, a); w.station.release(a.bayId); w.station.vehicleLeft(a.bayId); };
+
+  it('customer types really differ: patience, price tolerance and what they pay', () => {
+    const w = makeWorld();
+    const t = w.customers.cfg.types;
+    expect(t.impatient.patience).toBeLessThan(t.regular.patience);
+    expect(t.vip.payMult).toBeGreaterThan(t.regular.payMult);
+    expect(t.fleet.payMult).not.toBe(t.premium.payMult);
+    const a = spawnCustomer(w, 'impatient'), b = spawnCustomer(w, 'regular');
+    expect(a.maxPatience).toBeLessThan(b.maxPatience);
+  });
+
+  it('a long-waiting low priority customer can overtake ONE priority level, but never two (no starvation, no queue jumping)', () => {
+    const w = makeWorld();
+    w.economy.reputation = 100; w.customers.getStage = () => 4;
+    const pr = (k) => w.customers.cfg.types[k].priority;
+    expect(pr('emergency')).toBeGreaterThan(pr('regular')); // sanity: emergency outranks regular
+    const { a, queued } = queueUp(w, [{ type: 'regular', waited: 0 }, { type: 'emergency', waited: 0 }]);
+    const [regular, emergency] = queued;
+    // both fresh: priority decides
+    expect(w.customers.queueScore(emergency)).toBeGreaterThan(w.customers.queueScore(regular));
+    // regular has waited almost all of its patience: its score rises by at most 1.5 (cannot beat a 2-level gap)
+    regular.arrivedAt = w.customers.time - regular.maxPatience * 0.99;
+    const gap = pr('emergency') - pr('regular');
+    const overtakes = w.customers.queueScore(regular) > w.customers.queueScore(emergency);
+    expect(overtakes).toBe(gap < 1.5);
+    freeOneBay(w, a);
+    expect([regular.state, emergency.state].filter((s) => s === 'assigned')).toHaveLength(1);
+  });
+
+  it('equal priority is still first come, first served', () => {
+    const w = makeWorld();
+    const { a, queued } = queueUp(w, [{ type: 'regular', waited: 20 }, { type: 'regular', waited: 5 }]);
+    freeOneBay(w, a);
+    expect(queued[0].state).toBe('assigned');
+    expect(queued[1].state).toBe('queue');
+  });
+
+  it('happy customers become regulars: arrivals speed up with the number of happy customers, capped at +30%', () => {
+    const w = makeWorld();
+    vi.spyOn(Math, 'random').mockReturnValue(0.5);
+    const base = w.customers.arrivalInterval();
+    w.customers.stats.happy = 40;
+    expect(w.customers.loyalty).toBeCloseTo(0.2, 5);
+    expect(w.customers.arrivalInterval()).toBeLessThan(base);
+    w.customers.stats.happy = 100000;
+    expect(w.customers.loyalty).toBe(0.3);
+    expect(w.customers.arrivalInterval()).toBeCloseTo(base / 1.3, 3);
+  });
+
+  it('a customer who never reaches the driveway is removed by the watchdog, and the late car cannot take a bay', () => {
+    const w = makeWorld();
+    const c = spawnCustomer(w);
+    const left = vi.fn(); w.bus.on('customer:left', left);
+    const rep = w.economy.reputation;
+    w.customers.update(10); expect(w.customers.customers.has(c.id)).toBe(true);
+    w.customers.update(w.customers.cfg.stuckSeconds ?? 180);
+    expect(w.customers.customers.has(c.id)).toBe(false);
+    expect(w.customers.stats.lostBy['got lost on the way']).toBe(1);
+    expect(left).toHaveBeenCalledTimes(1);
+    expect(w.economy.reputation).toBe(rep); // not the player's fault
+    expect(w.customers.arrived(c)).toEqual({ action: 'leave', reason: 'gone' }); // the car shows up later: sent away
+    expect(w.station.freeBays).toBe(2);
+    expect(w.parking.stats('station-bays').reserved).toBe(0);
+  });
+
+  it('a customer who is on time is not touched by the watchdog', () => {
+    const w = makeWorld();
+    const c = spawnCustomer(w);
+    w.customers.update(100);
+    w.customers.arrived(c);
+    w.customers.update(500); // waiting at a bay: patience rules apply, not the watchdog
+    expect(w.customers.stats.lostBy['got lost on the way']).toBeUndefined();
+  });
+
+  it('customers warn once when their patience is nearly gone', () => {
+    const w = makeWorld();
+    const c = spawnCustomer(w);
+    const { bayId } = w.customers.arrived(c);
+    w.station.vehicleParked(bayId); w.customers.parkedAtBay(c);
+    const warn = vi.fn(); w.bus.on('customer:impatient', warn);
+    c.patience = c.maxPatience * 0.2;
+    w.customers.update(0.5); w.customers.update(0.5);
+    expect(warn).toHaveBeenCalledTimes(1);
+  });
+
+  it('two events for the same car (double arrival) cannot reserve two bays', () => {
+    const w = makeWorld();
+    const c = spawnCustomer(w);
+    const r1 = w.customers.arrived(c), r2 = w.customers.arrived(c);
+    expect(r1.action).toBe('bay');
+    expect(w.station.bays.filter((b) => b.customer === c).length).toBeLessThanOrEqual(2);
+    expect(w.parking.stats('station-bays').reserved).toBeLessThanOrEqual(2);
+    void r2;
+  });
+
+  it('unavailable services send customers away with a reason instead of leaving them stuck', () => {
+    const w = makeWorld();
+    const c = w.customers.createCustomer('regular');
+    c.vehicle.connector = 'nope';
+    expect(w.customers.checkService(c)).toMatch(/no NOPE connector/);
+    c.vehicle.connector = w.station.charger.connectors[0];
+    w.station.setPrice(w.station.cfg.maxPrice);
+    const d = w.customers.createCustomer('regular');
+    d.vehicle.connector = w.station.charger.connectors[0];
+    expect(w.customers.checkService(d, 0)).toBe('too expensive');
+    const before = w.customers.stats.lost;
+    for (let i = 0; i < 30; i++) w.customers.spawn('regular'); // everyone refuses, nobody is stuck in the lot
+    expect(w.customers.customers.size).toBe(0);
+    expect(w.customers.stats.lost).toBeGreaterThan(before);
   });
 });

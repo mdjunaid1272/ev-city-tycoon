@@ -1,0 +1,272 @@
+{
+  "ingredients": {
+    "beans": {
+      "label": "Coffee beans",
+      "icon": "🫘",
+      "cost": 0.5,
+      "cap": 40
+    },
+    "milk": {
+      "label": "Milk",
+      "icon": "🥛",
+      "cost": 0.45,
+      "cap": 60
+    },
+    "pastry": {
+      "label": "Pastry dough",
+      "icon": "🥐",
+      "cost": 0.9,
+      "cap": 30
+    },
+    "filling": {
+      "label": "Sandwich filling",
+      "icon": "🥪",
+      "cost": 1.6,
+      "cap": 20
+    }
+  },
+  "products": {
+    "espresso": {
+      "label": "Espresso",
+      "icon": "☕",
+      "price": 3.5,
+      "prep": 8,
+      "unlock": 0,
+      "satisfaction": 2,
+      "ingredients": {
+        "beans": 1
+      }
+    },
+    "croissant": {
+      "label": "Croissant",
+      "icon": "🥐",
+      "price": 4,
+      "prep": 6,
+      "unlock": 0,
+      "satisfaction": 2,
+      "ingredients": {
+        "pastry": 1
+      }
+    },
+    "latte": {
+      "label": "Latte",
+      "icon": "🥛",
+      "price": 5.5,
+      "prep": 14,
+      "unlock": 1,
+      "satisfaction": 4,
+      "ingredients": {
+        "beans": 1,
+        "milk": 2
+      }
+    },
+    "sandwich": {
+      "label": "Sandwich",
+      "icon": "🥪",
+      "price": 7.5,
+      "prep": 18,
+      "unlock": 1,
+      "satisfaction": 4,
+      "ingredients": {
+        "pastry": 1,
+        "filling": 1
+      }
+    },
+    "iced": {
+      "label": "Iced coffee",
+      "icon": "🧊",
+      "price": 6,
+      "prep": 10,
+      "unlock": 2,
+      "satisfaction": 5,
+      "ingredients": {
+        "beans": 1,
+        "milk": 1
+      }
+    }
+  },
+  "customerTypes": {
+    "commuter": {
+      "label": "Commuter",
+      "icon": "🧑‍💼",
+      "weight": 5,
+      "patience": 40,
+      "spend": 1,
+      "prefs": {
+        "espresso": 5,
+        "croissant": 3,
+        "latte": 2
+      }
+    },
+    "tourist": {
+      "label": "Tourist",
+      "icon": "🧳",
+      "weight": 3,
+      "patience": 70,
+      "spend": 1.25,
+      "prefs": {
+        "latte": 4,
+        "sandwich": 3,
+        "iced": 2,
+        "croissant": 2
+      }
+    },
+    "rusher": {
+      "label": "Rusher",
+      "icon": "🏃",
+      "weight": 2,
+      "patience": 22,
+      "spend": 1,
+      "prefs": {
+        "espresso": 6
+      }
+    }
+  },
+  "demand": {
+    "baseIntervalSeconds": 13,
+    "reputationDivisor": 120,
+    "rushHours": [
+      [
+        7,
+        9.5
+      ],
+      [
+        16.5,
+        19
+      ]
+    ],
+    "rushFactor": 0.7,
+    "nightFactor": 2.5,
+    "chargingChance": 0.35,
+    "chargingPatience": 45,
+    "typeFactor": {
+      "regular": 1,
+      "premium": 1.3,
+      "impatient": 0.5,
+      "fleet": 0.5,
+      "vip": 1.5,
+      "emergency": 0.15
+    },
+    "maxPriceFactor": 1.6
+  },
+  "service": {
+    "manualPrepFactor": 1.5,
+    "eatSeconds": [
+      7,
+      13
+    ],
+    "tipRate": 0.12,
+    "happyScore": 75,
+    "autoRestock": {
+      "below": 0.3,
+      "refillTo": 0.7,
+      "intervalSeconds": 2
+    },
+    "shortageCooldownSeconds": 90
+  },
+  "upgrades": {
+    "machine": {
+      "label": "Espresso machine",
+      "icon": "⚙️",
+      "effect": "Faster preparation",
+      "levels": [
+        {
+          "prepMult": 1,
+          "cost": 0,
+          "stage": 0
+        },
+        {
+          "prepMult": 0.8,
+          "cost": 2500,
+          "stage": 3
+        },
+        {
+          "prepMult": 0.65,
+          "cost": 6000,
+          "stage": 3
+        },
+        {
+          "prepMult": 0.5,
+          "cost": 12000,
+          "stage": 4
+        }
+      ]
+    },
+    "storage": {
+      "label": "Storage room",
+      "icon": "📦",
+      "effect": "More ingredients in stock",
+      "levels": [
+        {
+          "capMult": 1,
+          "cost": 0,
+          "stage": 0
+        },
+        {
+          "capMult": 1.6,
+          "cost": 1500,
+          "stage": 3
+        },
+        {
+          "capMult": 2.4,
+          "cost": 4000,
+          "stage": 3
+        }
+      ]
+    },
+    "seating": {
+      "label": "Seating area",
+      "icon": "🪑",
+      "effect": "More seats, more walk-in customers",
+      "levels": [
+        {
+          "seats": 4,
+          "demand": 1,
+          "staff": 1,
+          "cost": 0,
+          "stage": 0
+        },
+        {
+          "seats": 6,
+          "demand": 1.25,
+          "staff": 2,
+          "cost": 2000,
+          "stage": 3
+        },
+        {
+          "seats": 8,
+          "demand": 1.5,
+          "staff": 2,
+          "cost": 5000,
+          "stage": 4
+        },
+        {
+          "seats": 10,
+          "demand": 1.8,
+          "staff": 3,
+          "cost": 10000,
+          "stage": 4
+        }
+      ]
+    },
+    "menu": {
+      "label": "Menu",
+      "icon": "📋",
+      "effect": "Unlocks new products",
+      "levels": [
+        {
+          "cost": 0,
+          "stage": 0
+        },
+        {
+          "cost": 3000,
+          "stage": 3
+        },
+        {
+          "cost": 8000,
+          "stage": 4
+        }
+      ]
+    }
+  }
+}

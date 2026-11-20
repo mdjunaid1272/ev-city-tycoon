@@ -68,7 +68,8 @@ function staffing(cash = 50000) {
     const c = mgr.makeCandidate(); c.role = 'attendant'; c.skill = skill; c.cost = mgr.hireCost(skill); mgr.candidates.push(c);
     return mgr.hire(c.id);
   };
-  return { bus, economy, tasks, mgr, hire };
+  const step = (seconds, dt = 0.1) => { for (let t = 0; t < seconds; t += dt) mgr.update(dt); };
+  return { bus, economy, tasks, mgr, hire, step };
 }
 
 describe('employees: hiring and doing tasks', () => {
@@ -133,5 +134,138 @@ describe('employees: hiring and doing tasks', () => {
     const e = s.mgr.employees[0];
     expect(Number.isFinite(e.pos.x) && Number.isFinite(e.pos.z)).toBe(true);
     expect(['idle', 'move', 'perform', 'complete', 'recover', 'return', 'arriving']).toContain(e.state);
+  });
+});
+
+describe('employees: workload, specialisation and the team training program', () => {
+  /** Station + one charging hub, so attendants can be moved between two places. */
+  function twoSites(cash = 1e6) {
+    const s = staffing(cash);
+    s.mgr.registerFacility('hub_x', { nav: new NavGrid(), posts: [{ x: 5, z: 5 }, { x: 6, z: 5 }], door: { x: -14, z: -11.4 }, breakSpot: { x: -16, z: -10 }, built: () => true, label: 'Hub X' });
+    const hubTasks = (n) => { for (let i = 0; i < n; i++) s.tasks.publish(task({ key: `hubjob${i}`, dept: 'hub_x', pos: { x: 5, z: 5 } })); };
+    return { ...s, hubTasks };
+  }
+
+  it('the training program raises every employee\'s speed by exactly its bonus, costs cash, and has a maximum', () => {
+    const s = staffing();
+    const e = s.hire(3).employee;
+    const base = s.mgr.workMult(e);
+    const cash = s.economy.cash;
+    const n = s.mgr.nextEfficiency();
+    expect(s.mgr.buyEfficiency()).toEqual({ ok: true });
+    expect(s.economy.cash).toBe(cash - n.cost);
+    expect(s.economy.ledger.expenses.training).toBe(n.cost);
+    expect(s.mgr.workMult(e)).toBeCloseTo(base * 1.05, 6);
+    s.mgr.buyEfficiency(); s.mgr.buyEfficiency();
+    expect(s.mgr.efficiencyBonus).toBeCloseTo(0.15, 6);
+    expect(s.mgr.workMult(e)).toBeCloseTo(base * 1.15, 6);
+    expect(s.mgr.buyEfficiency()).toMatchObject({ ok: false, reason: 'Fully trained' });
+    expect(s.mgr.nextEfficiency()).toBeNull();
+  });
+
+  it('training needs cash and takes nothing when it fails', () => {
+    const s = staffing(100);
+    expect(s.mgr.buyEfficiency()).toMatchObject({ ok: false, reason: 'Not enough cash' });
+    expect(s.economy.cash).toBe(100);
+    expect(s.mgr.efficiencyLevel).toBe(0);
+  });
+
+  it('the training level is saved; older saves without it start at level 0; corrupt values are clamped', () => {
+    const s = staffing();
+    s.mgr.buyEfficiency(); s.mgr.buyEfficiency();
+    const saved = JSON.parse(JSON.stringify(s.mgr.serialize()));
+    expect(saved.efficiencyLevel).toBe(2);
+    const mk = (sv) => new EmployeeManager({ bus: new EventBus(), economy: s.economy, tasks: s.tasks, config: data('employees'), getReputation: () => 0, getCapacity: () => 2, saved: sv });
+    expect(mk(saved).efficiencyLevel).toBe(2);
+    expect(mk({ employees: [] }).efficiencyLevel).toBe(0);
+    expect(mk({ efficiencyLevel: 99 }).efficiencyLevel).toBe(3);
+    expect(mk({ efficiencyLevel: -5 }).efficiencyLevel).toBe(0);
+    expect(mk({ efficiencyLevel: 'x' }).efficiencyLevel).toBe(0);
+  });
+
+  it('workload counts open work against the staff of each department', () => {
+    const s = twoSites();
+    s.hire(); s.hire();
+    s.hubTasks(5);
+    expect(s.mgr.workload('hub_x')).toMatchObject({ tasks: 5, staff: 0 });
+    expect(s.mgr.workload('charging')).toMatchObject({ tasks: 0, staff: 2 });
+    expect(s.mgr.workload('hub_x').perStaff).toBeGreaterThan(s.mgr.workload('charging').perStaff);
+  });
+
+  it('balance() moves idle attendants to the busier site, one at a time, and keeps the quiet site staffed', () => {
+    const s = twoSites();
+    s.hire(); s.hire();
+    s.step(30); // both settle at their posts, idle
+    s.hubTasks(6);
+    const moved = s.mgr.balance();
+    expect(moved).toBeGreaterThan(0);
+    expect(s.mgr.employees.filter((e) => s.mgr.homeOf(e) === 'hub_x').length).toBe(moved);
+    expect(s.mgr.employees.filter((e) => s.mgr.homeOf(e) === 'charging').length).toBeGreaterThanOrEqual(0);
+    // work gets done at the hub
+    s.step(120);
+    expect(s.tasks.stats.completed).toBeGreaterThan(0);
+  });
+
+  it('balance() does nothing when the other site is not busier, or would leave a site with work empty', () => {
+    const s = twoSites();
+    s.hire();
+    s.step(20);
+    expect(s.mgr.balance()).toBe(0); // no work anywhere
+    s.hubTasks(2);
+    for (let i = 0; i < 3; i++) s.tasks.publish(task({ key: `st${i}`, dept: 'charging', pos: { x: 0, z: 2 } }));
+    expect(s.mgr.balance()).toBe(0); // the only attendant must stay where the work is
+  });
+
+  it('new attendants start where the workload is highest', () => {
+    const s = twoSites();
+    s.hire();
+    s.hubTasks(6);
+    const e = s.hire().employee;
+    expect(s.mgr.homeOf(e)).toBe('hub_x');
+    const calm = twoSites();
+    expect(calm.mgr.homeOf(calm.hire().employee)).toBe('charging'); // no work anywhere: the default site
+  });
+
+  it('describe() says what an employee is doing in plain words', () => {
+    const s = staffing();
+    const e = s.hire().employee;
+    expect(s.mgr.describe(e)).toBe('Starting shift');
+    s.step(40);
+    expect(s.mgr.describe(e)).toBe('Waiting for work');
+    s.tasks.publish(task({ key: 'job', type: 'connect', pos: { x: 0.8, z: 2 }, base: 20 }));
+    let seen = new Set();
+    for (let i = 0; i < 400; i++) { s.mgr.update(0.1); seen.add(s.mgr.describe(e)); }
+    expect([...seen].some((t) => /Connecting a car/.test(t))).toBe(true);
+    s.mgr.assign(e.id, 'off');
+    expect(s.mgr.describe(e)).toBe('Off duty');
+  });
+
+  it('skill progression: experience raises the level and the work speed, training raises the skill', () => {
+    const s = staffing();
+    const e = s.hire(2).employee;
+    const w0 = s.mgr.workMult(e);
+    e.xp = 600;
+    expect(s.mgr.level(e)).toBe(10);
+    expect(s.mgr.workMult(e)).toBeCloseTo(w0 * 1.2, 6);
+    const sal = e.salary;
+    expect(s.mgr.train(e.id)).toBe(true);
+    expect(e.skill).toBe(3);
+    expect(e.salary).toBeGreaterThan(sal); // better people cost more
+  });
+
+  it('salaries are paid daily through the economy; unpaid days slow the team and eventually make people quit', () => {
+    const s = staffing(5000);
+    const e = s.hire().employee;
+    const cash = s.economy.cash;
+    s.mgr.paySalaries();
+    expect(s.economy.cash).toBe(cash - e.salary);
+    s.economy.cash = 0;
+    const fast = s.mgr.workMult(e);
+    s.mgr.paySalaries();
+    expect(e.unpaidDays).toBe(1);
+    expect(s.mgr.workMult(e)).toBeLessThan(fast);
+    const quit = vi.fn(); s.bus.on('employee:quit', quit);
+    s.mgr.paySalaries(); s.mgr.paySalaries();
+    expect(quit).toHaveBeenCalledTimes(1);
   });
 });

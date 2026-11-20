@@ -47,6 +47,8 @@ import { WashView } from '../businesses/WashView.js';
 import { GarageView } from '../businesses/GarageView.js';
 import { MissionManager } from '../progression/MissionManager.js';
 import { UIManager, money } from '../ui/UIManager.js';
+import { Cafe, CAFE_LAYOUT } from '../businesses/Cafe.js';
+import { CafeView } from '../businesses/CafeView.js';
 import { TutorialManager } from '../ui/TutorialManager.js';
 import { Environment } from '../world/Environment.js';
 import { playerYield } from '../vehicles/PlayerYield.js';
@@ -76,7 +78,7 @@ export class Game {
     const tick = () => new Promise((r) => requestAnimationFrame(() => r()));
 
     step(0.05, 'Loading game data…');
-    const [econCfg, vehicles, custCfg, empCfg, svcCfg, progCfg, missCfg, decorCfg] = await Promise.all([
+    const [econCfg, vehicles, custCfg, empCfg, svcCfg, progCfg, missCfg, decorCfg, cafeCfg] = await Promise.all([
       loadJson('./data/economy.json', null),
       loadJson('./data/vehicles.json', null),
       loadJson('./data/customers.json', null),
@@ -85,8 +87,9 @@ export class Game {
       loadJson('./data/progression.json', null),
       loadJson('./data/missions.json', null),
       loadJson('./data/decor.json', null),
+      loadJson('./data/cafe.json', null),
     ]);
-    if (!econCfg || !vehicles || !custCfg || !empCfg || !svcCfg || !progCfg || !missCfg || !decorCfg) throw new Error('Game data failed to load (public/data/*.json)');
+    if (!econCfg || !vehicles || !custCfg || !empCfg || !svcCfg || !progCfg || !missCfg || !decorCfg || !cafeCfg) throw new Error('Game data failed to load (public/data/*.json)');
     const saved = await this.saver.load();
 
     step(0.15, 'Preparing renderer…');
@@ -149,7 +152,7 @@ export class Game {
     this.employees = new EmployeeManager({
       bus: this.bus, economy: this.economy, tasks: this.tasks, config: empCfg,
       getReputation: () => this.economy.reputation, saved: saved?.employees,
-      getCapacity: () => this.station.unlockedCount + (this.wash?.built ? this.wash.unlockedBays : 0) + (this.garage?.built ? this.garage.unlockedBays : 0) + Object.values(this.hubs || {}).reduce((n, h) => n + (h.built ? h.unlockedBays : 0), 0),
+      getCapacity: () => this.station.unlockedCount + (this.wash?.built ? this.wash.unlockedBays : 0) + (this.garage?.built ? this.garage.unlockedBays : 0) + Object.values(this.hubs || {}).reduce((n, h) => n + (h.built ? h.unlockedBays : 0), 0) + (this.cafe?.built ? this.cafe.staffSlots : 0),
     });
     this.employees.colliders = this.colliders; // staff are solid
     this.employees.player = this.player.pos;
@@ -157,6 +160,14 @@ export class Game {
       nav: this.nav, label: 'Charging Station', built: () => true,
       posts: [{ x: -0.8, z: 3.6 }, { x: 0.8, z: 3.6 }, { x: -0.8, z: 2.0 }, { x: 0.8, z: 2.0 }, { x: 0, z: -2.6 }],
       door: { x: -14, z: -11.4 }, breakSpot: { x: -16.5, z: -10.5 },
+    });
+    // the cafe: a business inside the station lot (opens with the Coffee Shop upgrade); baristas are a normal employee department
+    this.cafe = new Cafe({ bus: this.bus, economy: this.economy, cfg: cafeCfg, hub: this.hub, tasks: this.tasks, getHour: () => this.day?.hour ?? 12, getReputation: () => this.economy.reputation, getStage: () => this.progression.stage, saved: saved?.cafe });
+    this.cafe.hubCashierBoost = () => (this.employees.satisfactionBonus > 0 ? 1.25 : 1);
+    this.cafeView = new CafeView({ scene: this.sm.scene, assets: this.assets, colliders: this.colliders, nav: this.nav, bus: this.bus, cafe: this.cafe, employees: this.employees });
+    this.employees.registerFacility('cafe', {
+      nav: this.nav, label: 'Caf\u00e9', built: () => this.cafe.built, posts: CAFE_LAYOUT.stand,
+      door: { x: CAFE_LAYOUT.entry.x, z: CAFE_LAYOUT.entry.z }, breakSpot: { x: 21.5, z: -5.2 },
     });
     // car wash + garage (built later by the player on the neighbouring lots)
     const svcArgs = { bus: this.bus, economy: this.economy, parking: this.parking, cfg: svcCfg, custCfg, tasks: this.tasks, getEmployees: () => this.employees, vehicleDefs: vehicles.vehicles, getHour: () => this.day?.hour ?? 12 };
@@ -193,7 +204,7 @@ export class Game {
       bus: this.bus, economy: this.economy, cfg: progCfg.contracts, progression: this.progression, saved: saved?.contracts,
       getBuilt: (k) => (k === 'wash' ? this.wash.built : this.garage.built),
     });
-    this.upgrades = new UpgradeManager({ economy: this.economy, station: this.station, wash: this.wash, garage: this.garage, hub: this.hub, progression: this.progression, hubs: this.hubs });
+    this.upgrades = new UpgradeManager({ economy: this.economy, station: this.station, wash: this.wash, garage: this.garage, hub: this.hub, progression: this.progression, hubs: this.hubs, employees: this.employees, cafe: this.cafe });
     const stage = () => this.progression.stage;
     this.customers.getStage = stage;
     this.customers.fleetBoost = () => this.contracts.boostFor('charge');
@@ -229,7 +240,7 @@ export class Game {
     if (saved?.camera) this.camera.restore(saved.camera);
     this.goals = new GoalManager({
       bus: this.bus, economy: this.economy, stats: this.stats, cfg: missCfg, progression: this.progression, saved: saved?.goals,
-      ctx: { washBuilt: () => this.wash.built, garageBuilt: () => this.garage.built, employees: () => this.employees.employees.filter((e) => !e.leaving).length, properties: () => this.properties.ownedCount, decor: () => this.placement.totalPlaced },
+      ctx: { washBuilt: () => this.wash.built, garageBuilt: () => this.garage.built, cafeBuilt: () => this.cafe.built, employees: () => this.employees.employees.filter((e) => !e.leaving).length, properties: () => this.properties.ownedCount, decor: () => this.placement.totalPlaced },
     });
     this.goals.init(this.day.day);
     this.contracts.day = this.day.day;
@@ -243,7 +254,7 @@ export class Game {
     this.dailyReward = new DailyReward({ economy: this.economy, cfg: progCfg.login, saved: saved?.login });
     if (!saved) this.dailyReward.markToday();
     this.missions = new MissionManager(this.bus, this.economy);
-    this.missions.have = { employees: () => this.employees.employees.filter((e) => !e.leaving).length };
+    this.missions.have = { employees: () => this.employees.employees.filter((e) => !e.leaving).length, baristas: () => this.employees.employees.filter((e) => !e.leaving && e.role === 'barista').length };
     if (saved?.missions) this.missions.restore(saved.missions);
     this.missions.syncCurrent();
 
@@ -269,7 +280,7 @@ export class Game {
     this.ui = new UIManager({
       bus: this.bus, economy: this.economy, station: this.station, missions: this.missions,
       settings: this.settings, game: this, camera: this.camera, day: this.day, customers: this.customers, employees: this.employees, wash: this.wash, garage: this.garage,
-      stats: this.stats, progression: this.progression, goals: this.goals, upgrades: this.upgrades, hub: this.hub, contracts: this.contracts,
+      stats: this.stats, progression: this.progression, goals: this.goals, upgrades: this.upgrades, hub: this.hub, contracts: this.contracts, cafe: this.cafe, cafeView: this.cafeView,
       power: this.power, ads: this.ads, offline: this.offline, dailyReward: this.dailyReward,
       properties: this.properties, districts: this.districts, hubs: this.hubs, hubViews: this.hubViews, placement: this.placement, decor: this.decor,
     });
@@ -311,6 +322,8 @@ export class Game {
     removeEventListener('visibilitychange', this.onHide);
     removeEventListener('beforeunload', this.onUnload);
     this.tutorial?.dispose();
+    this.cafe?.dispose();
+    this.cafeView?.dispose();
     this.ui?.dispose();
     this.input?.dispose();
     this.ads?.dispose();
@@ -428,7 +441,7 @@ export class Game {
       }
       return;
     }
-    const roots = [...this.employeeView.selectables, ...this.stationView.selectables, ...this.washView.selectables, ...this.garageView.selectables, ...Object.values(this.hubViews).flatMap((v) => v.selectables)].filter((o) => o.visible);
+    const roots = [...this.employeeView.selectables, ...this.stationView.selectables, ...(this.cafe.built ? this.cafeView.selectables : []), ...this.washView.selectables, ...this.garageView.selectables, ...Object.values(this.hubViews).flatMap((v) => v.selectables)].filter((o) => o.visible);
     const hits = this.raycaster.intersectObjects(roots, true);
     if (!hits.length) { this.ui.clearSelection(); return; }
     let o = hits[0].object;
@@ -505,6 +518,8 @@ export class Game {
       this.districts.update(dt, this.camera.inManagement ? this.camera.mg.dist / 120 : 1);
       this.decor.update();
       this.employees.update(dt);
+      this.cafe.update(dt);
+      this.cafeView.update(dt);
       for (const v of [this.washView, this.garageView, ...Object.values(this.hubViews)]) {
         v.mgFactor = this.camera.mg.dist / 120;
         v.playerPos = this.player.pos;
@@ -566,6 +581,7 @@ export class Game {
       progression: this.progression.serialize(),
       goals: this.goals.serialize(),
       hub: this.hub.serialize(),
+      cafe: this.cafe.serialize(),
       contracts: this.contracts.serialize(),
       offline: this.offline.serialize(),
       login: this.dailyReward.serialize(),

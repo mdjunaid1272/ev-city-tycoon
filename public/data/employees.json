@@ -16,18 +16,139 @@
   "cashierSatisfactionBase": 4,
   "cashierSatisfactionPerSkill": 1.5,
   "roles": {
-    "attendant": { "label": "Charging Attendant", "icon": "🔌", "dept": "charging", "shirt": "0x1f8a4c", "hat": "0x17935a", "available": true, "weight": 6, "blurb": "Plugs in waiting vehicles and sends finished ones off." },
-    "manager":   { "label": "Manager", "icon": "📋", "dept": "charging", "shirt": "0x1b6ef3", "hat": "0x1555c0", "available": true, "weight": 1.5, "minSkill": 2, "blurb": "+% work speed for the whole team and auto-prioritises the most impatient customers." },
-    "cashier":   { "label": "Cashier", "icon": "💳", "dept": "charging", "shirt": "0xffc43d", "hat": "0xe8a21c", "available": true, "weight": 2, "blurb": "Friendly checkout: raises every customer's satisfaction (more tips and reputation)." },
-    "washer":    { "label": "Car Wash Worker", "icon": "🧽", "dept": "wash", "shirt": "0x4cc9f0", "hat": "0x2f8cff", "available": false, "facility": "wash", "weight": 3, "blurb": "Runs wash bays: works manual bays and starts the automatic tunnel.", "unlock": "Unlocks with the Car Wash" },
-    "mechanic":  { "label": "Mechanic", "icon": "🔧", "dept": "garage", "shirt": "0xff7a59", "hat": "0xc0453a", "available": false, "facility": "garage", "weight": 3, "blurb": "Diagnoses vehicles and performs repairs. Skill 3+ can do motor and battery jobs.", "unlock": "Unlocks with the EV Garage" },
-    "security":  { "label": "Security Guard", "icon": "🛡️", "dept": "charging", "shirt": "0x4a525d", "hat": "0x20252b", "available": false, "unlock": "Unlocks at Stage 3" }
+    "attendant": {
+      "label": "Charging Attendant",
+      "icon": "🔌",
+      "dept": "charging",
+      "shirt": "0x1f8a4c",
+      "hat": "0x17935a",
+      "available": true,
+      "weight": 6,
+      "blurb": "Plugs in waiting vehicles and sends finished ones off."
+    },
+    "manager": {
+      "label": "Manager",
+      "icon": "📋",
+      "dept": "charging",
+      "shirt": "0x1b6ef3",
+      "hat": "0x1555c0",
+      "available": true,
+      "weight": 1.5,
+      "minSkill": 2,
+      "blurb": "+% work speed for the whole team and auto-prioritises the most impatient customers."
+    },
+    "cashier": {
+      "label": "Cashier",
+      "icon": "💳",
+      "dept": "charging",
+      "shirt": "0xffc43d",
+      "hat": "0xe8a21c",
+      "available": true,
+      "weight": 2,
+      "blurb": "Friendly checkout: raises every customer's satisfaction (more tips and reputation)."
+    },
+    "washer": {
+      "label": "Car Wash Worker",
+      "icon": "🧽",
+      "dept": "wash",
+      "shirt": "0x4cc9f0",
+      "hat": "0x2f8cff",
+      "available": false,
+      "facility": "wash",
+      "weight": 3,
+      "blurb": "Runs wash bays: works manual bays and starts the automatic tunnel.",
+      "unlock": "Unlocks with the Car Wash"
+    },
+    "mechanic": {
+      "label": "Mechanic",
+      "icon": "🔧",
+      "dept": "garage",
+      "shirt": "0xff7a59",
+      "hat": "0xc0453a",
+      "available": false,
+      "facility": "garage",
+      "weight": 3,
+      "blurb": "Diagnoses vehicles and performs repairs. Skill 3+ can do motor and battery jobs.",
+      "unlock": "Unlocks with the EV Garage"
+    },
+    "security": {
+      "label": "Security Guard",
+      "icon": "🛡️",
+      "dept": "charging",
+      "shirt": "0x4a525d",
+      "hat": "0x20252b",
+      "available": false,
+      "unlock": "Unlocks at Stage 3"
+    },
+    "barista": {
+      "label": "Barista",
+      "icon": "☕",
+      "dept": "cafe",
+      "shirt": "0x8a5a35",
+      "hat": "0x5a3a22",
+      "available": false,
+      "facility": "cafe",
+      "weight": 3,
+      "blurb": "Prepares café orders: faster with more skill. Without a barista you prepare orders yourself.",
+      "unlock": "Unlocks with the Coffee Shop"
+    }
   },
   "departments": {
-    "charging": { "label": "Charging Station", "available": true },
-    "wash": { "label": "Car Wash", "available": false },
-    "garage": { "label": "EV Garage", "available": false },
-    "off": { "label": "Off duty", "available": true }
+    "charging": {
+      "label": "Charging Station",
+      "available": true
+    },
+    "wash": {
+      "label": "Car Wash",
+      "available": false
+    },
+    "garage": {
+      "label": "EV Garage",
+      "available": false
+    },
+    "off": {
+      "label": "Off duty",
+      "available": true
+    },
+    "cafe": {
+      "label": "Café",
+      "available": false
+    }
   },
-  "firstNames": ["Ava", "Liam", "Noor", "Ken", "Zara", "Omar", "Mia", "Jon", "Ines", "Raj", "Lena", "Tariq", "Sofia", "Ben", "Yuki", "Carlos", "Amina", "Leo", "Priya", "Hugo"]
+  "firstNames": [
+    "Ava",
+    "Liam",
+    "Noor",
+    "Ken",
+    "Zara",
+    "Omar",
+    "Mia",
+    "Jon",
+    "Ines",
+    "Raj",
+    "Lena",
+    "Tariq",
+    "Sofia",
+    "Ben",
+    "Yuki",
+    "Carlos",
+    "Amina",
+    "Leo",
+    "Priya",
+    "Hugo"
+  ],
+  "efficiencyProgram": [
+    {
+      "cost": 3000,
+      "bonus": 0.05
+    },
+    {
+      "cost": 7500,
+      "bonus": 0.1
+    },
+    {
+      "cost": 15000,
+      "bonus": 0.15
+    }
+  ]
 }

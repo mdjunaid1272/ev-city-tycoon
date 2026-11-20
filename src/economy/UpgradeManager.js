@@ -6,8 +6,8 @@
 const $ = (n) => `$${n.toLocaleString('en-US')}`;
 
 export class UpgradeManager {
-  constructor({ economy, station, wash, garage, hub, progression, hubs = {} }) {
-    Object.assign(this, { economy, station, wash, garage, hub, progression, hubs });
+  constructor({ economy, station, wash, garage, hub, progression, hubs = {}, employees = null, cafe = null }) {
+    Object.assign(this, { economy, station, wash, garage, hub, progression, hubs, employees, cafe });
   }
 
   list() {
@@ -58,6 +58,11 @@ export class UpgradeManager {
     for (const key of ['store', 'coffee', 'lounge']) {
       const c = hub.cfg[key];
       add({ id: `hub:${key}`, group: 'Customer hub', icon: c.icon, name: c.label, level: hub.built[key] ? 1 : 0, max: 1, desc: c.blurb, cost: hub.built[key] ? null : c.cost, maxed: hub.built[key], lock: hub.built[key] ? null : hub.lock(key, pr), buy: () => hub.build(key, pr) });
+    }
+    // --- team ---
+    if (this.employees) {
+      const n = this.employees.nextEfficiency();
+      add({ id: 'team:training', group: 'Team', icon: '🎓', name: 'Team training program', level: this.employees.efficiencyLevel, max: (this.employees.cfg.efficiencyProgram || []).length, desc: n ? `+${Math.round(n.bonus * 100)}% work speed for every employee (now +${Math.round(this.employees.efficiencyBonus * 100)}%)` : 'Fully trained', cost: n ? n.cost : null, maxed: !n, buy: () => this.employees.buyEfficiency().ok });
     }
     // --- purchased charging hubs ---
     for (const h of Object.values(this.hubs || {})) {

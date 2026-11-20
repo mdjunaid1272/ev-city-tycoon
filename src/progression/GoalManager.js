@@ -38,6 +38,7 @@ export class GoalManager {
     switch (t.requires) {
       case 'wash': return this.ctx.washBuilt();
       case 'garage': return this.ctx.garageBuilt();
+      case 'cafe': return !!this.ctx.cafeBuilt?.();
       case 'employee': return this.ctx.employees() > 0;
       case 'rep10': return this.economy.reputation >= 10;
       case 'contracts': return this.progression.isUnlocked('contracts');

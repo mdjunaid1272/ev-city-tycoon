@@ -78,6 +78,26 @@
       "step": 1,
       "cashPer": 14,
       "cashMult": 1
+    },
+    {
+      "id": "d_cafe",
+      "title": "Serve {n} café orders",
+      "stat": "cafeOrders",
+      "min": 4,
+      "max": 12,
+      "cashPer": 60,
+      "requires": "cafe"
+    },
+    {
+      "id": "d_cafe_rev",
+      "title": "Earn ${n} from the café",
+      "stat": "cafeRevenue",
+      "min": 25,
+      "max": 90,
+      "step": 5,
+      "cashPer": 1.2,
+      "cashMult": 1,
+      "requires": "cafe"
     }
   ],
   "weekly": [
@@ -141,6 +161,16 @@
       "cashPer": 18,
       "gems": 8,
       "requires": "employee"
+    },
+    {
+      "id": "w_cafe",
+      "title": "Serve {n} café orders this week",
+      "stat": "cafeOrders",
+      "min": 30,
+      "max": 80,
+      "cashPer": 38,
+      "gems": 8,
+      "requires": "cafe"
     }
   ],
   "achievements": [
@@ -329,6 +359,28 @@
       "target": 10,
       "reward": {
         "gems": 10
+      }
+    },
+    {
+      "id": "a_cafe50",
+      "title": "Barista Bar",
+      "desc": "Serve 50 café orders",
+      "stat": "cafeOrders",
+      "target": 50,
+      "reward": {
+        "gems": 10,
+        "cash": 1500
+      }
+    },
+    {
+      "id": "a_cafe_rev",
+      "title": "Coffee Money",
+      "desc": "Earn $2,000 from the café",
+      "stat": "cafeRevenue",
+      "target": 2000,
+      "reward": {
+        "gems": 12,
+        "cash": 2000
       }
     }
   ]

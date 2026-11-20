@@ -6,36 +6,49 @@ import { $, money, siteCounts, aggregateStats, MORE_MODALS } from './uiShared.js
  */
 export const HUDManager = {
   // ---------- HUD ----------
-  /** Floating "Open" button above the station terminal: shown in street view when the player is near it. */
-  updateTerminalButton() {
-    let b = this.termBtn;
+  /**
+   * A button that floats above a spot in the world (terminal, cafe counter) and is shown in street view when the player is near it.
+   * One button per key is created once and reused; dispose() removes them.
+   */
+  floatingButton(key, { id, html, pos, y = 2.6, show = true, onClick }) {
+    const map = (this._floatBtns ||= {});
+    let b = map[key];
     if (!b) {
-      b = this.termBtn = document.createElement('button');
-      b.id = 'term-open';
+      b = map[key] = document.createElement('button');
+      b.id = id;
       b.type = 'button';
-      b.innerHTML = '<span>🖥️</span> Open';
-      b.onclick = (ev) => { ev.stopPropagation(); this.open('station'); };
+      b.innerHTML = html;
+      b.onclick = (ev) => { ev.stopPropagation(); onClick(); };
       // keep clicks / drags on the button from also walking the character
       for (const t of ['pointerdown', 'pointerup', 'mousedown', 'mouseup', 'touchstart', 'touchend']) b.addEventListener(t, (ev) => ev.stopPropagation());
       document.body.appendChild(b);
     }
-    const g = this.game, tp = g.stationView.terminalPos, pp = g.player.pos;
-    const near = !g.camera.inManagement && !g.camera.transitioning && !this.modal && !g.paused && Math.hypot(tp.x - pp.x, tp.z - pp.z) < 7;
+    const g = this.game, pp = g.player.pos;
+    const near = show && !g.camera.inManagement && !g.camera.transitioning && !this.modal && !g.paused && Math.hypot(pos.x - pp.x, pos.z - pp.z) < 7;
     if (!near) { if (b.style.display !== 'none') b.style.display = 'none'; return; }
-    const v = tp.clone(); v.y += 2.6; v.project(g.sm.camera);
+    const v = pos.clone(); v.y += y; v.project(g.sm.camera);
     b.style.display = 'block';
     b.style.left = `${((v.x + 1) / 2) * innerWidth}px`;
     b.style.top = `${((1 - v.y) / 2) * innerHeight - 4 + Math.sin(performance.now() / 380) * 4}px`;
   },
 
+  /** Floating buttons: "Open" at the station terminal, "Cafe" at the cafe counter once the cafe exists. */
+  updateTerminalButton() {
+    const g = this.game;
+    this.floatingButton('term', { id: 'term-open', html: '<span>🖥️</span> Open', pos: g.stationView.terminalPos, y: 2.6, onClick: () => this.open('station') });
+    if (this.cafe && g.cafeView) {
+      this.floatingButton('cafe', { id: 'cafe-open', html: '<span>☕</span> Caf\u00e9', pos: g.cafeView.label.sprite.position, y: 0.5, show: this.cafe.built, onClick: () => this.open('cafe') });
+    }
+  },
+
   /** Daily overview: revenue today, customers on site, satisfaction. */
   updateDaily() {
     // every customer is counted once: queued customers already live in their business's customer map (see SiteCounts)
-    const c = siteCounts([this.customers, this.wash, this.garage, ...Object.values(this.hubs || {})]);
+    const c = siteCounts([this.customers, this.wash, this.garage, ...Object.values(this.hubs || {}), this.cafe]);
     const active = c.onSite;
     const setT = (id, v) => { const e = $(id); if (e && e.textContent !== String(v)) e.textContent = v; };
-    setT('dd-arriving', c.arriving); setT('dd-queued', c.queued); setT('dd-waiting', c.waiting); setT('dd-charging', c.charging); setT('dd-service', c.service);
-    const sat = aggregateStats([this.customers, this.wash, this.garage, ...Object.values(this.hubs || {})]).avgSatisfaction; // all businesses
+    setT('dd-cafe', c.cafe); setT('dd-arriving', c.arriving); setT('dd-queued', c.queued); setT('dd-waiting', c.waiting); setT('dd-charging', c.charging); setT('dd-service', c.service);
+    const sat = aggregateStats([this.customers, this.wash, this.garage, ...Object.values(this.hubs || {}), this.cafe]).avgSatisfaction; // all businesses
     $('d-rev').textContent = money(Math.round(this.economy.todayRevenue));
     setT('d-cust', active);
     { const gl = this.goals, dn = gl.daily.filter((g) => g.done).length; $('d-dm-count').textContent = `${dn}/${gl.daily.length}`; $('d-dm-fill').style.width = `${gl.daily.length ? (dn / gl.daily.length) * 100 : 0}%`; $('d-missions').classList.toggle('all', gl.daily.length > 0 && dn === gl.daily.length); }

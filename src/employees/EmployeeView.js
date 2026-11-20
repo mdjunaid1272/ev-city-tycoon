@@ -58,7 +58,7 @@ export class EmployeeView {
     if (!m.employees.includes(e) || e.leaving) return null; // fired / quit: the panel closes itself
     const rows = [
       ['Skill', stars(e.skill)], ['Work speed', `x${m.workMult(e).toFixed(2)}`], ['Experience', `Lv ${m.level(e)} · ${e.xp} xp`],
-      ['Salary', `${$(e.salary)}/day`], ['Status', e.dept === 'off' ? 'Off duty' : STATE_TEXT[e.state] || e.state], ['Tasks done', e.tasksDone],
+      ['Salary', `${$(e.salary)}/day`], ['Status', m.describe(e)], ['Tasks done', e.tasksDone],
     ];
     if (e.role === 'manager') rows.push(['Team bonus', `+${Math.round(m.teamBonus * 100)}% speed · auto-priority`]);
     if (e.role === 'cashier') rows.push(['Satisfaction bonus', `+${m.satisfactionBonus.toFixed(1)}`]);

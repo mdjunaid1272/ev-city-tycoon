@@ -50,13 +50,21 @@ export class CustomerManager {
     return this.customers.size;
   }
 
+  /**
+   * Repeat customers: every happy customer is a future regular. The more happy customers the station has made (lifetime
+   * count, already saved), the more drivers come back: up to +30% arrivals. Unhappy service never reduces it, it just stops growing.
+   */
+  get loyalty() {
+    return Math.min(0.3, (this.stats.happy || 0) / 200);
+  }
+
   /** Arrival interval in seconds: price, reputation and time of day shape demand. */
   arrivalInterval() {
     const [lo, hi] = this.cfg.baseArrivalSeconds;
     let t = lo + Math.random() * (hi - lo);
     const price = this.station.pricePerKwh, fair = this.cfg.fairPricePerKwh;
     t *= 1 + Math.max(0, price - fair) * 4; // expensive -> fewer customers
-    t /= (1 + this.economy.reputation / 150) * this.decorDemand(); // good reputation + attractive lot -> more customers
+    t /= (1 + this.economy.reputation / 150) * this.decorDemand() * (1 + this.loyalty); // good reputation + attractive lot + returning happy customers -> more customers
     const h = this.getHour();
     if ((h >= 7 && h < 9.5) || (h >= 16.5 && h < 19)) t *= 0.65; // rush hours
     else if (h >= 23 || h < 5) t *= 2; // night
@@ -105,7 +113,9 @@ export class CustomerManager {
     }
     // patience only runs while the customer is waiting in the queue or at an uncharged bay
     for (const c of [...this.customers.values()]) {
+      if (c.state === 'navigate' && this.time - c.spawnedAt > (this.cfg.stuckSeconds ?? 180)) { this.lostOnTheWay(c); continue; } // never reached the driveway (blocked road, despawned car...)
       if (c.state !== 'queue' && c.state !== 'waiting') continue;
+      if (!c.warned && c.patience < c.maxPatience * 0.25) { c.warned = true; this.bus.emit('customer:impatient', { customer: c }); }
       c.patience -= dt;
       if (c.patience <= 0) this.giveUp(c);
     }
@@ -156,6 +166,8 @@ export class CustomerManager {
   // ---------- arrival at the station driveway ----------
   /** Called by the view when the vehicle reaches the driveway. Returns the decision. */
   arrived(c) {
+    // a customer that was already removed (watchdog, reset) must never take a bay or a queue slot: that would lock it forever
+    if (!this.customers.has(c.id)) return { action: 'leave', reason: 'gone' };
     c.arrivedAt = this.time;
     this.assignFromQueue(); // queued customers get free bays first
     const bay = this.station.freeBays ? this.station.reserveBay(c) : null;
@@ -177,10 +189,19 @@ export class CustomerManager {
     return { action: 'leave', reason: 'queue full' };
   }
 
-  /** Pick the next queued customer (highest priority first, then longest waiting) for any free bay. */
+  /**
+   * Who is next: customer priority first, but waiting counts too. Someone who has used most of their patience can overtake
+   * ONE priority level, so low-priority customers are never starved by a stream of VIPs.
+   */
+  queueScore(c) {
+    const waited = Math.max(0, this.time - c.arrivedAt), used = c.maxPatience > 0 ? Math.min(1, waited / c.maxPatience) : 0;
+    return c.def.priority + used * 1.5;
+  }
+
+  /** Pick the next queued customer for any free bay (see queueScore). */
   assignFromQueue() {
     while (this.queue.length && this.station.freeBays) {
-      const next = this.queue.reduce((best, c) => (!best || c.def.priority > best.def.priority || (c.def.priority === best.def.priority && c.arrivedAt < best.arrivedAt) ? c : best), null);
+      const next = this.queue.reduce((best, c) => (!best || this.queueScore(c) > this.queueScore(best) || (this.queueScore(c) === this.queueScore(best) && c.arrivedAt < best.arrivedAt) ? c : best), null);
       const bay = this.station.reserveBay(next);
       if (!bay) break;
       this.queue.splice(this.queue.indexOf(next), 1);
@@ -200,6 +221,14 @@ export class CustomerManager {
 
   parkedAtBay(c) {
     if (c.state === 'assigned') c.state = 'waiting';
+  }
+
+  /** A customer who never arrived is removed without a reputation penalty (it is not the player's fault). */
+  lostOnTheWay(c) {
+    this.customers.delete(c.id);
+    c.state = 'left';
+    this.lose(c, 'got lost on the way', false);
+    this.bus.emit('customer:left', { customer: c, from: 'navigate', reason: 'stuck' });
   }
 
   giveUp(c) {
