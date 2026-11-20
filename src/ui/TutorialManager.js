@@ -84,6 +84,8 @@ export class TutorialManager {
   dispose() {
     removeEventListener('resize', this.onResize);
     removeEventListener('pointerdown', this.onTouch);
+    for (const off of this._offs || []) off();
+    this._offs = [];
     this.clearGuides();
     this.scene.remove(this.marker);
     this.marker.traverse((o) => { o.geometry?.dispose(); o.material?.dispose(); });
@@ -170,10 +172,8 @@ export class TutorialManager {
 
   // ---------- events -> counters ----------
   bindEvents() {
-    const b = this.bus, inc = (k) => () => { this.n[k] = (this.n[k] || 0) + 1; };
-    b.on('charging:start', inc('charge'));
-    b.on('customer:paid', inc('paid'));
-    b.on('employee:hired', inc('hired'));
+    const inc = (k) => () => { this.n[k] = (this.n[k] || 0) + 1; };
+    this._offs = ['charging:start:charge', 'customer:paid:paid', 'employee:hired:hired'].map((s) => { const [a, b, k] = s.split(':'); return this.bus.on(`${a}:${b}`, inc(k)); }); // unsubscribed in dispose()
     // hybrid devices: the first real touch switches the hints to the joystick wording
     this.onTouch = (e) => { if (e.pointerType === 'touch' && !this.touch) { this.touch = true; this.render(); } };
     addEventListener('pointerdown', this.onTouch, { passive: true });

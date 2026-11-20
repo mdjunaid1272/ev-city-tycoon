@@ -35,3 +35,21 @@ export function siteCounts(businesses) {
   }
   return out;
 }
+
+/**
+ * Lifetime customer figures summed over every business (station, wash, garage, hubs): lost customers, tips and average satisfaction.
+ * Each business keeps its own `stats` object ({ lost, tips, satSum, satN, ... }); the total is the sum, nothing is counted twice.
+ */
+export function aggregateStats(businesses) {
+  const out = { lost: 0, tips: 0, satSum: 0, satN: 0, avgSatisfaction: null };
+  for (const b of businesses) {
+    const s = b?.stats;
+    if (!s) continue;
+    out.lost += s.lost || 0;
+    out.tips += s.tips || 0;
+    out.satSum += s.satSum || 0;
+    out.satN += s.satN || 0;
+  }
+  out.avgSatisfaction = out.satN ? out.satSum / out.satN : null;
+  return out;
+}

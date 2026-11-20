@@ -169,7 +169,6 @@ export class UIManager {
 
   rewardText(r) { return rewardTextOf(r); }
 
-
   update(dt) {
     this.updateTerminalButton();
     // animate cash counter
@@ -196,13 +195,8 @@ export class UIManager {
     }
   }
 
-
-
   // ---------- "More" menu ----------
   toggleMore() { this.moreOpen ? this.closeMore() : this.openMore(); }
-
-
-
 
   onMode(m) {
     const mg = m === 'management';
@@ -214,9 +208,6 @@ export class UIManager {
     $('mgmt-hint').classList.toggle('hidden', !mg);
     if (m !== 'management') { this.clearSelection(); if (this.decorOpen) this.closeDecor(); }
   }
-
-
-
 
   // ---------- selection card (management mode) ----------
   showSelection(fn) {
@@ -286,12 +277,6 @@ export class UIManager {
     this.restoreFocus();
     if (wasOffline && this.dailyReward.status()) this.open('login');
   }
-
-
-
-
-
-
 
   togglePause() {
     if (this.modal === 'pause') this.closeModal();
@@ -370,27 +355,10 @@ export class UIManager {
     void eco;
   }
 
-
-
-
-
-
-
-
-
-
-  // ---------- Milestone 6 screens ----------
+  // ---------- small helpers shared by the panel modules ----------
   tabs(name, list) { return tabStrip(name, this.tab[name], list); }
   bar(frac, color = 'var(--green)') { return progressBar(frac, color); }
   rewardHtml(r) { return rewardHtmlOf(r); }
-
-
-
-
-
-
-
-
 
   tplFinance2() {
     const eco = this.economy, hist = eco.history.slice(-7);
@@ -404,26 +372,6 @@ export class UIManager {
       <div class="kv"><span>Charges / washes / repairs</span><b>${s.charged} / ${s.washed} / ${s.repaired}</b></div>
       <div class="kv"><span>Contracts completed</span><b>${s.contractsDone}</b></div>`;
   }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 }
 

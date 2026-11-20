@@ -556,7 +556,7 @@ body.tut-tap #tut-hint { display: none; }
 
 /* =====================================================================================================================
    BUTTON SYSTEM  (one set of sizes, states and semantic colours for every control)
-   primary = blue · secondary = outlined/light · success = green (buy / hire / build) · warning = orange · destructive = red
+   primary = blue Â· secondary = outlined/light Â· success = green (buy / hire / build) Â· warning = orange Â· destructive = red
    ===================================================================================================================== */
 :root { --tap: 44px; --focus: #1c78d6; }
 button, .btn, .ibtn, .sc, .act, .mi, [role="button"] { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }

@@ -1,8 +1,8 @@
-﻿/** Helpers and constants shared by UIManager and its panel modules. */
+/** Helpers and constants shared by UIManager and its panel modules. */
 export { QUALITY } from '../core/Settings.js';
 export { districtOfBlock } from '../world/DistrictManager.js';
 export { icon, hydrateIcons } from './icons.js';
-export { siteCounts } from '../customers/SiteCounts.js';
+export { siteCounts, aggregateStats } from '../customers/SiteCounts.js';
 
 export const $ = (id) => document.getElementById(id);
 export const CONFIRM_COST = 10000; // purchases at or above this price ask for confirmation

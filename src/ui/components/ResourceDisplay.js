@@ -1,4 +1,4 @@
-﻿import { money, esc } from '../uiShared.js';
+import { money, esc } from '../uiShared.js';
 
 /** "+$500 +5💎 +3⭐" for a reward object {cash, gems, reputation}. */
 export function rewardText(r) {

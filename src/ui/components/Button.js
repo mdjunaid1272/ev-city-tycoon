@@ -1,4 +1,4 @@
-﻿import { esc } from '../uiShared.js';
+import { esc } from '../uiShared.js';
 
 /**
  * One place that builds button markup, so every panel uses the same classes.

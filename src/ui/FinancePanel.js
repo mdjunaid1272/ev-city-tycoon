@@ -1,4 +1,4 @@
-import { esc, money } from './uiShared.js';
+import { esc, money, aggregateStats } from './uiShared.js';
 
 /**
  * Finance, customers, day report and statistics boards.
@@ -65,7 +65,8 @@ export const FinancePanel = {
   },
 
   tplStats() {
-    const s = this.stats.total, eco = this.economy, cm = this.customers.stats, sat = this.customers.avgSatisfaction;
+    // every business counts: lost customers, tips and satisfaction are summed over the station, wash, garage and hubs
+    const s = this.stats.total, eco = this.economy, all = aggregateStats([this.customers, this.wash, this.garage, ...Object.values(this.hubs || {})]), sat = all.avgSatisfaction;
     return `<h2>Statistics</h2><div class="sub">Lifetime numbers for your business.</div>
       <div class="tiles">
         <div class="tile"><small>Customers served</small><b>${s.served}</b></div>
@@ -77,9 +78,9 @@ export const FinancePanel = {
       <div class="kv"><span>Charges</span><b>${s.charged}</b></div><div class="kv"><span>Car washes</span><b>${s.washed}</b></div><div class="kv"><span>Repairs</span><b>${s.repaired}</b></div>
       <div class="kv"><span>Contracts completed</span><b>${s.contractsDone}</b></div>
       <div class="sect">Customers</div>
-      <div class="kv"><span>Happy / unhappy</span><b>${cm.happy} / ${cm.angry}</b></div>
-      <div class="kv"><span>Tips earned</span><b class="pos">${money(cm.tips, 2)}</b></div>
-      <div class="kv"><span>Lost customers</span><b>${cm.lost}</b></div>
+      <div class="kv"><span>Happy customers</span><b>${s.happy}</b></div>
+      <div class="kv"><span>Tips earned</span><b class="pos">${money(all.tips, 2)}</b></div>
+      <div class="kv"><span>Lost customers</span><b>${all.lost}</b></div>
       <div class="kv"><span>Properties owned</span><b>${this.properties.ownedCount}</b></div>
       ${this.tplFinance2()}`;
   },

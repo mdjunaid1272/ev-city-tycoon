@@ -99,7 +99,7 @@ export class MissionManager {
   restore(d) {
     if (!d) return;
     this.index = Math.min(Math.max(0, d.index | 0), MISSIONS.length);
-    this.progress = Math.max(0, d.progress || 0);
+    this.progress = Number.isFinite(d.progress) ? Math.max(0, d.progress) : 0; // a corrupt value must not become NaN
     this.syncCurrent();
     this.bus.emit('mission:progress', this.snapshot());
   }

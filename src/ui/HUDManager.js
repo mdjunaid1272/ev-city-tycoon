@@ -1,4 +1,4 @@
-import { $, money, siteCounts, MORE_MODALS } from './uiShared.js';
+import { $, money, siteCounts, aggregateStats, MORE_MODALS } from './uiShared.js';
 
 /**
  * Heads-up display: daily overview, objective strip, prompt, more-menu, bottom navigation, floating terminal button.
@@ -35,7 +35,7 @@ export const HUDManager = {
     const active = c.onSite;
     const setT = (id, v) => { const e = $(id); if (e && e.textContent !== String(v)) e.textContent = v; };
     setT('dd-queued', c.queued); setT('dd-waiting', c.waiting); setT('dd-charging', c.charging); setT('dd-service', c.service);
-    const sat = this.customers.avgSatisfaction;
+    const sat = aggregateStats([this.customers, this.wash, this.garage, ...Object.values(this.hubs || {})]).avgSatisfaction; // all businesses
     $('d-rev').textContent = money(Math.round(this.economy.todayRevenue));
     setT('d-cust', active);
     { const gl = this.goals, dn = gl.daily.filter((g) => g.done).length; $('d-dm-count').textContent = `${dn}/${gl.daily.length}`; $('d-dm-fill').style.width = `${gl.daily.length ? (dn / gl.daily.length) * 100 : 0}%`; $('d-missions').classList.toggle('all', gl.daily.length > 0 && dn === gl.daily.length); }
