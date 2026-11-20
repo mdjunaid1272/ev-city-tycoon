@@ -42,14 +42,7 @@ const keep = await p.evaluate(async () => {
   return { scroll: card.scrollTop, sameNode: card.querySelector('button.btn') === node, focused: document.activeElement === node, id };
 });
 check('refresh keeps the same button node and its focus', keep.sameNode && keep.focused, JSON.stringify(keep));
-// ---- a value change patches text without replacing nodes
-const patch = await p.evaluate(() => {
-  const card = document.getElementById('modal-card'); card.innerHTML = '<h2>T</h2><div class="kv"><span>a</span><b>1</b></div><button class="btn">x</button>';
-  const ui = __game.ui; ui._modalName = 'staff'; const btn = card.querySelector('button'); const kv = card.querySelector('.kv');
-  const tpl = document.createElement('template'); tpl.innerHTML = '<h2>T</h2><div class="kv"><span>a</span><b>2</b></div><button class="btn" disabled>x</button>';
-  return import('/src/ui/domPatch.js').then((m) => { m.patchChildren(card, tpl.content); return { b: card.querySelector('b').textContent, disabled: card.querySelector('button').disabled, sameBtn: card.querySelector('button') === btn, sameKv: card.querySelector('.kv') === kv }; });
-});
-check('patcher updates text/attributes in place', patch.b === '2' && patch.disabled && patch.sameBtn && patch.sameKv, JSON.stringify(patch));
+// (the in-place patcher itself is unit-tested in tests/dom-patch.test.js)
 // ---- a press in progress is never interrupted
 const press = await p.evaluate(async () => {
   const ui = __game.ui; ui.closeModal(); ui.open('staff'); await new Promise((r) => setTimeout(r, 250));

@@ -22,7 +22,7 @@ npm run build    # production build in dist/
 |-|-|-|
 | Move | WASD / arrows, or click the ground (Shift sprint) | Joystick, or tap the ground |
 | Camera | Fixed high-angle follow camera, wheel zoom | Pinch |
-| Interact | Stand at a charger / press E | Yellow E button |
+| Interact | Stand next to a bay (cars connect by themselves); click a charging charger to stop and bill; click the floating Open button at the terminal | Same, by tapping |
 | Management (isometric) camera | M | Manage button; ↺ ↻ rotate 90° |
 | Menu | Esc | ⚙️ |
 
@@ -51,3 +51,16 @@ public/data     economy, vehicles, customers, employees, services, progression, 
 
 Drop Blender GLBs into `public/assets/models/` and list them in `public/data/assets.json`
 (`{"models":[{"name":"car","url":"./assets/models/car.glb"}]}`) to replace the procedural models.
+
+## Testing
+
+```bash
+npm test          # 90+ automated unit / UI tests (Vitest; logic in Node, UI in jsdom) - runs in about 2 seconds
+npm run test:watch
+npm run test:e2e  # browser tests: needs `npm run dev` running and a Chromium-based browser
+                  #   EVCT_BROWSER=path/to/chrome-or-edge  EVCT_URL=http://localhost:5173/
+```
+
+- `tests/` covers customer counting (no double counting), economy and payments (no duplicate payments), charging bay reservation / release, customer lifecycle, property purchases, employee task assignment, tutorial targets / pause / resume, the Statistics panel and in-place panel refresh, and save / load.
+- `e2e/` drives the real game in a browser: HUD, tutorial hints, every management panel, buttons and keyboard focus (desktop + touch), building selection.
+- CI (`.github/workflows/pages.yml`) runs `npm test` before building.
