@@ -188,3 +188,25 @@ kbd, #prompt kbd { background: linear-gradient(180deg, #ffe27a, var(--yellow)); 
 @media (max-width: 760px) {
   #modal-card > h2 { margin-left: -14px; margin-right: -14px; }
 }
+
+/* ---------- player profile ---------- */
+#btn-profile { font-size: 22px; line-height: 1; }
+#btn-profile #v-avatar { display: block; }
+.prof-head { display: flex; gap: 12px; align-items: center; margin: 8px 0 6px; }
+.prof-ava { flex: none; width: 64px; height: 64px; border-radius: 50%; display: grid; place-items: center; font-size: 36px; background: #eef4ff; border: 3px solid var(--navy, #1d2b4f); }
+.prof-id { flex: 1; min-width: 0; }
+.prof-lbl { display: block; font-size: 11px; font-weight: 700; opacity: .65; text-transform: uppercase; letter-spacing: .04em; }
+#prof-name { width: 100%; box-sizing: border-box; font: inherit; font-weight: 700; font-size: 17px; padding: 6px 10px; border-radius: 10px; border: 2px solid var(--line-2, #c9d3e6); background: #fff; color: var(--text, #1b2433); min-height: 40px; }
+#prof-name:focus-visible { outline: 3px solid #5cc8ff; outline-offset: 1px; }
+.prof-title { margin-top: 4px; font-size: 13px; opacity: .85; }
+.prof-xp small { display: block; margin-top: 3px; font-size: 11.5px; opacity: .7; }
+.prof-grid { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 6px; }
+.prof-opt, .prof-sw { width: 46px; height: 46px; border-radius: 12px; border: 2px solid var(--line-2, #c9d3e6); background: #fff; font-size: 24px; display: grid; place-items: center; cursor: pointer; padding: 0; }
+.prof-opt.on, .prof-sw.on { border-color: var(--navy, #1d2b4f); box-shadow: 0 0 0 3px #5cc8ff; }
+.prof-sw i { width: 26px; height: 26px; border-radius: 50%; background: linear-gradient(180deg, var(--hat) 0 38%, var(--shirt) 38% 100%); border: 2px solid rgba(0, 0, 0, .25); }
+.prof-badges { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; }
+.bd { border-radius: 12px; padding: 8px 6px; text-align: center; background: #f1f4fa; border: 2px solid var(--line-2, #d5ddec); opacity: .6; }
+.bd.on { opacity: 1; background: #fff6d6; border-color: #e8c24a; }
+.bd span { display: block; font-size: 24px; }
+.bd small { display: block; font-weight: 700; font-size: 12px; margin-top: 2px; }
+.bd em { display: block; font-style: normal; font-size: 10.5px; opacity: .75; margin-top: 2px; }

@@ -15,6 +15,7 @@ import { TrafficLightView } from '../world/TrafficLightView.js';
 import { PedestrianManager } from '../world/PedestrianManager.js';
 import { ParkingSystem } from '../vehicles/ParkingSystem.js';
 import { PlayerController } from '../player/PlayerController.js';
+import { PlayerProfile } from '../player/PlayerProfile.js';
 import { InteractionSystem } from '../player/InteractionSystem.js';
 import { CameraManager } from '../camera/CameraManager.js';
 import { EconomyManager } from '../economy/EconomyManager.js';
@@ -141,6 +142,9 @@ export class Game {
       traffic: this.traffic, road: this.road, parking: this.parking, customers: this.customers, hub: this.hub,
     });
     this.player = new PlayerController({ scene: this.sm.scene, assets: this.assets, colliders: this.colliders, input: this.input });
+    this.profile = new PlayerProfile({ bus: this.bus, saved: saved?.profile });
+    this.player.setOutfit(this.profile.outfitDef);
+    this._offProfile = (this.bus.on('profile:changed', () => { this.player.setOutfit(this.profile.outfitDef); this.save(); }));
     if (saved?.player) {
       this.player.pos.set(saved.player.x, 0.34, saved.player.z);
       this.player.yaw = saved.player.yaw || 0;
@@ -321,6 +325,7 @@ export class Game {
     this.sm?.renderer?.setAnimationLoop(null);
     removeEventListener('visibilitychange', this.onHide);
     removeEventListener('beforeunload', this.onUnload);
+    this._offProfile?.();
     this.tutorial?.dispose();
     this.cafe?.dispose();
     this.cafeView?.dispose();
@@ -546,6 +551,7 @@ export class Game {
         else this.moveMarker.scale.setScalar(1 + Math.sin(this.time * 8) * 0.12);
       }
       this.city.update(this.camera.focusPoint, this.time, this.camera.inManagement ? this.camera.mg.dist / 120 : 1);
+      this.profile.update(dt);
       this.autosave += dt;
       if (this.autosave > 15) { this.autosave = 0; this.save(); }
     }
@@ -587,6 +593,7 @@ export class Game {
       login: this.dailyReward.serialize(),
       missions: this.missions.serialize(),
       tutorial: this.tutorial?.serialize(),
+      profile: this.profile.serialize(),
       camera: this.camera.serialize(),
       time: { hour: this.day.hour, day: this.day.day },
       lastSeen: Date.now(),

@@ -11,6 +11,9 @@ export class PlayerController {
     this.input = input;
     this.model = assets.create('character', { shirt: 0x2f8cff, hat: 0xe8483f });
     this.model.traverse((o) => { if (o.isMesh) o.castShadow = true; });
+    const ud = this.model.userData;
+    this.shirtMeshes = [ud.torso, ud.armL?.children[0], ud.armR?.children[0]].filter(Boolean);
+    this.hatMeshes = this.model.children.filter((o) => o.isMesh && o.material?.color?.getHex() === 0xe8483f); // cap + brim
     scene.add(this.model);
     this.pos = this.model.position;
     this.pos.set(-8, 0.34, 17);
@@ -27,6 +30,13 @@ export class PlayerController {
     const blob = new THREE.Mesh(new THREE.CircleGeometry(0.5, 20), new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.25, depthWrite: false }));
     blob.rotation.x = -Math.PI / 2; blob.position.y = 0.02;
     this.model.add(blob);
+  }
+
+  /** Recolour the player's shirt and cap (own material copies: shared model materials are never touched). */
+  setOutfit({ shirt, hat }) {
+    const paint = (m, c) => { if (!m.userData.ownMat) { m.material = m.material.clone(); m.userData.ownMat = true; } m.material.color.setHex(c); };
+    for (const m of this.shirtMeshes) paint(m, shirt);
+    for (const m of this.hatMeshes) paint(m, hat);
   }
 
   update(dt, camYaw) {

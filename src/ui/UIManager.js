@@ -13,6 +13,7 @@ import { BusinessPanel } from './BusinessPanel.js';
 import { BuildPanel } from './BuildPanel.js';
 import { SystemPanels } from './SystemPanels.js';
 import { CafePanel } from './CafePanel.js';
+import { ProfilePanel } from './ProfilePanel.js';
 
 export { money };
 
@@ -62,6 +63,10 @@ export class UIManager {
   bindHud() {
     document.body.classList.toggle('touch', this.game.touch);
     $('btn-pause').onclick = () => this.togglePause();
+    const pb = $('btn-profile');
+    if (pb) pb.onclick = () => (this.modal === 'profile' ? this.closeModal() : this.open('profile'));
+    this._offs.push(this.bus.on('profile:changed', () => this.syncProfileChip()));
+    this.syncProfileChip();
     $('btn-mgmt').onclick = () => this.camera.toggle();
     $('btn-map').onclick = () => this.open('map');
     $('btn-decor').onclick = () => this.openDecor();
@@ -317,9 +322,9 @@ export class UIManager {
     // never swap the buttons out from under a press: a periodic refresh between pointer-down and click would eat the click
     if (this._ptrDown) { this._dirty = true; return; }
     // avoid rebuilding while the user is dragging a slider / has a select open
-    if ((m === 'pause' || m === 'settings') && this._pauseRendered) return;
+    if ((m === 'pause' || m === 'settings' || m === 'profile') && this._pauseRendered) return;
     const body = ({
-      settings: () => this.tplSettings(), stats: () => this.tplStats(), help: () => this.tplHelp(), save: () => this.tplSave(),
+      settings: () => this.tplSettings(), stats: () => this.tplStats(), profile: () => this.tplProfile(), help: () => this.tplHelp(), save: () => this.tplSave(),
       station: () => this.tplStation(), staff: () => this.tplStaff(), finance: () => this.tplFinance(),
       business: () => this.tplBusinessTabs(), cafe: () => this.tplCafe(), wash: () => this.tplWash(), garage: () => this.tplGarage(),
       offline: () => this.tplOffline(), login: () => this.tplLogin(), stageup: () => this.tplStageUp(), map: () => this.tplMap(), missions: () => this.tplMissionsTabs(),
@@ -334,7 +339,7 @@ export class UIManager {
     if (same) patchHtml(card, html); else card.innerHTML = html;
     card.scrollTop = keepScroll;
     card.querySelector('[data-close]').onclick = () => this.closeModal();
-    this._pauseRendered = m === 'pause' || m === 'settings';
+    this._pauseRendered = m === 'pause' || m === 'settings' || m === 'profile';
     this.bindModal(card);
   }
 
@@ -374,6 +379,7 @@ export class UIManager {
     const ar = card.querySelector('#set-autorestock');
     if (ar) ar.onchange = () => { this.garage.autoRestock = ar.checked; };
     card.querySelectorAll('[data-pause]').forEach((b) => (b.onclick = () => this.pauseAction(b.dataset.pause)));
+    this.bindProfile(card);
     void eco;
   }
 
@@ -398,6 +404,6 @@ export class UIManager {
 }
 
 // the panel modules own their methods; copy them (getters included) onto the UIManager prototype
-for (const mixin of [NotificationManager, ModalManager, HUDManager, StaffPanel, FinancePanel, MissionPanel, BusinessPanel, BuildPanel, SystemPanels, CafePanel]) {
+for (const mixin of [NotificationManager, ModalManager, HUDManager, StaffPanel, FinancePanel, MissionPanel, BusinessPanel, BuildPanel, SystemPanels, CafePanel, ProfilePanel]) {
   Object.defineProperties(UIManager.prototype, Object.getOwnPropertyDescriptors(mixin));
 }

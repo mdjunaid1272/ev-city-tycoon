@@ -8,6 +8,7 @@ export const SystemPanels = {
   tplPause() {
     return `<h2>Paused</h2><div class="sub">The game is paused while this menu is open.</div>
       <button class="btn blue" data-pause="resume">Resume</button>
+      <button class="btn ghost" data-pause="profile">Profile</button>
       <button class="btn ghost" data-pause="settings">Settings</button>
       <button class="btn ghost" data-pause="help">Help &amp; controls</button>
       <button class="btn ghost" data-pause="tutorial">Replay tutorial</button>
@@ -81,7 +82,7 @@ export const SystemPanels = {
   pauseAction(a) {
     if (a === 'resume') this.closeModal();
     else if (a === 'tutorial') { this.closeModal(); this.game.tutorial?.restart(); }
-    else if (a === 'settings' || a === 'help' || a === 'save') this.open(a);
+    else if (a === 'profile' || a === 'settings' || a === 'help' || a === 'save') this.open(a);
     else if (a === 'save-now') {
       this.game.save().then(() => { this.toast('Game saved', 'good'); if (this.modal === 'save') { this._pauseRendered = false; this.renderModal(); } });
     } else if (a === 'reset') {
