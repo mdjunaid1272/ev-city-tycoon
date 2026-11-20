@@ -417,6 +417,10 @@ export class CityManager {
       m.marker.scale.set(sc, sc, 1);
     }
     const d = this.settings.quality.cullDist;
+    // chunk visibility only changes when the view moved a little or the quality (cull distance) changed
+    const lc = this._lastCull;
+    if (lc && lc.d === d && Math.abs(lc.x - playerPos.x) < 1 && Math.abs(lc.z - playerPos.z) < 1) return;
+    this._lastCull = { x: playerPos.x, z: playerPos.z, d };
     for (const c of this.chunks) {
       const dist = Math.hypot(c.cx - playerPos.x, c.cz - playerPos.z);
       const vis = dist < d + 34;

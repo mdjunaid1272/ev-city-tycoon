@@ -391,7 +391,10 @@ export class TrafficManager {
       const e = this.road.spawnEdges[Math.floor(Math.random() * this.road.spawnEdges.length)];
       if (this.edgeFree(e, 0, 4.4, 0, 14)) this.makeAgent(this.randomCar(), e, 0, { v: 8 });
     }
-    const list = this.agents.slice();
+    // iterate a snapshot (agents are added / removed while stepping) without allocating a new array every frame
+    const list = this._stepList || (this._stepList = []);
+    list.length = 0;
+    for (const a of this.agents) list.push(a);
     for (const a of list) {
       if (a.dead) continue;
       this.step(a, dt);

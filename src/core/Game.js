@@ -520,7 +520,7 @@ export class Game {
       this.selectionRing.scale.set(s, s, s);
     }
     this.sm.updateShadowFocus(this.camera.focusPoint);
-    this.sm.env.update(dt, this.sm.camera.position, this.camera.focusPoint);
+    this.sm.env.update(this.paused ? 0 : dt, this.sm.camera.position, this.camera.focusPoint); // clouds / cloud shadows stand still while paused
     this.ui.setLocation(this.city.districtAt(this.player.pos.x, this.player.pos.z));
     this.ui.update(dt);
     this.tutorial?.update(dt);

@@ -126,7 +126,12 @@ export class Environment {
 
   updateClouds(dt) {
     this.cloudShift += dt * 3.2; // wind, m/s
-    const m = new THREE.Matrix4(), q = new THREE.Quaternion(), p = new THREE.Vector3(), s = new THREE.Vector3();
+    // the clouds drift only a few metres per second and are huge: rewriting their instance matrices 10x a second looks identical
+    // to every frame, and nothing at all is written while the game is paused (dt = 0)
+    this._cloudAcc = (this._cloudAcc || 0) + dt;
+    if (this._cloudsDrawn && (dt === 0 || this._cloudAcc < 0.1)) return;
+    this._cloudAcc = 0; this._cloudsDrawn = true;
+    const m = (this._cm ||= new THREE.Matrix4()), q = (this._cq ||= new THREE.Quaternion()), p = (this._cp ||= new THREE.Vector3()), s = (this._cs ||= new THREE.Vector3());
     this.cloudData.forEach((c, i) => {
       let x = c.gx + this.cloudShift;
       x = ((x + 560) % 1120 + 1120) % 1120 - 560; // wrap around the horizon
