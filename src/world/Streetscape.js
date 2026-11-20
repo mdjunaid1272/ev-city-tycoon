@@ -32,7 +32,7 @@ export function parkFeatureAt(dx, dz) {
   return Math.abs(Math.abs(dx) - 2.7) < 1.0 && dz > -20.5 && dz < -3.5; // hedge rows
 }
 
-class Layer {
+export class Layer {
   constructor(geo, { color = 0xffffff, rough = 0.8, metal = 0, material = null, cast = false } = {}) {
     this.geo = geo; this.items = []; this.cast = cast;
     this.material = material || new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: rough, metalness: metal });

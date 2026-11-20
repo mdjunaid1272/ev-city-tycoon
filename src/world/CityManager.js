@@ -6,6 +6,7 @@ import { groundMaterial, slabMaterial, buildExtras } from './CityExtras.js';
 import { buildRoadArt } from './RoadArt.js';
 import { pickStyle } from './Buildings.js';
 import { buildStreetscape, parkFeatureAt } from './Streetscape.js';
+import { buildProps } from './Props.js';
 
 export const ROAD_W = 12;
 export const LINES = [-90, -30, 30, 90];
@@ -63,6 +64,7 @@ export class CityManager {
     this.chunks = [];
     this.treePos = [];
     this.lampPos = [];
+    this.roofSigns = [];
     this.properties = [];
     this.markers = [];
     this.rand = rng(1337);
@@ -96,6 +98,7 @@ export class CityManager {
     this.buildInstancedProps();
     this.extras = buildExtras({ city: this, scene: this.scene, colliders: this.colliders, settings: this.settings });
     this.streetscape = buildStreetscape({ city: this, scene: this.scene, colliders: this.colliders, settings: this.settings });
+    this.props = buildProps({ city: this, scene: this.scene, colliders: this.colliders, roofSigns: this.roofSigns });
   }
 
   buildTerrain() {
@@ -191,6 +194,7 @@ export class CityManager {
         b.rotation.y = 0;
         g.add(b);
         this.colliders.add(cx + ox, cz + oz, 18.2, 18.2, h + 1);
+        if (n === 1 && h >= 16) this.roofSigns.push({ x: cx + ox, y: h + 0.5, z: cz + oz + (oz > 0 ? 6.2 : -6.2) });
         n++;
       }
       this.addTree(cx - 21, cz, 0.9); this.addTree(cx + 21, cz, 0.9); this.addTree(cx, cz - 21, 0.9); this.addTree(cx, cz + 21, 0.9);

@@ -24,7 +24,7 @@ function seeded(seed) {
 const _c = new THREE.Color(), _w = new THREE.Color(), _k = new THREE.Color();
 export const shade = (hex, f) => _c.set(hex).lerp(f >= 0 ? _w.set(0xffffff) : _k.set(0x000000), Math.abs(f)).getHex();
 
-class Kit {
+export class Kit {
   constructor() { this.parts = []; }
   add(geo, color) {
     const c = new THREE.Color(color), n = geo.attributes.position.count, a = new Float32Array(n * 3);
