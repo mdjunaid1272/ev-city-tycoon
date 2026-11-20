@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { nightMaterials } from './Materials.js';
+import { nightMaterials, nightFades } from './Materials.js';
 
 const KEYS = [
   [0, 0x0d1430], [5, 0x101a3c], [6.5, 0xffb07a], [8.5, 0x9fd8ff],
@@ -61,6 +61,7 @@ export class DayNight {
     sm.hemi.intensity = THREE.MathUtils.lerp(0.8, 1.0, day);
     sm.hemi.color.copy(sky).lerp(_c1.setHex(0xffffff), 0.5);
     sm.renderer.toneMappingExposure = THREE.MathUtils.lerp(0.9, 1.05, day);
+    for (const m of nightFades) m.opacity = this.night * (m.userData.max ?? 0.6);
     for (const m of nightMaterials) m.emissiveIntensity = this.night * (m.emissiveMap ? 1.0 : 2.2);
   }
 

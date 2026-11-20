@@ -7,13 +7,13 @@ export class SceneManager {
     const q = settings.quality;
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: q.antialias, powerPreference: 'high-performance' });
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
-    this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    this.renderer.toneMapping = THREE.NeutralToneMapping;
     this.renderer.toneMappingExposure = 1.05;
     this.renderer.shadowMap.type = THREE.PCFShadowMap;
 
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(0x9fd8ff);
-    this.scene.fog = new THREE.Fog(0x9fd8ff, 120, 420);
+    this.scene.fog = new THREE.Fog(0x9fd8ff, 190, 540);
 
     this.camera = new THREE.PerspectiveCamera(60, 1, 0.5, 1600);
 

@@ -37,6 +37,8 @@ export function mesh(geo, material, { x = 0, y = 0, z = 0, cast = true, receive 
 
 /** Materials whose emissive follows night time (window glow, lamps). */
 export const nightMaterials = new Set();
+/** materials whose opacity follows the night (light pools): opacity = night * userData.max */
+export const nightFades = new Set();
 
 let windowTex = null;
 export function windowTextures() {

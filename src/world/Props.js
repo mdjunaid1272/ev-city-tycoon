@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { Layer } from './Streetscape.js';
 import { Kit, shade } from './Buildings.js';
-import { nightMaterials } from './Materials.js';
+import { nightMaterials, nightFades, wallMaterial } from './Materials.js';
 
 /**
  * Urban props and landmarks, all drawn through four shared instanced layers (coloured boxes, coloured cylinders,
@@ -126,6 +126,28 @@ export function buildProps({ city, scene, colliders, roofSigns = [] }) {
     void face;
   }
 
-  for (const l of [B, C, G, faces, signs, glows]) l.finish(root);
+  // ---- warm light pools under every street lamp (additive, fade in with the night: one draw call)
+  const pool = canvasMat(128, 128, (g, S) => {
+    const gr = g.createRadialGradient(S / 2, S / 2, 0, S / 2, S / 2, S / 2);
+    gr.addColorStop(0, 'rgba(255,214,140,0.95)'); gr.addColorStop(0.45, 'rgba(255,190,110,0.35)'); gr.addColorStop(1, 'rgba(255,170,90,0)');
+    g.clearRect(0, 0, S, S); g.fillStyle = gr; g.fillRect(0, 0, S, S);
+  });
+  pool.transparent = true; pool.blending = THREE.AdditiveBlending; pool.depthWrite = false; pool.opacity = 0; pool.userData.max = 0.55;
+  nightFades.add(pool);
+  const pools = new Layer(new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2), { material: pool });
+  for (const [x, z] of city.lampPos) pools.add(x, 0.36, z, 11, 1, 11, 0);
+
+  // ---- distant skyline: a ring of hazy towers beyond the scenery, windows lit at night (one instanced draw)
+  const sky = rng(99), skyMat = wallMaterial(0x8ea6c6, 20, 44);
+  const skyline = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), skyMat, 70);
+  const M4 = new THREE.Matrix4(), Qd = new THREE.Quaternion(), Vd = new THREE.Vector3(), Sd = new THREE.Vector3();
+  for (let i = 0; i < 70; i++) {
+    const a = (i / 70) * Math.PI * 2 + sky() * 0.05, dist = 300 + sky() * 45, w = 14 + sky() * 18, h = 22 + sky() * sky() * 70, dd = 14 + sky() * 14;
+    Qd.setFromAxisAngle(new THREE.Vector3(0, 1, 0), -a);
+    skyline.setMatrixAt(i, M4.compose(Vd.set(Math.cos(a) * dist, h / 2 - 2, Math.sin(a) * dist), Qd, Sd.set(w, h, dd)));
+  }
+  skyline.frustumCulled = false; skyline.castShadow = false; skyline.receiveShadow = false;
+  root.add(skyline);
+  for (const l of [B, C, G, faces, signs, glows, pools]) l.finish(root);
   return { root, counts: { boxes: B.items.length, cylinders: C.items.length, glass: G.items.length, clocks: faces.items.length / 4, roofSigns: roofSigns.length } };
 }
