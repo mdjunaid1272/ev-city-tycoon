@@ -2,6 +2,12 @@ import { QUALITY } from '../core/Settings.js';
 import { districtOfBlock } from '../world/DistrictManager.js';
 import { icon, hydrateIcons } from './icons.js';
 import { siteCounts } from '../customers/SiteCounts.js';
+import { patchHtml } from './domPatch.js';
+
+// panels that show continuously changing values (progress, timers) refresh a few times a second; the others refresh from events,
+// with a slow safety net for values that depend only on the clock
+const LIVE_MODALS = new Set(['station', 'wash', 'garage']);
+const SLOW_MODALS = new Set(['finance', 'staff', 'business', 'map', 'missions', 'stats']);
 
 const $ = (id) => document.getElementById(id);
 const CONFIRM_COST = 10000; // purchases at or above this price ask for confirmation
@@ -120,6 +126,10 @@ export class UIManager {
     b.on('ui:fire', (id) => this.confirmFire(id));
     b.on('station:changed', () => { if (this.modal === 'station') this.renderModal(); this.refreshSelection(); });
     b.on('economy:changed', () => { if (this.modal === 'finance') this.renderModal(); });
+    // Statistics: refresh the moment anything it shows changes (coalesced, so a burst of events renders once)
+    for (const ev of ['customer:paid', 'customer:lost', 'svc:paid', 'svc:lost', 'charging:complete', 'cash:earned', 'reputation:changed', 'contract:done', 'property:changed', 'economy:changed', 'employee:task-complete']) {
+      b.on(ev, () => { if (this.modal === 'stats') this.scheduleRender(); });
+    }
     b.on('toast', ({ text, kind }) => this.toast(text, kind));
     b.on('input:key', (code) => {
       if (code === 'Escape') {
@@ -179,9 +189,10 @@ export class UIManager {
     if ($('v-sun').dataset.icon !== sun) { $('v-sun').dataset.icon = sun; hydrateIcons($('topbar')); }
     this._dt = (this._dt || 0) + dt;
     if (this._dt > 0.4) { this._dt = 0; this.updateDaily(); }
-    if (['station', 'finance', 'staff', 'wash', 'garage', 'business', 'map', 'missions'].includes(this.modal) || String(this.modal).startsWith('hub_')) {
+    const live = LIVE_MODALS.has(this.modal) || String(this.modal).startsWith('hub_');
+    if (live || SLOW_MODALS.has(this.modal)) {
       this._mt = (this._mt || 0) + dt;
-      if (this._mt > 0.4) { this._mt = 0; this.renderModal(); }
+      if (this._mt > (live ? 0.4 : 2)) { this._mt = 0; this.renderModal(); }
     }
     if (this.selectionFn) {
       this._st = (this._st || 0) + dt;
@@ -387,6 +398,12 @@ export class UIManager {
     else this.open('pause');
   }
 
+  /** Render the open panel soon (events can arrive in bursts: they share one render). */
+  scheduleRender() {
+    if (this._rq) return;
+    this._rq = setTimeout(() => { this._rq = null; this.renderModal(); }, 120);
+  }
+
   renderModal() {
     const card = $('modal-card');
     const m = this.modal;
@@ -402,13 +419,13 @@ export class UIManager {
       offline: () => this.tplOffline(), login: () => this.tplLogin(), stageup: () => this.tplStageUp(), map: () => this.tplMap(), missions: () => this.tplMissionsTabs(),
       pause: () => this.tplPause(), report: () => this.tplReport(),
     }[m] || (() => (String(m).startsWith('hub_') ? this.tplHub(m.slice(4)) : '')))();
-    const html = `<button class="x" data-close title="Close" aria-label="Close">${icon('close', 16)}</button>` + body;
+    // the system uses SVG icons in navigation and controls: decorative emoji are dropped from board titles
+    const html = (`<button class="x" data-close title="Close" aria-label="Close">${icon('close', 16)}</button>` + body).replace(/(<h2[^>]*>)(?:\p{Extended_Pictographic}️?\s*)+/u, '$1');
     if (html === this._modalHtml && m === this._modalName) return; // nothing changed: keep the live DOM (and any press in progress)
+    const same = m === this._modalName && card.firstElementChild; // same panel, new values: patch in place (keeps scroll, focus, selection)
     this._modalHtml = html; this._modalName = m;
     const keepScroll = card.scrollTop;
-    card.innerHTML = html;    // the system uses SVG icons in navigation and controls: drop decorative emoji from board titles
-    const h2 = card.querySelector('h2');
-    if (h2) h2.innerHTML = h2.innerHTML.replace(/^(?:\p{Extended_Pictographic}️?\s*)+/u, '');
+    if (same) patchHtml(card, html); else card.innerHTML = html;
     card.scrollTop = keepScroll;
     card.querySelector('[data-close]').onclick = () => this.closeModal();
     this._pauseRendered = m === 'pause' || m === 'settings';
