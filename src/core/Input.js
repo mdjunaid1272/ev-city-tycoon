@@ -62,7 +62,7 @@ export class Input {
     if (this.keys.has('KeyD') || this.keys.has('ArrowRight')) x += 1;
     if (this.keys.has('KeyA') || this.keys.has('ArrowLeft')) x -= 1;
     if (this.keys.has('KeyW') || this.keys.has('ArrowUp')) y += 1;
-    if (this.keys.has('KeyS') || this.keys.has('Space')) y -= 1; // S or Space = down / back (the Down arrow no longer does this)
+    if (this.keys.has('KeyS') || this.keys.has('ArrowDown')) y -= 1;
     x += this.joy.x;
     y += this.joy.y;
     const l = Math.hypot(x, y);
