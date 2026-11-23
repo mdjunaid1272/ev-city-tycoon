@@ -232,3 +232,31 @@ kbd, #prompt kbd { background: linear-gradient(180deg, #ffe27a, var(--yellow)); 
 #work-bar.hidden { display: none; }
 #work-bar .wb-b { margin-top: 6px; height: 10px; border-radius: 6px; background: rgba(255, 255, 255, .22); overflow: hidden; }
 #work-bar .wb-b i { display: block; height: 100%; width: 0; background: #38d996; border-radius: 6px; transition: width .15s linear; }
+/* ---------- café order board (shown while the player is inside the café) ---------- */
+#cafe-board { position: fixed; z-index: 11; top: calc(72px + env(safe-area-inset-top, 0px)); right: calc(72px + env(safe-area-inset-right, 0px)); width: min(262px, 52vw); padding: 8px 10px 9px; border-radius: 18px; background: var(--hud, #1b2540); color: #fff; border: 2px solid var(--hud-line, #5cc8ff); box-shadow: 0 6px 0 rgba(0, 0, 0, .3), 0 14px 22px rgba(0, 0, 0, .25); font-size: 13px; }
+#cafe-board.hidden { display: none; }
+#cafe-board .cb-h { display: flex; align-items: center; gap: 6px; }
+#cafe-board .cb-h b { flex: 1; font-size: 15px; }
+#cafe-board .cb-n { min-width: 24px; text-align: center; padding: 1px 7px; border-radius: 999px; background: #ffc43d; color: #3a2a00; font-weight: 800; }
+#cafe-board .cb-h button { width: 36px; height: 36px; border-radius: 10px; border: 0; background: rgba(255, 255, 255, .16); color: #fff; font-size: 16px; cursor: pointer; }
+#cafe-board .cb-h button:focus-visible, #cafe-board .cb-o:focus-visible { outline: 3px solid #5cc8ff; outline-offset: 1px; }
+#cafe-board ul { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 6px; }
+#cafe-board .cb-o { display: flex; align-items: center; gap: 8px; padding: 6px 8px; min-height: 44px; border-radius: 12px; background: rgba(255, 255, 255, .12); cursor: pointer; }
+#cafe-board .cb-o.busy { background: rgba(56, 217, 150, .2); cursor: default; }
+#cafe-board .cb-i { font-size: 22px; line-height: 1; }
+#cafe-board .cb-m { flex: 1; min-width: 0; }
+#cafe-board .cb-m b, #cafe-board .cb-m small { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#cafe-board .cb-m small { opacity: .75; font-size: 11px; }
+#cafe-board .cb-b { margin-top: 3px; height: 6px; border-radius: 4px; background: rgba(255, 255, 255, .2); overflow: hidden; }
+#cafe-board .cb-b i { display: block; height: 100%; border-radius: 4px; transition: width .2s linear; }
+#cafe-board .cb-b .ok { background: #38d996; } #cafe-board .cb-b .mid { background: #ffc43d; } #cafe-board .cb-b .hot { background: #ff5a5a; } #cafe-board .cb-b .go { background: #5cc8ff; }
+#cafe-board em { font-style: normal; font-size: 11px; font-weight: 800; padding: 3px 7px; border-radius: 999px; background: rgba(255, 255, 255, .18); white-space: nowrap; }
+#cafe-board em.me { background: #38d996; color: #06331f; }
+#cafe-board .cb-empty, #cafe-board .cb-more { text-align: center; opacity: .8; font-size: 12px; padding: 6px 0; }
+#cafe-board .cb-f { margin-top: 8px; padding-top: 6px; border-top: 1px dashed rgba(255, 255, 255, .3); font-size: 12px; opacity: .92; }
+#cafe-board .cb-low { margin-top: 3px; color: #ffd27a; }
+/* phones (portrait): bottom centre between the joystick and the action buttons, so it never covers the objective / daily panels */
+@media (max-width: 520px) { #cafe-board { top: auto; right: calc(96px + env(safe-area-inset-right, 0px)); left: calc(128px + env(safe-area-inset-left, 0px)); width: auto; bottom: calc(var(--nav-total, 76px) + 14px + env(safe-area-inset-bottom, 0px)); padding: 6px 7px 7px; font-size: 12px; } #cafe-board .cb-o { padding: 4px 6px; min-height: 40px; } #cafe-board .cb-list li:nth-child(n+4) { display: none; } #cafe-board .cb-i { font-size: 18px; } #cafe-board em { padding: 2px 5px; font-size: 10px; } #cafe-board .cb-f { font-size: 11px; } }
+
+#cafe-board .cb-h b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 520px) { #cafe-board .cb-h b { font-size: 13px; } #cafe-board .cb-h button { width: 32px; height: 32px; } }

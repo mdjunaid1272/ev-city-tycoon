@@ -17,6 +17,7 @@ import { ParkingSystem } from '../vehicles/ParkingSystem.js';
 import { PlayerController } from '../player/PlayerController.js';
 import { PlayerProfile } from '../player/PlayerProfile.js';
 import { OwnerWork } from '../employees/OwnerWork.js';
+import { CafeOrderBoard } from '../ui/CafeOrderBoard.js';
 import { InteractionSystem } from '../player/InteractionSystem.js';
 import { CameraManager } from '../camera/CameraManager.js';
 import { EconomyManager } from '../economy/EconomyManager.js';
@@ -299,6 +300,7 @@ export class Game {
     $('loading').classList.add('done');
     setTimeout(() => $('loading').remove(), 700);
     playerYield.pos = this.player.pos;
+    this.cafeBoard = new CafeOrderBoard({ game: this });
     this.tutorial = new TutorialManager({ game: this, bus: this.bus, scene: this.sm.scene, saved: saved?.tutorial, isNew: !saved });
     // welcome back: offline earnings first, then the daily login reward
     this.pendingOffline = saved?.lastSeen ? this.offline.compute((Date.now() - saved.lastSeen) / 1000) : null;
@@ -329,6 +331,7 @@ export class Game {
     removeEventListener('beforeunload', this.onUnload);
     this._offProfile?.();
     this.ownerWork?.dispose();
+    this.cafeBoard?.dispose();
     this.tutorial?.dispose();
     this.cafe?.dispose();
     this.cafeView?.dispose();
@@ -572,6 +575,7 @@ export class Game {
     this.ui.setLocation(this.city.districtAt(this.player.pos.x, this.player.pos.z));
     this.ui.update(dt);
     this.tutorial?.update(dt);
+    this.cafeBoard?.update(dt);
     this.sm.render();
     this.fps.n++; this.fps.t += dt;
     if (this.fps.t >= 1) { this.fps.v = this.fps.n / this.fps.t; this.fps.n = 0; this.fps.t = 0; }

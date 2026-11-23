@@ -21,6 +21,7 @@ export class OwnerWork {
   constructor({ bus, tasks, employees, getPos, faceTo = null, doc = typeof document !== 'undefined' ? document : null }) {
     Object.assign(this, { bus, tasks, employees, getPos, faceTo });
     this.task = null;
+    this.preferKey = null; // a job the player tapped on the café order board: taken before the others
     this.timer = 0;
     this.duration = 1;
     this.nudge = NUDGE_EVERY - WAIT_BEFORE_NUDGE; // first reminder soon after a car starts waiting
@@ -37,6 +38,7 @@ export class OwnerWork {
   }
 
   get working() { return !!this.task; }
+  prefer(key) { this.preferKey = key; }
   get progress() { return this.task ? Math.min(1, this.timer / this.duration) : 0; }
 
   dispose() {
@@ -64,6 +66,7 @@ export class OwnerWork {
       this.show(`${t.label || LABELS[t.type] || 'Working'} · ${Math.round(this.progress * 100)}%`, this.progress);
       if (this.timer >= this.duration) {
         this.task = null;
+        if (this.preferKey === t.key) this.preferKey = null;
         t.run();
         this.tasks.complete(t);
         this.bus.emit('owner:task-complete', { type: t.type });
@@ -76,8 +79,9 @@ export class OwnerWork {
     for (const t of this.tasks.tasks.values()) {
       if (t.state !== 'open' || !DEPTS.includes(t.dept) || (t.minSkill || 1) > SKILL) continue;
       const d = Math.hypot(pos.x - t.pos.x, pos.z - t.pos.z);
-      if (d <= REACH && d < bestD) { best = t; bestD = d; }
+      if (d <= REACH && (t.key === this.preferKey ? -1 : d) < bestD) { best = t; bestD = t.key === this.preferKey ? -1 : d; }
     }
+    if (this.preferKey && !this.tasks.byKey.has(this.preferKey)) this.preferKey = null; // that order is gone
     if (best && best.valid()) {
       best.state = 'reserved'; best.reservedBy = 'player';
       this.tasks.start(best);
