@@ -14,7 +14,7 @@ const TABS = [['drinks', '☕ Drinks'], ['bakery', '🥐 Bakery'], ['extras', '�
 export class CafeCozyUI {
   constructor({ game, doc = document }) {
     this.g = game; this.doc = doc; this.cz = game.cafeCozy;
-    this.isOpen = false; this.tab = 'drinks'; this.view = 'front';
+    this.isOpen = false; this.tab = 'drinks'; 
     this.t = 0; this.noteSeen = 0; this.noteTimer = 0; this.cards = new Map(); this.dlgKey = null;
     this.build();
   }
@@ -35,7 +35,6 @@ export class CafeCozyUI {
         <span class="cz-chip cz-xp" title="Café experience"><i id="cz-xpbar"></i><span id="cz-xptxt">0 XP</span></span>
         <span class="cz-chip">🪙 <b id="cz-coins">0</b></span>
         <span class="cz-chip">Served <b id="cz-served">0</b></span>
-        <button type="button" class="cz-x" data-cz="cam" id="cz-cam" aria-label="Change the camera: front view or isometric view" aria-pressed="true">📷</button>
         <button type="button" class="cz-x" data-cz="recipe" aria-label="Recipe card">📖</button>
         <button type="button" class="cz-x" data-cz="close" aria-label="Close the café for today">✕</button>
       </header>
@@ -78,9 +77,7 @@ export class CafeCozyUI {
     if (!r.ok) { g.bus.emit('toast', { text: r.reason, kind: 'warn' }); return false; }
     this.isOpen = true; this.noteSeen = 0; this.noteTimer = 0; this.dlgKey = null;
     this.restoreFocus = this.doc.activeElement;
-    this.applyView();
-    this.onResize = () => { if (this.isOpen) this.applyView(); };
-    addEventListener('resize', this.onResize);
+    this.prevCamera = undefined; this.applyView();
     this.el.classList.remove('hidden'); for (const id of ['#cz-summary', '#cz-dialogue', '#cz-recipe']) this.$(id).classList.add('hidden');
     this.doc.body.classList.add('cz-on');
     const hud = this.doc.getElementById('hud'); if (hud) hud.inert = true;
@@ -104,9 +101,8 @@ export class CafeCozyUI {
     const hud = this.doc.getElementById('hud'); if (hud) hud.inert = false;
     g.player.enabled = true; g.player.model.visible = this.playerWasVisible ?? true;
     if (g.ownerWork) g.ownerWork.suspended = false;
-    g.camera.exitFixed();
-    g.cafeView.setCutaway(false);
-    if (this.onResize) removeEventListener('resize', this.onResize);
+    if (this.prevCamera === 'third' && g.camera.inManagement) g.camera.setMode('third');
+    this.prevCamera = undefined;
     removeEventListener('keydown', this.onKey, true);
     for (const c of this.cards.values()) c.remove();
     this.cards.clear();
@@ -124,27 +120,12 @@ export class CafeCozyUI {
   /** Is the workbench / orders in side columns (wide landscape)? Then the room gets the middle of the screen. */
   sideLayout() { return innerWidth >= 900 && innerWidth / innerHeight >= 1.25; }
 
-  /**
-   * FRONT VIEW (default): the camera stands in the street in front of the café, the roof and the whole front facade are cut away, so the
-   * counter, the row of customers, the tables and the machines are seen straight on, like a stage. The distance follows the screen:
-   * the room (about 8 m wide) fills the free part of the screen (the middle on wide screens, the band between the panels on phones).
-   * ISOMETRIC VIEW: the previous corner view.
-   */
+  /** The camera: the same corner (isometric) view of the café as before. */
   applyView() {
-    const g = this.g, cam = g.camera, b = CAFE_LAYOUT.building;
-    const freeW = innerWidth - (this.sideLayout() ? 700 : 24);
-    if (this.view === 'front') {
-      const fov = 22, pxPerM = Math.max(30, freeW / 8.6), dist = Math.min(70, Math.max(14, innerHeight / (2 * Math.tan((fov / 2) * Math.PI / 180) * pxPerM)));
-      // a low camera: on phones nearly eye level, so the room sits in the free band between the panels and customers face the viewer
-      const wide = this.sideLayout();
-      cam.enterFixed({ yaw: 0, pitch: wide ? 0.24 : 0.1, fov, dist, focus: { x: b.x, y: wide ? 1.4 : 1.2, z: b.z - 0.4 } });
-      g.cafeView.setCutaway(true);
-    } else {
-      cam.enterFixed({ yaw: Math.PI / 4, pitch: Math.atan(1 / Math.SQRT2), fov: 12, dist: 64, focus: { x: b.x, y: 0, z: b.z - 4.5 } });
-      g.cafeView.setCutaway(false);
-    }
-    this.cozyViewMode?.(this.view);
-    const btn = this.$('#cz-cam'); if (btn) { btn.setAttribute('aria-pressed', String(this.view === 'front')); btn.title = this.view === 'front' ? 'Front view (tap for the isometric view)' : 'Isometric view (tap for the front view)'; }
+    const g = this.g;
+    if (this.prevCamera === undefined) this.prevCamera = g.camera.inManagement ? 'management' : 'third';
+    g.camera.setMode('management');
+    g.camera.mg.focus.set(CAFE_LAYOUT.building.x, 0, CAFE_LAYOUT.building.z - 4.5); g.camera.mg.dist = 64;
   }
 
   setTab(tab) {
@@ -166,7 +147,6 @@ export class CafeCozyUI {
     if (sum) return this.summaryAction(sum.dataset.sum);
     if (dlg) return this.dialogueAction(dlg.dataset.dlg);
     if (act === 'close') return this.askClose();
-    if (act === 'cam') { this.view = this.view === 'front' ? 'iso' : 'front'; this.applyView(); return; }
     if (act === 'recipe') { this.$('#cz-recipe').classList.toggle('hidden'); this.refresh(); return; }
     if (act === 'bin') { cz.discardBuild(); this.refresh(); return; }
     if (!cz.open) return;

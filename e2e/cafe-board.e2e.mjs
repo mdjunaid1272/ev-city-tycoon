@@ -34,7 +34,7 @@ await p.locator(`#cafe-board [data-cb-order="${pick}"]`).click({ force: true });
 await step(p, 1); // refresh the board now instead of waiting for the next frame
 const marked = await p.evaluate((k) => ({ prefer: __game.ownerWork.preferKey === k, walking: !!__game.player.target, text: document.querySelector(`#cafe-board [data-cb-order="${k}"]`)?.textContent || '' }), pick);
 check('tapping a waiting order marks it "Next" and does not walk the character', marked.prefer && !marked.walking && /Next/.test(marked.text), JSON.stringify(marked));
-await p.evaluate(() => __game.player.pos.set(17.4, 0.34, -17.8));
+await p.evaluate(() => __game.player.pos.set(15.0, 0.34, -17.8));
 await step(p, 6);
 const taken = await p.evaluate((k) => ({ working: __game.ownerWork.working, key: __game.ownerWork.task?.key, row: document.querySelector('#cafe-board .cb-o.busy em')?.textContent }), pick);
 check('the owner starts on the tapped order, and the board shows "You"', taken.working && taken.key === pick && /^You/.test(taken.row || ''), JSON.stringify(taken));

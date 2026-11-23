@@ -18,11 +18,11 @@ import { Disposables } from '../core/Disposables.js';
 // tables beside the door. Walls / counter / tables are real colliders; the staff walking grid is rebuilt around them.
 export const CAFE_LAYOUT = {
   building: { x: 17.4, z: -13.5, w: 7.2, d: 12 },        // outer footprint: x 13.8 .. 21.0, z -19.5 .. -7.5
-  door: { x: 17.5, z: -7.5, w: 2.2 },                    // opening in the south wall
-  counter: { x: 18.75, z: -16.0, w: 3.8 },               // a wide counter pushed to the east wall: the open end (2.7 m, the staff walking grid needs that) is on the west side
-  stand: [{ x: 17.4, z: -17.8 }, { x: 19.6, z: -17.8 }], // where baristas (and the owner) work, behind the counter
-  queue: [{ x: 17.3, z: -14.5 }, { x: 18.35, z: -14.5 }, { x: 19.4, z: -14.5 }, { x: 20.35, z: -14.5 }, { x: 17.8, z: -13.2 }, { x: 19.0, z: -13.2 }], // a row of customers across the counter (front view), then a second row
-  tables: [{ x: 15.2, z: -9.4 }, { x: 19.9, z: -9.4 }, { x: 15.2, z: -11.6 }, { x: 19.9, z: -11.6 }, { x: 19.9, z: -13.8 }],
+  door: { x: 17.5, z: -7.5, w: 2.2 },                    // opening in the south wall                    // opening in the south wall
+  counter: { x: 16.2, z: -16.0, w: 3.8 },               // the service counter sits at the back-WEST; the east side is an open lane from the door to the back
+  stand: [{ x: 15.0, z: -17.8 }, { x: 17.4, z: -17.8 }], // where baristas (and the owner) work, behind the counter
+  queue: [{ x: 17.0, z: -14.7 }, { x: 15.8, z: -14.7 }, { x: 14.9, z: -14.7 }, { x: 18.2, z: -14.7 }, { x: 19.4, z: -14.1 }, { x: 19.4, z: -13.2 }], // customers line up along the counter front, then back along the east lane
+  tables: [{ x: 15.2, z: -9.0 }, { x: 19.9, z: -9.0 }, { x: 15.2, z: -11.0 }, { x: 19.9, z: -11.0 }, { x: 15.2, z: -13.0 }],
   entry: { x: 17.5, z: -6.0 },                           // on the lot, just outside the door
 };
 
