@@ -56,6 +56,7 @@ export class OwnerWork {
   }
 
   update(dt) {
+    if (this.suspended) { if (this.task) this.drop('suspended'); return; } // the café kitchen screen is open: the player cooks there instead
     const pos = this.getPos();
     if (this.task) {
       const t = this.task;

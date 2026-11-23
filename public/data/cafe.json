@@ -268,5 +268,76 @@
         }
       ]
     }
+  },
+  "kitchen": {
+    "stations": {
+      "cup": {
+        "label": "Cups",
+        "icon": "🥤",
+        "seconds": 0.6,
+        "key": "Q"
+      },
+      "espresso": {
+        "label": "Espresso machine",
+        "icon": "☕",
+        "seconds": 2.6,
+        "key": "W"
+      },
+      "steamer": {
+        "label": "Milk steamer",
+        "icon": "🥛",
+        "seconds": 2.2,
+        "key": "E"
+      },
+      "ice": {
+        "label": "Ice",
+        "icon": "🧊",
+        "seconds": 0.9,
+        "key": "A"
+      },
+      "oven": {
+        "label": "Oven",
+        "icon": "🥐",
+        "seconds": 3.4,
+        "burn": 7,
+        "key": "S"
+      },
+      "press": {
+        "label": "Sandwich press",
+        "icon": "🥪",
+        "seconds": 3,
+        "burn": 7,
+        "key": "D"
+      }
+    },
+    "recipes": {
+      "espresso": [
+        "cup",
+        "espresso"
+      ],
+      "latte": [
+        "cup",
+        "espresso",
+        "steamer"
+      ],
+      "iced": [
+        "cup",
+        "espresso",
+        "ice"
+      ],
+      "croissant": [
+        "oven"
+      ],
+      "sandwich": [
+        "press"
+      ]
+    },
+    "sweetSeconds": 2,
+    "okSeconds": 5,
+    "speedPerMachineLevel": 0.12,
+    "tipFactor": 0.6,
+    "comboMax": 5,
+    "comboStep": 0.25,
+    "goodQuality": 0.65
   }
 }
