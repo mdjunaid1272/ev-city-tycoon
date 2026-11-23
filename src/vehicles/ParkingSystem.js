@@ -1,7 +1,7 @@
 /**
  * Parking reservation system (pure data).
  * A space has at most one owner at a time; only the owner can release it, so two vehicles can
- * never be assigned the same space. Lots: "station-bays" (charging bays) and "station-row" (visitor parking).
+ * never be assigned the same space. Lot: "station-bays" (charging bays).
  */
 export class ParkingSystem {
   constructor() {

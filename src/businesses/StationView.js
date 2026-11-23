@@ -67,10 +67,6 @@ function lotFloorTexture() {
   for (const sx of [-8.5, -4, 0.5]) g.strokeRect(px(sx - 1.8), pz(14.4), 3.6 * S, 5.2 * S);
   g.fillStyle = '#ffe34d'; g.font = `bold ${1.1 * S}px system-ui`; g.textAlign = 'center';
   g.fillText('WAITING', px(-4), pz(21.1));
-  // ordinary parking row
-  g.strokeStyle = '#f4f7fa'; g.lineWidth = 4;
-  for (let x = 2; x <= 18; x += 4) { g.beginPath(); g.moveTo(px(x), pz(13)); g.lineTo(px(x), pz(19.5)); g.stroke(); }
-  g.beginPath(); g.moveTo(px(2), pz(13)); g.lineTo(px(18), pz(13)); g.stroke();
   // driveway arrows + edge lines
   g.strokeStyle = '#f2d64b'; g.lineWidth = 4; g.setLineDash([18, 18]);
   g.beginPath(); g.moveTo(px(-12), pz(21)); g.lineTo(px(-12), pz(13)); g.stroke();
@@ -95,10 +91,7 @@ export class StationView {
     this.traffic = traffic;
     this.road = road;
     this.parking = parking;
-    this.movers = []; // every customer/visitor vehicle currently inside the lot logic (moving or parked)
-    this.visitors = [];
-    this.visitorTimer = 12;
-    parking.addLot('station-row', [4, 8, 12, 16].map((x) => ({ x, z: 16.5, yaw: 0 })));
+    this.movers = []; // every customer vehicle currently inside the lot logic (moving or parked)
     this.colliders = colliders;
     this.bus = bus;
     this.station = station;
@@ -162,13 +155,11 @@ export class StationView {
     face.position.set(0, 8.6, 0.42);
     const back = face.clone(); back.position.z = -0.42; back.rotation.y = Math.PI;
     pylon.add(face, back);
-    pylon.position.set(15, FLOOR, 23.2); // beyond the visitor aisle (z = 20-21) so parking cars never clip it
+    pylon.position.set(15, FLOOR, 23.2); // clear of the entry aisle (z = 20-21)
     r.add(pylon);
     this.colliders.add(15, 23.2, 1, 1, 9);
 
-    // visitor parking row: two cars are already parked when you arrive (see VISITOR section below)
     this.buildExtras();
-    this.initVisitors();
 
     // benches + bushes
     for (const x of [-3, 3]) {
@@ -362,7 +353,7 @@ export class StationView {
   }
 
   // ---------- vehicles ----------
-  // Customer & visitor cars drive on the city road network (TrafficManager) and are handed to a local
+  // Customer cars drive on the city road network (TrafficManager) and are handed to a local
   // PathFollower at the driveway; leaving cars merge back into the lane graph.
   acquireCar(style, color) {
     return this.traffic.acquire(style, color);
@@ -485,71 +476,6 @@ export class StationView {
     rec.f.onDone = () => { rec.state = 'holding'; };
   }
 
-  // ---------- visitors (parking row) ----------
-  initVisitors() {
-    for (let i = 0; i < 2; i++) {
-      const v = this.makeVisitor();
-      if (!v) break;
-      const o = v.obj;
-      this.root.add(o);
-      o.position.set(v.space.x, CAR_Y, v.space.z);
-      o.rotation.y = 0;
-      v.f = new PathFollower(o, {});
-      v.f.done = true;
-      v.state = 'parked';
-      v.timer = 8 + Math.random() * 25;
-      this.parking.setOccupied(v.space, true);
-      this.movers.push(v);
-    }
-  }
-
-  makeVisitor() {
-    const id = `visitor${Math.random().toString(36).slice(2, 8)}`;
-    const space = this.parking.reserve('station-row', id);
-    if (!space) return null;
-    const obj = this.traffic.randomCar();
-    obj.visible = false;
-    const v = { obj, kind: 'visitor', id, space, state: 'driving', timer: 0, f: null };
-    this.visitors.push(v);
-    return v;
-  }
-
-  spawnVisitor() {
-    const v = this.makeVisitor();
-    if (!v) return;
-    this.traffic.requestCustomer(v.obj, {
-      kind: 'visitor',
-      handoffS: this.driveInS,
-      cb: (o, x, z, yaw) => {
-        this.adopt(v, x, z, yaw);
-        v.state = 'arriving';
-        v.f.setPath([...this.entryHead(), [-12, 21], [v.space.x, 20.2], [v.space.x, v.space.z]].map(([px, pz]) => new THREE.Vector3(px, CAR_Y, pz)));
-        v.f.onDone = () => {
-          v.state = 'parked';
-          v.timer = 15 + Math.random() * 25;
-          this.parking.setOccupied(v.space, true);
-        };
-      },
-    });
-  }
-
-  updateVisitors(dt) {
-    this.visitorTimer -= dt;
-    if (this.visitorTimer <= 0) {
-      this.visitorTimer = 25 + Math.random() * 20;
-      if (this.visitors.length < 3) this.spawnVisitor();
-    }
-    for (const v of this.visitors) {
-      if (v.state === 'parked') {
-        v.timer -= dt;
-        if (v.timer <= 0) this.sendOut(v, [[v.space.x, 11], [12, 8], [12, -9], ...this.exitTail()]);
-      } else if (v.state === 'leaving' && v.space && v.obj.position.z < 12) {
-        this.parking.release(v.space, v.id); // car has pulled out of the space
-        v.space = null;
-      }
-    }
-  }
-
   /** Simple local avoidance for lot vehicles: hold if another car is right ahead. */
   applyAvoidance(dt) {
     // Each car probes the space along the way it is about to drive (the whole path ahead, across its full width)
@@ -666,13 +592,9 @@ export class StationView {
           this.custRecs.delete(m.customer.id);
           if (m.slot) { this.customers.releaseSlot(m.customer); m.slot = null; }
           if (m.bayId !== null && this.cars.get(m.bayId) === m) this.cars.delete(m.bayId);
-        } else {
-          this.visitors.splice(this.visitors.indexOf(m), 1);
-          if (m.space) { this.parking.release(m.space, m.id); m.space = null; }
         }
       }
     }
-    this.updateVisitors(dt);
   }
 
   // ---------- cable ----------
