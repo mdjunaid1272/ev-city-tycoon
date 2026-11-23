@@ -278,10 +278,10 @@ export class StationView {
     this.batteryBox.add(mesh(rbox(4.6, 2.4, 2.4, 0.15, 2), mat(0xe9eef4, { rough: 0.5 }), { y: 1.2 }));
     this.batteryBox.add(mesh(rbox(4.7, 0.3, 2.5, 0.08, 1), mat(0x1f8a4c), { y: 2.1 }));
     this.batteryBox.add(mesh(rbox(1.6, 0.7, 0.05, 0.02, 1), mat(0x0b2a40, { emissive: 0x39ffb0, ei: 0.9 }), { x: 1.1, y: 1.1, z: 1.23, cast: false }));
-    this.batteryBox.position.set(18.5, FLOOR, -19.5);
+    this.batteryBox.position.set(18.5, FLOOR, -22.4); // behind the café (the café now fills the back corner of the lot)
     this.batteryBox.visible = false;
     r.add(this.batteryBox);
-    this.colliders.add(18.5, -19.5, 4.8, 2.6, 3);
+    this.colliders.add(18.5, -22.4, 4.8, 2.6, 3);
     // hub props near the kiosk
     this.hubProps = { store: new THREE.Group(), coffee: new THREE.Group(), lounge: new THREE.Group() };
     for (const [i, col] of [0xe8483f, 0x2f8cff].entries()) {

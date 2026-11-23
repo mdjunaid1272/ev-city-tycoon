@@ -528,6 +528,8 @@ export class Game {
       this.decor.update();
       this.employees.update(dt);
       this.cafe.update(dt);
+      this.cafeView.playerPos = this.player.pos;
+      this.cafeView.inMgmt = this.camera.inManagement;
       this.cafeView.update(dt);
       for (const v of [this.washView, this.garageView, ...Object.values(this.hubViews)]) {
         v.mgFactor = this.camera.mg.dist / 120;
@@ -629,10 +631,14 @@ export class Game {
     const isFree = (s) => !crew.some((e) => Math.hypot(e.pos.x - s.x, e.pos.z - s.z) < 1.4);
     const list = stands.filter(isFree).length ? stands.filter(isFree) : stands;
     const best = list.reduce((a, b) => (Math.hypot(a.x - pp.x, a.z - pp.z) <= Math.hypot(b.x - pp.x, b.z - pp.z) ? a : b));
-    this.player.target = { x: best.x, z: best.z };
+    // a real route through the door and around the counter (the same walking grid the staff use)
+    const path = this.nav.findPath({ x: pp.x, z: pp.z }, best);
+    const pts = path && path.length ? path : [{ x: best.x, z: best.z }];
+    this.player.target = { x: pts[0].x, z: pts[0].z };
+    this.player.route = pts.slice(1).map((q) => ({ x: q.x, z: q.z }));
     this.moveMarker.position.set(best.x, 0.4, best.z);
     this.moveMarker.visible = true;
-    this.bus.emit('toast', { text: 'Heading into the café: stand at the counter and orders are prepared for you.', kind: 'info' });
+    this.bus.emit('toast', { text: 'Going inside the café: stand behind the counter and orders are prepared for you.', kind: 'info' });
     return true;
   }
 

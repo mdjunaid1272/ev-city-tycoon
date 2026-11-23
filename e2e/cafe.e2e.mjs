@@ -38,14 +38,17 @@ check('walk-in customers order, the barista prepares, customers pay and leave', 
 check('the visual pool never exceeds 8 figures', run.active);
 
 // ---- floating Café button + board
-await p.evaluate(() => { const G = __game; G.player.pos.set(17.5, 0.34, -9.5); G.camera.tp.smooth.set(17.5, 1.6, -9.5); });
+await p.evaluate(() => { const G = __game; G.player.pos.set(17.5, 0.34, -3.5); G.camera.tp.smooth.set(17.5, 1.6, -3.5); }); // on the lot, in front of the café door
 await p.waitForTimeout(1200);
 const btn = await p.evaluate(() => { const b = document.getElementById('cafe-open'); return b ? { shown: b.style.display, text: b.textContent } : null; });
-check('a floating Café button appears next to the counter', btn && btn.shown === 'block', JSON.stringify(btn));
+check('a floating Café button appears above the door', btn && btn.shown === 'block', JSON.stringify(btn));
 await p.locator('#cafe-open').click({ force: true }); await p.waitForTimeout(500);
-const walk = await p.evaluate(() => { const G = __game, t = G.player.target; return { modal: G.ui.modal, target: t && { x: t.x, z: t.z } }; });
-check('tapping the Café button sends the player inside, to a barista spot behind the counter (no board yet)', walk.modal === null && walk.target && Math.abs(walk.target.z + 12.6) < 0.01 && (Math.abs(walk.target.x - 16.3) < 0.01 || Math.abs(walk.target.x - 18.7) < 0.01), JSON.stringify(walk));
-await p.evaluate(() => { const G = __game; G.player.target = null; G.player.pos.set(16.3, 0.34, -12.6); G.camera.tp.smooth.set(16.3, 1.6, -12.6); });
+const walk = await p.evaluate(() => { const G = __game, t = G.player.target, r = G.player.route, last = r.length ? r[r.length - 1] : t; return { modal: G.ui.modal, last: last && { x: last.x, z: last.z }, stops: 1 + r.length, via: [t, ...r].map((q) => q && [+q.x.toFixed(1), +q.z.toFixed(1)]) }; });
+check('tapping the Café button sends the player on a route inside, ending at a barista spot behind the counter (no board yet)', walk.modal === null && walk.last && Math.abs(walk.last.z + 17.8) < 0.01 && (Math.abs(walk.last.x - 16.4) < 0.01 || Math.abs(walk.last.x - 18.6) < 0.01) && walk.stops >= 2, JSON.stringify(walk));
+// the route goes through the DOOR (x 16.4 .. 18.6 at z -7.5) and never through a wall or the counter
+const routeOk = await p.evaluate(() => { const G = __game, pts = [{ x: G.player.pos.x, z: G.player.pos.z }, G.player.target, ...G.player.route]; let ok = true; for (let i = 0; i < pts.length - 1; i++) { const a = pts[i], b = pts[i + 1]; for (let k = 0; k <= 40; k++) { const x = a.x + ((b.x - a.x) * k) / 40, z = a.z + ((b.z - a.z) * k) / 40; if (G.colliders.boxes.some((bx) => bx.h >= 1 && x > bx.minX && x < bx.maxX && z > bx.minZ && z < bx.maxZ && bx.maxZ - bx.minZ < 15 && bx.maxX - bx.minX < 15 && z < -7 && z > -20 && x > 13.5 && x < 21.5)) ok = false; } } return ok; });
+check('the route passes only through free space (door, aisle, around the counter)', routeOk);
+await p.evaluate(() => { const G = __game; G.player.target = null; G.player.pos.set(16.4, 0.34, -17.8); G.camera.tp.smooth.set(16.4, 1.6, -17.8); });
 await p.waitForTimeout(1000);
 await p.locator('#cafe-open').click({ force: true }); await p.waitForTimeout(500);
 check('already at the counter, the same button opens the café board', await p.evaluate(() => __game.ui.modal === 'cafe'));

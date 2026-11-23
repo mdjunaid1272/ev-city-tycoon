@@ -24,13 +24,19 @@ export class PlayerController {
     this.time = 0;
     this.speed = 0;
     this.enabled = true;
-    this.target = null; // click-to-move destination {x,z}
+    this._t = null;
+    this.route = []; // further waypoints after `target` (set by goToCafe); any new target / manual control clears it
+    this._advancing = false;
     this.stuckT = 0; this.stuckX = 0; this.stuckZ = 0;
     // soft blob shadow so the player is grounded even with shadows off
     const blob = new THREE.Mesh(new THREE.CircleGeometry(0.5, 20), new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.25, depthWrite: false }));
     blob.rotation.x = -Math.PI / 2; blob.position.y = 0.02;
     this.model.add(blob);
   }
+
+  /** click-to-move destination {x,z}. Assigning it (ground click, manual control, blocked) drops any queued route. */
+  get target() { return this._t; }
+  set target(v) { this._t = v; if (!this._advancing) this.route.length = 0; }
 
   /** Recolour the player's shirt and cap (own material copies: shared model materials are never touched). */
   setOutfit({ shirt, hat }) {
@@ -59,7 +65,7 @@ export class PlayerController {
         if (Math.hypot(this.pos.x - this.stuckX, this.pos.z - this.stuckZ) < 0.25) this.target = null; // blocked
         this.stuckT = 0; this.stuckX = this.pos.x; this.stuckZ = this.pos.z;
       }
-      if (td < 0.3) this.target = null;
+      if (td < 0.3) { const next = this.route.length ? this.route.shift() : null; this._advancing = true; this.target = next; this._advancing = false; }
       else { dx = tx; dz = tz; len = Math.min(1, td / 1.5); sprint = td > 14; }
     }
     const maxV = (sprint ? SPRINT : WALK) * Math.min(1, len);

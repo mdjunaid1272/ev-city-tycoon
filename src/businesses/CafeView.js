@@ -1,7 +1,8 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { mat, rbox, mesh } from '../world/Materials.js';
-import { createBuilding } from '../world/Models.js';
+import { Kit, shade, glassMaterial } from '../world/Buildings.js';
+import { nightMaterials, textTexture } from '../world/Materials.js';
 import { makeLabel } from './StationView.js';
 import { CAFE_LAYOUT } from './Cafe.js';
 import { BAY_SLOTS } from './ChargingStation.js';
@@ -37,6 +38,9 @@ export class CafeView {
     this.t = 0;
     this.dirty = true;
     this.built = false;
+    this.playerPos = null; // set by Game every frame
+    this.inMgmt = false;
+    this.inside = false;
     this.labelTimer = 0;
     this.syncTimer = 0;
     this.gone = []; // scratch list reused every frame: figures that finished walking out
@@ -58,6 +62,8 @@ export class CafeView {
     this.scene.remove(this.root);
     this.menuTex?.dispose();
     this.counterMesh?.geometry.dispose();
+    for (const m of [this.wallMesh, this.glassMesh, this.roof]) m?.geometry.dispose();
+    this.windowGeo?.dispose(); this.windowMat?.dispose(); this.floor?.geometry.dispose(); this.floor?.material.dispose(); this.floorTex?.dispose();
     this.bodyGeo?.dispose();
     this.headGeo?.dispose();
     this.label?.sprite.material.map?.dispose();
@@ -66,13 +72,96 @@ export class CafeView {
 
   // ---------- static structure ----------
   buildStructure() {
-    const r = this.root, L = CAFE_LAYOUT, b = L.building;
-    this.building = createBuilding(b.w, 3.8, b.d, 0xb8793e, { roofColor: 0xf4f7fa, awning: 0xffc43d, sign: { text: 'CAFE', bg: '#5a3a22', fg: '#ffffff' }, style: 'cafe', seed: 3 });
-    this.building.position.set(b.x, FLOOR, b.z);
+    const r = this.root, L = CAFE_LAYOUT, b = L.building, D = L.door;
+    const H = 3.4, T = 0.35;
+    const x0 = b.x - b.w / 2, x1 = b.x + b.w / 2, z0 = b.z - b.d / 2, z1 = b.z + b.d / 2; // z1 = south wall (the door side)
+    const wall = 0xb8793e, trim = shade(wall, 0.55), dark = shade(wall, -0.5);
+    const walls = new Kit(), glass = new Kit(), roofK = new Kit();
+
+    // ---- the four walls; the south wall is low with a see-through window band and the door gap
+    walls.box(b.x, H / 2, z0 + T / 2, b.w, H, T, wall); // back
+    walls.box(x0 + T / 2, H / 2, b.z, T, H, b.d, wall); // west
+    walls.box(x1 - T / 2, H / 2, b.z, T, H, b.d, wall); // east
+    const dl = D.x - D.w / 2, dr = D.x + D.w / 2;
+    this.windows = [];
+    for (const [a, c] of [[x0, dl], [dr, x1]]) {
+      const w = c - a, cx = (a + c) / 2;
+      walls.box(cx, 0.5, z1 - T / 2, w, 1.0, T, wall); // lower wall
+      walls.box(cx, H - 0.25, z1 - T / 2, w, 0.5, T, wall); // band under the roof
+      walls.box(cx, 1.05, z1 - T / 2, w - 0.1, 0.12, T + 0.06, trim); // window sill
+      this.windows.push([cx, 2.0, z1 - T / 2, w - 0.3, 1.8]);
+    }
+    for (const x of [x0 + T / 2, dl, dr, x1 - T / 2]) walls.box(x, 1.9, z1 - T / 2, 0.14, 2.0, T + 0.08, dark); // window / door posts
+    walls.box(D.x, 3.12, z1 - T / 2, D.w + 0.5, 0.5, T + 0.1, trim); // lintel
+    // plinth + corner posts
+    for (const [px, pz, sx, sz] of [[b.x, z1 + 0.1, b.w + 0.3, 0.3], [b.x, z0 - 0.1, b.w + 0.3, 0.3], [x0 - 0.1, b.z, 0.3, b.d + 0.3], [x1 + 0.1, b.z, 0.3, b.d + 0.3]]) walls.box(px, 0.12, pz, sx, 0.24, sz, dark); // plinth ring (the floor stays open inside)
+    for (const sx of [x0, x1]) for (const sz of [z0, z1]) walls.box(sx, H / 2, sz, 0.5, H, 0.5, trim);
+    // glowing panes on the side walls (they light up at night)
+    for (const sx of [x0 + T / 2, x1 - T / 2]) for (const zc of [b.z - 2.6, b.z + 2.6]) {
+      glass.box(sx, 1.9, zc, T + 0.06, 1.5, 1.8);
+      walls.box(sx, 1.9, zc, T + 0.1, 0.1, 1.9, dark); walls.box(sx, 1.9, zc, T + 0.1, 1.6, 0.1, dark);
+    }
+    // striped awning over the door
+    const n = 7, seg = (D.w + 1.4) / n;
+    for (let i = 0; i < n; i++) {
+      const x = D.x - (D.w + 1.4) / 2 + seg * (i + 0.5), c = i % 2 ? 0xffffff : 0xffc43d;
+      walls.box(x, 3.02, z1 + 0.65, seg, 0.12, 1.3, c); walls.box(x, 2.82, z1 + 1.3, seg, 0.3, 0.08, c);
+    }
+    // ---- interior dressing (static, merged into the same mesh)
+    walls.box(D.x, 0.05, b.z + 1.2, 1.7, 0.03, b.d - 3.4, 0xb23a48); // red runner from the door to the counter
+    for (const [px, pz] of [[x0 + 0.8, z1 - 0.7], [x1 - 0.8, z1 - 0.7]]) { // potted plants beside the door
+      walls.box(px, 0.3, pz, 0.6, 0.6, 0.6, 0x8a5a35);
+      const leaf = new THREE.IcosahedronGeometry(0.5, 1); leaf.translate(px, 1.0, pz); walls.add(leaf, 0x3fae4a);
+    }
+    for (const sy of [1.7, 2.4]) walls.box(16.7, sy, z0 + T + 0.2, 1.7, 0.07, 0.4, 0x7a4a28); // back-wall shelves
+    for (let i = 0; i < 5; i++) { const jar = new THREE.CylinderGeometry(0.14, 0.14, 0.34, 8); jar.translate(16.0 + i * 0.35, 1.9, z0 + T + 0.2); walls.add(jar, [0xd9a14a, 0xf2e6d2, 0x3a2415, 0xe0b96a, 0xd9a14a][i]); }
+    walls.box(x0 + 1.0, 0.95, z0 + 0.9, 1.0, 1.9, 0.7, 0xdfe5ec); // fridge
+    walls.box(x0 + 1.0, 1.0, z0 + 1.27, 0.05, 1.5, 0.02, 0x9aa5b1);
+    for (const [lx, lz] of [[15.2, -10.5], [19.9, -10.5], [19.1, -14.3]]) { // pendant lamps over the tables and the queue
+      walls.box(lx, 3.0, lz, 0.03, 0.8, 0.03, 0x2a2f36);
+      const bulb = new THREE.SphereGeometry(0.24, 10, 8); bulb.translate(lx, 2.5, lz); glass.add(bulb, 0xfff2c8);
+    }
+    this.wallMesh = walls.build(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.78 }));
+    this.wallMesh.position.y = FLOOR;
+    this.glassMesh = glass.build(glassMaterial());
+    this.glassMesh.castShadow = false; this.glassMesh.position.y = FLOOR;
+
+    // see-through shop windows in the south wall (a single transparent material for both)
+    this.windowMat = new THREE.MeshStandardMaterial({ color: 0xbfe6ff, roughness: 0.1, metalness: 0.1, transparent: true, opacity: 0.3, depthWrite: false });
+    this.windowGeo = new THREE.BoxGeometry(1, 1, 0.06);
+    this.windowMeshes = this.windows.map(([cx, cy, cz, w, h]) => { const m = new THREE.Mesh(this.windowGeo, this.windowMat); m.scale.set(w, h, 1); m.position.set(cx, FLOOR + cy, cz); return m; });
+
+    // floor: warm checker tiles (the lot asphalt stays outside)
+    const fc = document.createElement('canvas'); fc.width = fc.height = 64;
+    const fg = fc.getContext('2d'); fg.fillStyle = '#e8d3a8'; fg.fillRect(0, 0, 64, 64); fg.fillStyle = '#c9a56a'; fg.fillRect(0, 0, 32, 32); fg.fillRect(32, 32, 32, 32);
+    this.floorTex = new THREE.CanvasTexture(fc); this.floorTex.wrapS = this.floorTex.wrapT = THREE.RepeatWrapping; this.floorTex.colorSpace = THREE.SRGBColorSpace;
+    this.floorTex.repeat.set((b.w - 2 * T) / 1.6, (b.d - 2 * T) / 1.6);
+    this.floor = new THREE.Mesh(new THREE.PlaneGeometry(b.w - 2 * T, b.d - 2 * T), new THREE.MeshStandardMaterial({ map: this.floorTex, roughness: 0.85 }));
+    this.floor.rotation.x = -Math.PI / 2; this.floor.position.set(b.x, FLOOR + 0.03, b.z); this.floor.receiveShadow = true;
+
+    // roof (hidden while the player is inside or in the management view) with a big coffee cup on top
+    roofK.box(b.x, H + 0.15, b.z, b.w + 0.6, 0.3, b.d + 0.6, 0xf4f7fa);
+    for (const [px, pz, sx, sz] of [[b.x, z1 + 0.15, b.w + 0.6, 0.3], [b.x, z0 - 0.15, b.w + 0.6, 0.3], [x0 - 0.15, b.z, 0.3, b.d + 0.6], [x1 + 0.15, b.z, 0.3, b.d + 0.6]]) roofK.box(px, H + 0.6, pz, sx, 0.6, sz, trim);
+    roofK.box(b.x + 2.0, H + 1.1, b.z - 3.0, 1.8, 1.0, 1.4, 0xb5bdc7);
+    roofK.cyl(b.x, H + 1.0, b.z + 1.0, 1.1, 0.15, 0xf4f7fa, 18); roofK.cyl(b.x, H + 1.9, b.z + 1.0, 0.8, 1.5, 0xffffff, 18);
+    const handle = new THREE.TorusGeometry(0.45, 0.11, 8, 14); handle.translate(b.x + 0.95, H + 1.9, b.z + 1.0); roofK.add(handle, 0x8a5a35);
+    this.roof = roofK.build(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.78 }));
+    this.roof.position.y = FLOOR;
+    // "CAFE" sign above the door (always visible, even without the roof)
+    const sign = new THREE.Mesh(new THREE.PlaneGeometry(3.0, 0.75), new THREE.MeshBasicMaterial({ map: textTexture('CAFE', { bg: '#5a3a22', fg: '#ffffff', w: 256, h: 64 }) }));
+    sign.position.set(D.x, FLOOR + H + 0.85, z1 + 0.34);
+    nightMaterials.add(glassMaterial());
+
+    // the whole building is one selectable group (the roof is hidden while the player is inside)
+    this.building = new THREE.Group();
+    this.building.add(this.floor, this.wallMesh, this.glassMesh, ...this.windowMeshes, this.roof, sign);
+    this.building.traverse((o) => { if (o.isMesh && o !== this.floor) { o.castShadow = o !== this.glassMesh && !this.windowMeshes.includes(o); o.receiveShadow = true; } });
     this.building.userData.select = () => cafeBuildingInfo(this);
     this.building.userData.focus = new THREE.Vector3(b.x, 0, b.z);
     r.add(this.building);
     this.selectables.push(this.building);
+    this.doorPos = new THREE.Vector3(D.x, FLOOR, D.z);
+    this.counterPos = new THREE.Vector3(L.counter.x, FLOOR + 1.2, L.counter.z);
     this.counterRect = { x: L.counter.x, z: L.counter.z, w: L.counter.w + 0.3, d: 1.1 };
 
     // counter: one mesh, rebuilt only when the menu changes (see rebuildCounter)
@@ -82,20 +171,20 @@ export class CafeView {
     this.counterMesh.position.set(L.counter.x, FLOOR, L.counter.z);
     r.add(this.counterMesh);
 
-    // menu board on the wall (one canvas texture, redrawn when prices / the menu change)
+    // menu board on the back wall, above the counter (one canvas texture, redrawn when prices / the menu change)
     this.menuCanvas = document.createElement('canvas');
     this.menuCanvas.width = 256; this.menuCanvas.height = 256;
     this.menuTex = new THREE.CanvasTexture(this.menuCanvas);
     this.menuTex.colorSpace = THREE.SRGBColorSpace;
     const board = new THREE.Mesh(new THREE.PlaneGeometry(1.9, 1.9), new THREE.MeshBasicMaterial({ map: this.menuTex }));
-    board.position.set(b.x - 2.2, 2.0, b.z + b.d / 2 + 0.04);
+    board.position.set(L.counter.x, FLOOR + 2.1, z0 + T + 0.04);
     r.add(board);
 
     // tables and stools: three instanced meshes for all of them (count = how many are unlocked)
-    const n = L.tables.length;
-    this.tops = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.55, 0.55, 0.08, 14), mat(0xf1e2c8), n);
-    this.legs = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.08, 0.1, 0.7, 8), mat(0x7a4a28), n);
-    this.stools = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.26, 0.22, 0.45, 10), mat(0x2f8cff), n * 2);
+    const nt = L.tables.length;
+    this.tops = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.55, 0.55, 0.08, 14), mat(0xf1e2c8), nt);
+    this.legs = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.08, 0.1, 0.7, 8), mat(0x7a4a28), nt);
+    this.stools = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.26, 0.22, 0.45, 10), mat(0x2f8cff), nt * 2);
     L.tables.forEach((t, i) => {
       const seats = [];
       this.place(this.tops, i, t.x, FLOOR + 0.76, t.z);
@@ -105,12 +194,15 @@ export class CafeView {
     });
     for (const m of [this.tops, this.legs, this.stools]) { m.count = 0; m.castShadow = true; m.frustumCulled = false; r.add(m); }
 
-    // status label above the counter
+    // status label above the counter (above the roof line, so it stays readable)
     this.label = makeLabel(3.4);
-    this.label.sprite.position.set(L.counter.x, 3.7, L.counter.z + 0.5);
+    this.label.sprite.position.set(L.counter.x, 4.6, L.counter.z);
     this.label.sprite.visible = false;
     r.add(this.label.sprite);
   }
+
+  /** Where the floating Café button hangs: over the door from outside, over the counter once the player is inside. */
+  buttonPos() { return this.inside ? this.counterPos : this.doorPos; }
 
   place(inst, i, x, y, z) {
     _p.set(x, y, z);
@@ -127,15 +219,15 @@ export class CafeView {
     const parts = [
       { geo: rbox(c.w, 1.0, 0.9, 0.08, 1), color: 0x7a4a28, at: [0, 0.5, 0] },
       { geo: rbox(c.w + 0.2, 0.1, 1.05, 0.04, 1), color: 0xf1e2c8, at: [0, 1.05, 0] },
-      { geo: rbox(0.9, 0.55, 0.5, 0.06, 1), color: 0xc9ced6, at: [-1.7, 1.4, 0] },
-      { geo: new THREE.CylinderGeometry(0.1, 0.1, 0.25, 8), color: 0x2a2f36, at: [-1.95, 1.2, 0.28], own: true },
+      { geo: rbox(0.9, 0.55, 0.5, 0.06, 1), color: 0xc9ced6, at: [-c.w / 2 + 0.6, 1.4, 0] },
+      { geo: new THREE.CylinderGeometry(0.1, 0.1, 0.25, 8), color: 0x2a2f36, at: [-c.w / 2 + 0.35, 1.2, 0.28], own: true },
     ];
     const kinds = { espresso: [0x3a2415, 'cup'], croissant: [0xd9a14a, 'pastry'], latte: [0xf2e6d2, 'cup'], sandwich: [0xe0b96a, 'pastry'], iced: [0x9fd8ff, 'cup'] };
     products.forEach((p, i) => {
       if (!p.available) return;
       const [color, shape] = kinds[p.id] || [0xffffff, 'cup'];
       const geo = shape === 'cup' ? new THREE.CylinderGeometry(0.16, 0.12, 0.28, 10) : new THREE.CapsuleGeometry(0.12, 0.3, 3, 8);
-      parts.push({ geo, color, at: [-0.2 + i * 0.55, 1.3, 0.12], rotZ: shape === 'cup' ? 0 : Math.PI / 2, own: true });
+      parts.push({ geo, color, at: [-0.3 + i * 0.45, 1.3, 0.12], rotZ: shape === 'cup' ? 0 : Math.PI / 2, own: true });
     });
     const pieces = parts.map(({ geo, color, at, rotZ = 0, own }) => {
       const g = geo.index ? geo.toNonIndexed() : geo.clone();
@@ -162,8 +254,14 @@ export class CafeView {
       this.built = built;
       this.root.visible = built;
       if (built && !this.colliderBoxes) {
-        const b = CAFE_LAYOUT.building, cr = this.counterRect;
-        this.colliderBoxes = [this.colliders.add(b.x, b.z, b.w + 0.3, b.d + 0.3, 5), this.colliders.add(cr.x, cr.z, cr.w, cr.d, 1.3)];
+        const b = CAFE_LAYOUT.building, D = CAFE_LAYOUT.door, cr = this.counterRect, T = 0.35;
+        const x0 = b.x - b.w / 2, x1 = b.x + b.w / 2, z0 = b.z - b.d / 2, z1 = b.z + b.d / 2, dl = D.x - D.w / 2, dr = D.x + D.w / 2;
+        // four walls (the south one has the door gap) + the counter: the inside is a real room people walk into
+        this.colliderBoxes = [
+          this.colliders.add(b.x, z0 + T / 2, b.w, T, 5), this.colliders.add(x0 + T / 2, b.z, T, b.d, 5), this.colliders.add(x1 - T / 2, b.z, T, b.d, 5),
+          this.colliders.add((x0 + dl) / 2, z1 - T / 2, dl - x0, T, 5), this.colliders.add((dr + x1) / 2, z1 - T / 2, x1 - dr, T, 5),
+          this.colliders.add(cr.x, cr.z, cr.w, cr.d, 1.3),
+        ];
         this.nav?.rebuild(this.colliders);
       }
     }
@@ -173,7 +271,7 @@ export class CafeView {
     this.visibleTables = want;
     this.tops.count = this.legs.count = want; this.stools.count = want * 2;
     let added = false;
-    this.tableSlots.forEach((t, i) => { if (i < want && !t.collider) { t.collider = this.colliders.add(t.x, t.z, 2.4, 1.3, 1); added = true; } });
+    this.tableSlots.forEach((t, i) => { if (i < want && !t.collider) { t.collider = this.colliders.add(t.x, t.z, 2.2, 1.3, 1); added = true; } });
     if (added) this.nav?.rebuild(this.colliders);
     this.rebuildCounter();
     this.drawMenu();
@@ -227,6 +325,15 @@ export class CafeView {
     return { ...CAFE_LAYOUT.entry };
   }
 
+  /** Next point to walk to: guests always cross the wall through the door, never through it. */
+  stopFor(f, tg) {
+    const D = CAFE_LAYOUT.door, zin = (z) => z < D.z - 0.15;
+    if (zin(f.z) === zin(tg.z)) return tg;
+    const outside = !zin(f.z), aligned = Math.abs(f.x - D.x) < 0.45;
+    const side = aligned ? !outside : outside; // aligned with the door: go straight through; otherwise reach the door line on this side first
+    return { x: D.x, z: D.z + (side ? 0.9 : -0.9) };
+  }
+
   assignSeat(f) {
     for (let i = 0; i < this.visibleTables; i++) {
       const s = this.tableSlots[i].seats.find((q) => !q.taken);
@@ -258,7 +365,7 @@ export class CafeView {
       }
       if (c.state === 'eating') {
         if (!f.seat && !f.sitTried) { f.sitTried = true; this.assignSeat(f); }
-        f.target = f.seat ? f.seat : { x: CAFE_LAYOUT.queue[0].x + 6, z: CAFE_LAYOUT.queue[0].z - 1 };
+        f.target = f.seat ? f.seat : { x: CAFE_LAYOUT.door.x + 2.4, z: CAFE_LAYOUT.door.z - 1.6 };
       } else {
         const i = waiting.indexOf(id);
         f.target = CAFE_LAYOUT.queue[Math.max(0, Math.min(i < 0 ? 0 : i, CAFE_LAYOUT.queue.length - 1))];
@@ -270,7 +377,7 @@ export class CafeView {
     const gone = this.gone;
     gone.length = 0;
     for (const [id, f] of this.figures) {
-      const tg = f.target;
+      const goal = f.target, tg = goal ? this.stopFor(f, goal) : null;
       let moving = false;
       if (tg) {
         const dx = tg.x - f.x, dz = tg.z - f.z, d = Math.hypot(dx, dz);
@@ -279,6 +386,8 @@ export class CafeView {
           f.x += (dx / d) * s; f.z += (dz / d) * s;
           f.model.rotation.y = Math.atan2(-dx, -dz);
           moving = true;
+        } else if (tg !== goal) { // at a doorway point: the next frame continues towards the real target
+          f.x = tg.x; f.z = tg.z;
         } else if (f.leaving) { // arrived at the exit: back to the pool
           f.model.visible = false; gone.push(id); this.pool.push(f); f.sitTried = false; f.target = null; continue;
         } else {
@@ -307,6 +416,11 @@ export class CafeView {
     this.syncTimer -= dt;
     if (this.syncTimer <= 0) { this.syncTimer = 0.2; this.syncFigures(); } // who goes where: 5x a second; walking is smooth every frame
     this.moveFigures(dt);
+    // the roof is lifted while the player is inside the café or looking from the management camera
+    const p = this.playerPos, b = CAFE_LAYOUT.building;
+    this.inside = !!p && Math.abs(p.x - b.x) < b.w / 2 && Math.abs(p.z - b.z) < b.d / 2;
+    const roofOn = !(this.inside || this.inMgmt);
+    if (roofOn !== this.roof.visible) this.roof.visible = roofOn;
     this.labelTimer -= dt;
     if (this.labelTimer <= 0) { this.labelTimer = 0.25; this.updateLabel(); }
   }
