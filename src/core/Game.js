@@ -16,6 +16,7 @@ import { PedestrianManager } from '../world/PedestrianManager.js';
 import { ParkingSystem } from '../vehicles/ParkingSystem.js';
 import { PlayerController } from '../player/PlayerController.js';
 import { PlayerProfile } from '../player/PlayerProfile.js';
+import { OwnerWork } from '../employees/OwnerWork.js';
 import { InteractionSystem } from '../player/InteractionSystem.js';
 import { CameraManager } from '../camera/CameraManager.js';
 import { EconomyManager } from '../economy/EconomyManager.js';
@@ -224,6 +225,7 @@ export class Game {
       biz.decorBonus = () => this.placement.effects(biz.id).comfort;
       biz.decorDemand = () => this.placement.demandFactor(biz.id, this.day?.hour ?? 12);
     }
+    this.ownerWork = new OwnerWork({ bus: this.bus, tasks: this.tasks, employees: this.employees, getPos: () => this.player.pos });
     this.chargingTasks = new ChargingTasks({ bus: this.bus, station: this.station, customers: this.customers, tasks: this.tasks, employees: this.employees, cfg: empCfg });
     this.employeeView = new EmployeeView({ scene: this.sm.scene, assets: this.assets, manager: this.employees, economy: this.economy, bus: this.bus });
     this.interaction = new InteractionSystem(this.bus, this.sm.scene);
@@ -326,6 +328,7 @@ export class Game {
     removeEventListener('visibilitychange', this.onHide);
     removeEventListener('beforeunload', this.onUnload);
     this._offProfile?.();
+    this.ownerWork?.dispose();
     this.tutorial?.dispose();
     this.cafe?.dispose();
     this.cafeView?.dispose();
@@ -355,7 +358,7 @@ export class Game {
         run: () => {
           if (!entry) return;
           const r = this.properties.buy(entry.id);
-          this.bus.emit('toast', { text: r.ok ? `${biz.cfg.label} is yours! Hire staff to run it.` : r.reason, kind: r.ok ? 'good' : '' });
+          this.bus.emit('toast', { text: r.ok ? `${biz.cfg.label} is yours! Hire staff, or stand beside a bay to work it yourself.` : r.reason, kind: r.ok ? 'good' : '' });
         },
       });
     }
@@ -519,6 +522,7 @@ export class Game {
       this.chargingTasks.update(dt);
       this.wash.update(dt);
       this.garage.update(dt);
+      this.ownerWork.update(dt);
       for (const h of Object.values(this.hubs)) h.update(dt);
       this.districts.update(dt, this.camera.inManagement ? this.camera.mg.dist / 120 : 1);
       this.decor.update();

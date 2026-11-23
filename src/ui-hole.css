@@ -227,3 +227,8 @@ kbd, #prompt kbd { background: linear-gradient(180deg, #ffe27a, var(--yellow)); 
 .stage-board > summary > :nth-child(3) { grid-column: 1 / -1; }
 .stage-board[open] > summary { border-bottom: 1px dashed var(--line-2, #d5ddec); margin-bottom: 6px; }
 .stage-board > summary:focus-visible { outline: 3px solid #5cc8ff; outline-offset: 2px; border-radius: 8px; }
+/* ---------- owner doing a hands-on job (wash / garage) ---------- */
+#work-bar { position: fixed; z-index: 13; left: 50%; transform: translateX(-50%); bottom: calc(190px + env(safe-area-inset-bottom, 0px)); min-width: 220px; max-width: min(92vw, 360px); padding: 8px 14px 10px; border-radius: 16px; background: var(--hud, #1b2540); color: #fff; border: 2px solid var(--hud-line, #5cc8ff); box-shadow: 0 6px 0 rgba(0, 0, 0, .3); font-weight: 700; font-size: 14px; text-align: center; pointer-events: none; }
+#work-bar.hidden { display: none; }
+#work-bar .wb-b { margin-top: 6px; height: 10px; border-radius: 6px; background: rgba(255, 255, 255, .22); overflow: hidden; }
+#work-bar .wb-b i { display: block; height: 100%; width: 0; background: #38d996; border-radius: 6px; transition: width .15s linear; }
