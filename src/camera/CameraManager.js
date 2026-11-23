@@ -23,6 +23,7 @@ export class CameraManager {
     this.colliders = colliders;
     this.settings = settings;
 
+    this.fixed = false; // a screen (the café) owns the camera: no zoom, pan, rotate or mode toggle
     this.mode = 'third';
     this.blend = 0; // 0 = third, 1 = management
     this.blendTarget = 0;
@@ -57,6 +58,7 @@ export class CameraManager {
   }
 
   toggle() {
+    if (this.fixed) return;
     this.setMode(this.mode === 'third' ? 'management' : 'third');
   }
 
@@ -78,7 +80,7 @@ export class CameraManager {
 
   /** Turn the isometric view by 90 degrees (dir = +1 / -1). */
   rotateIso(dir) {
-    if (this.mode !== 'management' || !this.enabled) return;
+    if (this.fixed || this.mode !== 'management' || !this.enabled) return;
     this.mg.yawTarget += dir * (Math.PI / 2);
   }
 
@@ -87,7 +89,7 @@ export class CameraManager {
   }
 
   onDrag({ dx, dy, button, touch }) {
-    if (!this.enabled) return;
+    if (!this.enabled || this.fixed) return;
     const sens = 0.0042 * this.settings.data.sensitivity;
     const inv = this.settings.data.invertY ? -1 : 1;
     if (this.mode === 'third') {
@@ -116,6 +118,7 @@ export class CameraManager {
 
   /** Back to the default framing of the current mode (zoom, and in management view the focus on the player). */
   reset() {
+    if (this.fixed) return;
     if (this.mode === 'third') this.tp.dist = 20;
     else {
       this.mg.dist = 175;
@@ -125,7 +128,7 @@ export class CameraManager {
   }
 
   onZoom(z) {
-    if (!this.enabled) return;
+    if (!this.enabled || this.fixed) return;
     if (this.mode === 'third') this.tp.dist = clamp(this.tp.dist + z * 2, 11, 36);
     else this.mg.dist = clamp(this.mg.dist * (1 + z * 0.12), 60, 420);
   }
@@ -196,6 +199,25 @@ export class CameraManager {
       fog.far = THREE.MathUtils.lerp(420, mg.dist * 3 + 250, e);
     }
     this.transitioning = this.blend !== this.blendTarget;
+  }
+
+  /**
+   * Take the camera for a screen: management orbit parameters set directly (yaw 0 = looking north from the south side = a FRONT view).
+   * Remembers the player's own camera and gives it back in exitFixed().
+   */
+  enterFixed({ yaw, pitch, fov, dist, focus }) {
+    if (!this.fixed) this._saved = { mode: this.mode, yaw: this.mg.yaw, yawTarget: this.mg.yawTarget, pitch: this.mg.pitch, dist: this.mg.dist, fov: this.mg.fov, focus: this.mg.focus.clone() };
+    this.fixed = true;
+    this.setMode('management');
+    Object.assign(this.mg, { yaw, yawTarget: yaw, pitch, dist, fov });
+    this.mg.focus.set(focus.x, focus.y ?? 0, focus.z);
+  }
+  exitFixed() {
+    if (!this.fixed) return;
+    const s = this._saved; this._saved = null; this.fixed = false;
+    Object.assign(this.mg, { yaw: s.yaw, yawTarget: s.yawTarget, pitch: s.pitch, dist: s.dist, fov: s.fov });
+    this.mg.focus.copy(s.focus);
+    this.setMode(s.mode);
   }
 
   /** Yaw used for camera-relative player movement. */

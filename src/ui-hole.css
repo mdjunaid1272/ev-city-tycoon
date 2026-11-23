@@ -353,3 +353,16 @@ body.cz-on #hud, body.cz-on #cafe-open, body.cz-on #term-open, body.cz-on #work-
 
 .cz-theme .btn, .cz-shopit .btn, .cz-theme .tag { flex: 0 0 auto; width: auto; min-width: 84px; }
 .cz-theme span { min-width: 0; }
+
+/* cozy café, wide screens: orders left, workbench right, the front view of the room in the middle */
+@media (min-width: 900px) and (min-aspect-ratio: 5/4) {
+  #cz { grid-template-columns: 290px 1fr 400px; grid-template-rows: auto minmax(0, 1fr); }
+  #cz .cz-top { grid-column: 1 / -1; }
+  #cz .cz-orders { grid-column: 1; grid-row: 2; flex-direction: column; overflow-x: hidden; overflow-y: auto; align-items: stretch; max-height: 100%; min-height: 0; }
+  #cz .cz-cw { width: auto; }
+  #cz .cz-mid { grid-column: 2; grid-row: 2; }
+  #cz .cz-bench { grid-column: 3; grid-row: 2; max-height: none; max-width: none; width: auto; justify-self: stretch; overflow-y: auto; min-height: 0; }
+}
+
+/* cozy café, phones: the panels leave more of the room visible */
+@media (max-width: 520px) { #cz .cz-bench { max-height: 42vh; } #cz .cz-orders { min-height: 84px; } }

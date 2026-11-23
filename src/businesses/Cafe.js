@@ -19,9 +19,9 @@ import { Disposables } from '../core/Disposables.js';
 export const CAFE_LAYOUT = {
   building: { x: 17.4, z: -13.5, w: 7.2, d: 12 },        // outer footprint: x 13.8 .. 21.0, z -19.5 .. -7.5
   door: { x: 17.5, z: -7.5, w: 2.2 },                    // opening in the south wall
-  counter: { x: 19.1, z: -16.0, w: 3.2 },                // pushed to the east wall: the open end (3.3 m, the staff walking grid needs that) is on the west side
-  stand: [{ x: 16.4, z: -17.8 }, { x: 18.6, z: -17.8 }], // where baristas (and the owner) work, behind the counter
-  queue: [{ x: 18.6, z: -14.6 }, { x: 17.6, z: -14.4 }, { x: 17.6, z: -13.3 }, { x: 17.6, z: -12.2 }, { x: 17.6, z: -11.1 }, { x: 17.6, z: -10.0 }], // in front of the counter, then back along the door corridor
+  counter: { x: 18.75, z: -16.0, w: 3.8 },               // a wide counter pushed to the east wall: the open end (2.7 m, the staff walking grid needs that) is on the west side
+  stand: [{ x: 17.4, z: -17.8 }, { x: 19.6, z: -17.8 }], // where baristas (and the owner) work, behind the counter
+  queue: [{ x: 17.3, z: -14.5 }, { x: 18.35, z: -14.5 }, { x: 19.4, z: -14.5 }, { x: 20.35, z: -14.5 }, { x: 17.8, z: -13.2 }, { x: 19.0, z: -13.2 }], // a row of customers across the counter (front view), then a second row
   tables: [{ x: 15.2, z: -9.4 }, { x: 19.9, z: -9.4 }, { x: 15.2, z: -11.6 }, { x: 19.9, z: -11.6 }, { x: 19.9, z: -13.8 }],
   entry: { x: 17.5, z: -6.0 },                           // on the lot, just outside the door
 };

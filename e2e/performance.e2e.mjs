@@ -21,7 +21,7 @@ for (const q of ['low', 'medium', 'high']) {
   await p.waitForTimeout(800);
   const without = await frameInfo(p);
   await p.evaluate(() => {
-    const G = __game; G.hub.build('coffee', G.progression); G.cafe.upgrade('seating'); G.cafe.upgrade('seating'); G.cafe.upgrade('menu');
+    const G = __game; G.hub.build('coffee', G.progression); G.cafeView.apply(); G.cafe.upgrade('seating'); G.cafe.upgrade('seating'); G.cafe.upgrade('menu');
     const c = G.employees.makeCandidate(); c.role = 'barista'; c.skill = 3; c.cost = 100; G.employees.candidates.push(c); G.employees.hire(c.id);
     G.cafe.setAutoRestock(true); G.cafe.spawnTimer = 1; for (let i = 0; i < 400; i++) { G.cafe.update(0.1); G.employees.update(0.1); G.cafeView.update(0.1); }
   });

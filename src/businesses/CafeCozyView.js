@@ -31,7 +31,7 @@ export class CafeCozyView {
     this.shownGuests = false;
     this.pickupSprites = [];
     this.buildMachines();
-    for (let i = 0; i < cozy.cfg.quality.pickupMax; i++) { const sp = this.makeSprite(0.9, 0.9); sp.visible = false; this.group.add(sp); this.pickupSprites.push(sp); }
+    for (let i = 0; i < cozy.cfg.quality.pickupMax; i++) { const sp = this.makeSprite(0.9, 0.9, 1.0); sp.visible = false; this.group.add(sp); this.pickupSprites.push(sp); }
     this.baseWall = new THREE.Color(0xb8793e);
   }
 
@@ -208,11 +208,11 @@ export class CafeCozyView {
   }
 
   // ---------- customers ----------
-  makeSprite(w, h) {
+  makeSprite(w, h, k = 2.4) {
     const c = document.createElement('canvas'); c.width = 256; c.height = Math.round(256 * (h / w));
     const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
     const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false }));
-    sp.scale.set(w * 2.4, h * 2.4, 1); sp.userData.canvas = c; sp.userData.key = null;
+    sp.scale.set(w * k, h * k, 1); sp.userData.canvas = c; sp.userData.key = null;
     return sp;
   }
 
@@ -225,7 +225,7 @@ export class CafeCozyView {
     const ud = model.userData;
     const shirt = [ud.torso, ud.armL?.children[0], ud.armR?.children[0]].filter(Boolean);
     const hat = model.children.filter((o) => o.isMesh && o.material?.color?.getHex() === 0xe8483f);
-    const bubble = this.makeSprite(1.7, 0.7); bubble.position.set(0, 3.15, 0); model.add(bubble);
+    const bubble = this.makeSprite(1.7, 0.7, 1.15); bubble.position.set(0, 2.9, 0); model.add(bubble);
     this.group.add(model);
     return { model, shirt, hat, head: ud.head, bubble, phase: Math.random() * 6, x: 0, z: 0, target: null, leaving: false, seat: null, cid: null };
   }
@@ -308,7 +308,7 @@ export class CafeCozyView {
         if (d > 0.08) { const s = Math.min(d, WALK * dt); f.x += (dx / d) * s; f.z += (dz / d) * s; f.model.rotation.y = Math.atan2(-dx, -dz); moving = true; }
         else if (tg !== goal) { f.x = tg.x; f.z = tg.z; }
         else if (f.leaving) { f.model.visible = false; f.bubble.visible = false; gone.push(id); this.pool.push(f); f.target = null; f.tried = false; continue; }
-        else f.model.rotation.y = f.seat ? Math.PI : 0;
+        else f.model.rotation.y = f.seat ? Math.PI : this.cv.cutaway ? Math.PI + (f.cid && (f.cid.charCodeAt(f.cid.length - 1) % 2 ? 0.55 : -0.55)) : 0; // in the front view they turn to the viewer (the barista)
       }
       f.model.position.set(f.x, FLOOR + (f.seat && !moving ? -0.32 : 0), f.z);
       animateCharacter(f.model, f.phase += moving ? dt * 7 : 0, moving ? 1 : 0, this.t);

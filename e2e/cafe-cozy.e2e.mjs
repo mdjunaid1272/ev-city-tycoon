@@ -69,7 +69,7 @@ await clk(p, '#modal-card [data-tab="cafehub:customers"]'); await p.waitForTimeo
 const guests = await p.evaluate(() => ({ cards: document.querySelectorAll('#modal-card .cz-guest').length, unknown: document.querySelectorAll('#modal-card .cz-guest.locked').length }));
 check('the guest collection shows every character (unmet ones hidden)', guests.cards === 13 && guests.unknown >= 1, JSON.stringify(guests));
 await clk(p, '#modal-card [data-tab="cafehub:progress"]'); await p.waitForTimeout(250);
-check('the progress board shows level, unlocks and the limits that keep the city the main game', await p.evaluate(() => /Level 4/.test(document.getElementById('modal-card').textContent) && /Limits/.test(document.getElementById('modal-card').textContent) && document.querySelectorAll('#modal-card .mrow').length >= 8));
+check('the progress board shows level, unlocks and the limits that keep the city the main game', await p.waitForFunction(() => /Level 4/.test(document.getElementById('modal-card').textContent) && /Limits/.test(document.getElementById('modal-card').textContent) && document.querySelectorAll('#modal-card .mrow').length >= 8, null, { timeout: 8000 }).then(() => true, () => false));
 
 // ---- decoration through the UI, visible in 3D
 await clk(p, '#modal-card [data-tab="cafehub:decor"]'); await p.waitForTimeout(250);
@@ -97,11 +97,27 @@ await clk(p, '#modal-card [data-tab="cafehub:play"]'); await p.waitForTimeout(20
 await p.waitForTimeout(600);
 const open = await p.evaluate(() => ({ ui: __game.cozyUI.isOpen, open: __game.cafeCozy.open, shown: !document.getElementById('cz').classList.contains('hidden'), mgmt: __game.camera.inManagement || __game.camera.transitioning, hud: getComputedStyle(document.getElementById('hud')).visibility, guests: __game.cafeView.suppressGuests, enabled: __game.player.enabled, modal: __game.ui.modal }));
 check('opening the café shows the play screen over the 3D café (isometric camera), hides the HUD, locks walking', open.ui && open.open && open.shown && open.mgmt && open.hud === 'hidden' && !open.enabled && open.modal === null, JSON.stringify(open));
+// ---- the FRONT VIEW: camera straight on, roof and front wall cut away; the camera is not the player's any more
+const fv = await p.evaluate(() => ({ fixed: __game.camera.fixed, yaw: __game.camera.mg.yaw, pitch: __game.camera.mg.pitch, dist: __game.camera.mg.dist, cut: __game.cafeView.cutaway, south: __game.cafeView.southMesh.visible, roof: __game.cafeView.roof.visible, sign: __game.cafeView.sign.visible, win: __game.cafeView.windowMeshes.some((m) => m.visible), btn: !!document.getElementById('cz-cam') }));
+check('the play screen shows the café from the FRONT: camera straight on and low, roof and the whole front wall cut away', fv.fixed && Math.abs(fv.yaw) < 0.01 && fv.pitch < 0.4 && fv.cut && !fv.south && !fv.roof && !fv.sign && !fv.win && fv.btn, JSON.stringify(fv));
+await p.mouse.move(600, 360); await p.mouse.wheel(0, -900); await p.waitForTimeout(250);
+check('the camera is fixed while the café is open (zoom and pan do nothing)', await p.evaluate((d) => Math.abs(__game.camera.mg.dist - d) < 0.01 && __game.camera.fixed, fv.dist));
 await p.evaluate(() => { __game.cafeCozy.session.spawnTimer = 0.1; });
 await sim(p, 40);
 const cust = await p.evaluate(() => { const s = __game.cafeCozy.session; return { n: s.customers.length, cards: document.querySelectorAll('#cz .cz-c').length, figs: __game.cozyView.figs.size, names: s.customers.map((c) => c.name) }; });
 check('customers arrive with names and orders: ticket cards in the UI and characters in the 3D café', cust.n >= 1 && cust.cards === cust.n && cust.figs >= 1, JSON.stringify(cust));
 
+// the customers stand in a ROW across the counter (side by side, facing the viewer in the front view)
+await p.evaluate(() => { const s = __game.cafeCozy.session; s.spawnTimer = 1e9; s.customers.length = 0; const L = __game.cafeCozy; for (const rid of ['priya', 'lena', 'okafor']) { const def = L.cfg.customers[rid]; s.customers.push({ id: 'row_' + rid, rid, name: def.name, icon: def.icon, category: def.category, vip: false, colors: { shirt: def.shirt, hat: def.hat, skin: def.skin }, lines: [{ pid: 'tea', requests: [], done: false, product: null }], patience: 300, maxPatience: 300, state: 'waiting', eatLeft: 0, sats: [], liked: false, chatReady: false, spawnedAt: 0 }); } });
+await sim(p, 25);
+const row = await p.evaluate(() => { const f = [...__game.cozyView.figs.values()].filter((x) => x.cid?.startsWith('row_')); return { n: f.length, xs: f.map((x) => +x.x.toFixed(2)).sort((a, b) => a - b), zs: f.map((x) => +x.z.toFixed(2)), turned: f.every((x) => Math.abs(Math.cos(x.model.rotation.y)) < 0.95) }; });
+check('customers wait in a row across the counter (spread out sideways, same distance from the counter) and turn towards the viewer', row.n === 3 && row.xs[2] - row.xs[0] >= 1.5 && Math.max(...row.zs) - Math.min(...row.zs) < 0.2 && row.turned, JSON.stringify(row));
+// the camera button swaps to the isometric view and back
+await clk(p, '#cz-cam'); await p.waitForTimeout(300);
+const iso = await p.evaluate(() => ({ yaw: __game.camera.mg.yaw, cut: __game.cafeView.cutaway, south: __game.cafeView.southMesh.visible }));
+await clk(p, '#cz-cam'); await p.waitForTimeout(300);
+const frontAgain = await p.evaluate(() => ({ yaw: __game.camera.mg.yaw, cut: __game.cafeView.cutaway }));
+check('the camera button switches between the front view and the isometric view (the front wall comes back in the corner view)', Math.abs(iso.yaw - Math.PI / 4) < 0.01 && !iso.cut && iso.south && Math.abs(frontAgain.yaw) < 0.01 && frontAgain.cut, JSON.stringify({ iso, frontAgain }));
 // ---- cook a real order with clicks (first through a wrong ingredient)
 await p.evaluate(() => { const s = __game.cafeCozy.session; s.customers.length = 0; s.spawnTimer = 1e9; const L = __game.cafeCozy, def = L.cfg.customers.mina; s.customers.push({ id: 'mx', rid: 'mina', name: def.name, icon: def.icon, category: def.category, vip: false, colors: { shirt: def.shirt, hat: def.hat, skin: def.skin }, lines: [{ pid: 'latte', requests: ['cinnamon'], done: false, product: null }], patience: 90, maxPatience: 90, state: 'waiting', eatLeft: 0, sats: [], liked: false, chatReady: false, spawnedAt: 0 }); });
 await sim(p, 1); await clk(p, '#cz [data-cid="mx"]');
@@ -164,6 +180,8 @@ check('a practice shift pays nothing to the city', practice.cash === 0 && /Rest/
 // exit
 await clk(p, '#cz [data-sum="exit"]'); await p.waitForTimeout(500);
 const back = await p.evaluate(() => ({ open: __game.cozyUI.isOpen, hidden: document.getElementById('cz').classList.contains('hidden'), hud: getComputedStyle(document.getElementById('hud')).visibility, inert: document.getElementById('hud').inert, enabled: __game.player.enabled, owner: __game.ownerWork.suspended, guests: __game.cafeView.suppressGuests, state: __game.cafeCozy.state, figs: __game.cozyView.figs.size }));
+const camBack = await p.evaluate(() => ({ fixed: __game.camera.fixed, cut: __game.cafeView.cutaway, south: __game.cafeView.southMesh.visible, sign: __game.cafeView.sign.visible, roofLogic: true }));
+check('leaving gives the camera back and puts the front wall, windows and sign back', !camBack.fixed && !camBack.cut && camBack.south && camBack.sign, JSON.stringify(camBack));
 check('exiting returns to the city: HUD back, walking enabled, real café guests back', !back.open && back.hidden && back.hud === 'visible' && !back.inert && back.enabled && !back.owner && !back.guests && back.state === 'idle', JSON.stringify(back));
 await p.evaluate(() => __game.camera.setMode('third')); await p.waitForTimeout(900);
 await p.evaluate(() => { __game.ui.open('finance'); }); await p.waitForTimeout(300);

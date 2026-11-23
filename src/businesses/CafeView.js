@@ -63,7 +63,7 @@ export class CafeView {
     this.scene.remove(this.root);
     this.menuTex?.dispose();
     this.counterMesh?.geometry.dispose();
-    for (const m of [this.wallMesh, this.glassMesh, this.roof]) m?.geometry.dispose();
+    for (const m of [this.wallMesh, this.southMesh, this.glassMesh, this.roof]) m?.geometry.dispose();
     this.windowGeo?.dispose(); this.windowMat?.dispose(); this.floor?.geometry.dispose(); this.floor?.material.dispose(); this.floorTex?.dispose();
     this.bodyGeo?.dispose();
     this.headGeo?.dispose();
@@ -77,7 +77,7 @@ export class CafeView {
     const H = 3.4, T = 0.35;
     const x0 = b.x - b.w / 2, x1 = b.x + b.w / 2, z0 = b.z - b.d / 2, z1 = b.z + b.d / 2; // z1 = south wall (the door side)
     const wall = 0xb8793e, trim = shade(wall, 0.55), dark = shade(wall, -0.5);
-    const walls = new Kit(), glass = new Kit(), roofK = new Kit();
+    const walls = new Kit(), glass = new Kit(), roofK = new Kit(), south = new Kit(); // `south` = the front facade (cut away in the front view)
 
     // ---- the four walls; the south wall is low with a see-through window band and the door gap
     walls.box(b.x, H / 2, z0 + T / 2, b.w, H, T, wall); // back
@@ -87,13 +87,13 @@ export class CafeView {
     this.windows = [];
     for (const [a, c] of [[x0, dl], [dr, x1]]) {
       const w = c - a, cx = (a + c) / 2;
-      walls.box(cx, 0.5, z1 - T / 2, w, 1.0, T, wall); // lower wall
-      walls.box(cx, H - 0.25, z1 - T / 2, w, 0.5, T, wall); // band under the roof
-      walls.box(cx, 1.05, z1 - T / 2, w - 0.1, 0.12, T + 0.06, trim); // window sill
+      south.box(cx, 0.5, z1 - T / 2, w, 1.0, T, wall); // lower wall
+      south.box(cx, H - 0.25, z1 - T / 2, w, 0.5, T, wall); // band under the roof
+      south.box(cx, 1.05, z1 - T / 2, w - 0.1, 0.12, T + 0.06, trim); // window sill
       this.windows.push([cx, 2.0, z1 - T / 2, w - 0.3, 1.8]);
     }
-    for (const x of [x0 + T / 2, dl, dr, x1 - T / 2]) walls.box(x, 1.9, z1 - T / 2, 0.14, 2.0, T + 0.08, dark); // window / door posts
-    walls.box(D.x, 3.12, z1 - T / 2, D.w + 0.5, 0.5, T + 0.1, trim); // lintel
+    for (const x of [x0 + T / 2, dl, dr, x1 - T / 2]) south.box(x, 1.9, z1 - T / 2, 0.14, 2.0, T + 0.08, dark); // window / door posts
+    south.box(D.x, 3.12, z1 - T / 2, D.w + 0.5, 0.5, T + 0.1, trim); // lintel
     // plinth + corner posts
     for (const [px, pz, sx, sz] of [[b.x, z1 + 0.1, b.w + 0.3, 0.3], [b.x, z0 - 0.1, b.w + 0.3, 0.3], [x0 - 0.1, b.z, 0.3, b.d + 0.3], [x1 + 0.1, b.z, 0.3, b.d + 0.3]]) walls.box(px, 0.12, pz, sx, 0.24, sz, dark); // plinth ring (the floor stays open inside)
     for (const sx of [x0, x1]) for (const sz of [z0, z1]) walls.box(sx, H / 2, sz, 0.5, H, 0.5, trim);
@@ -106,7 +106,7 @@ export class CafeView {
     const n = 7, seg = (D.w + 1.4) / n;
     for (let i = 0; i < n; i++) {
       const x = D.x - (D.w + 1.4) / 2 + seg * (i + 0.5), c = i % 2 ? 0xffffff : 0xffc43d;
-      walls.box(x, 3.02, z1 + 0.65, seg, 0.12, 1.3, c); walls.box(x, 2.82, z1 + 1.3, seg, 0.3, 0.08, c);
+      south.box(x, 3.02, z1 + 0.65, seg, 0.12, 1.3, c); south.box(x, 2.82, z1 + 1.3, seg, 0.3, 0.08, c);
     }
     // ---- interior dressing (static, merged into the same mesh)
     walls.box(D.x, 0.05, b.z + 1.2, 1.7, 0.03, b.d - 3.4, 0xb23a48); // red runner from the door to the counter
@@ -122,8 +122,10 @@ export class CafeView {
       walls.box(lx, 3.0, lz, 0.03, 0.8, 0.03, 0x2a2f36);
       const bulb = new THREE.SphereGeometry(0.24, 10, 8); bulb.translate(lx, 2.5, lz); glass.add(bulb, 0xfff2c8);
     }
-    this.wallMesh = walls.build(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.78 }));
+    const wallMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.78 }); // shared: a theme tints the front facade too
+    this.wallMesh = walls.build(wallMat);
     this.wallMesh.position.y = FLOOR;
+    this.southMesh = south.build(wallMat); this.southMesh.position.y = FLOOR;
     this.glassMesh = glass.build(glassMaterial());
     this.glassMesh.castShadow = false; this.glassMesh.position.y = FLOOR;
 
@@ -155,7 +157,8 @@ export class CafeView {
 
     // the whole building is one selectable group (the roof is hidden while the player is inside)
     this.building = new THREE.Group();
-    this.building.add(this.floor, this.wallMesh, this.glassMesh, ...this.windowMeshes, this.roof, sign);
+    this.sign = sign;
+    this.building.add(this.floor, this.wallMesh, this.southMesh, this.glassMesh, ...this.windowMeshes, this.roof, sign);
     this.building.traverse((o) => { if (o.isMesh && o !== this.floor) { o.castShadow = o !== this.glassMesh && !this.windowMeshes.includes(o); o.receiveShadow = true; } });
     this.building.userData.select = () => cafeBuildingInfo(this);
     this.building.userData.focus = new THREE.Vector3(b.x, 0, b.z);
@@ -200,6 +203,12 @@ export class CafeView {
     this.label.sprite.position.set(L.counter.x, 4.6, L.counter.z);
     this.label.sprite.visible = false;
     r.add(this.label.sprite);
+  }
+
+  /** Front view: the roof and the whole front facade (wall, windows, awning, sign) are cut away so the room can be seen from the street. */
+  setCutaway(on) {
+    this.cutaway = !!on;
+    for (const m of [this.southMesh, this.sign, ...(this.windowMeshes || [])]) if (m) m.visible = !on;
   }
 
   /** Where the floating Café button hangs: over the door from outside, over the counter once the player is inside. */
@@ -421,7 +430,7 @@ export class CafeView {
     // the roof is lifted while the player is inside the café or looking from the management camera
     const p = this.playerPos, b = CAFE_LAYOUT.building;
     this.inside = !!p && Math.abs(p.x - b.x) < b.w / 2 && Math.abs(p.z - b.z) < b.d / 2;
-    const roofOn = !(this.inside || this.inMgmt);
+    const roofOn = !(this.inside || this.inMgmt || this.cutaway);
     if (roofOn !== this.roof.visible) this.roof.visible = roofOn;
     this.labelTimer -= dt;
     if (this.labelTimer <= 0) { this.labelTimer = 0.25; this.updateLabel(); }
