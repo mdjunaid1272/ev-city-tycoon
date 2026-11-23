@@ -18,7 +18,8 @@ import { PlayerController } from '../player/PlayerController.js';
 import { PlayerProfile } from '../player/PlayerProfile.js';
 import { OwnerWork } from '../employees/OwnerWork.js';
 import { CafeOrderBoard } from '../ui/CafeOrderBoard.js';
-import { CafeKitchenUI } from '../ui/CafeKitchenUI.js';
+import { CafeMiniGame } from '../businesses/CafeMiniGame.js';
+import { CafeMiniGameUI } from '../ui/CafeMiniGameUI.js';
 import { InteractionSystem } from '../player/InteractionSystem.js';
 import { CameraManager } from '../camera/CameraManager.js';
 import { EconomyManager } from '../economy/EconomyManager.js';
@@ -172,6 +173,8 @@ export class Game {
     this.cafe = new Cafe({ bus: this.bus, economy: this.economy, cfg: cafeCfg, hub: this.hub, tasks: this.tasks, getHour: () => this.day?.hour ?? 12, getReputation: () => this.economy.reputation, getStage: () => this.progression.stage, saved: saved?.cafe });
     this.cafe.hubCashierBoost = () => (this.employees.satisfactionBonus > 0 ? 1.25 : 1);
     this.cafeView = new CafeView({ scene: this.sm.scene, assets: this.assets, colliders: this.colliders, nav: this.nav, bus: this.bus, cafe: this.cafe, employees: this.employees, settings: this.settings });
+    // the optional café mini-game: independent of the café business (its only link to the city is one capped payout per session)
+    this.cafeMiniGame = new CafeMiniGame({ economy: this.economy, bus: this.bus, cfg: cafeCfg, saved: saved?.cafeMiniGame, getDay: () => this.day?.day ?? 1, getMachineLevel: () => this.cafe.levels.machine });
     this.employees.registerFacility('cafe', {
       nav: this.nav, label: 'Caf\u00e9', built: () => this.cafe.built, posts: CAFE_LAYOUT.stand,
       door: { x: CAFE_LAYOUT.entry.x, z: CAFE_LAYOUT.entry.z }, breakSpot: { x: 21.5, z: -5.2 },
@@ -302,7 +305,7 @@ export class Game {
     setTimeout(() => $('loading').remove(), 700);
     playerYield.pos = this.player.pos;
     this.cafeBoard = new CafeOrderBoard({ game: this });
-    this.kitchenUI = new CafeKitchenUI({ game: this });
+    this.miniGameUI = new CafeMiniGameUI({ game: this });
     this.tutorial = new TutorialManager({ game: this, bus: this.bus, scene: this.sm.scene, saved: saved?.tutorial, isNew: !saved });
     // welcome back: offline earnings first, then the daily login reward
     this.pendingOffline = saved?.lastSeen ? this.offline.compute((Date.now() - saved.lastSeen) / 1000) : null;
@@ -334,7 +337,7 @@ export class Game {
     this._offProfile?.();
     this.ownerWork?.dispose();
     this.cafeBoard?.dispose();
-    this.kitchenUI?.dispose();
+    this.miniGameUI?.dispose();
     this.tutorial?.dispose();
     this.cafe?.dispose();
     this.cafeView?.dispose();
@@ -548,10 +551,10 @@ export class Game {
       this.stationView.update(dt, this.player.pos);
       this.dragMove();
       this.player.update(dt, this.camera.moveYaw);
-      if (this.kitchenWhenThere) { // tapped the Café button from outside: the kitchen opens when the player has walked in
+      if (this.cafeMenuWhenThere) { // tapped the Café button from outside: the kitchen opens when the player has walked in
         const pp = this.player.pos;
-        if (CAFE_LAYOUT.stand.some((s) => Math.hypot(s.x - pp.x, s.z - pp.z) <= 2.2)) { this.kitchenWhenThere = false; this.openKitchen(); }
-        else if (!this.player.target) { this.kitchenWhenThere = false; this.ownerWork.suspended = false; } // walking was cancelled or blocked
+        if (CAFE_LAYOUT.stand.some((s) => Math.hypot(s.x - pp.x, s.z - pp.z) <= 2.2)) { this.cafeMenuWhenThere = false; this.openCafeMenu(); }
+        else if (!this.player.target) { this.cafeMenuWhenThere = false; this.ownerWork.suspended = false; } // walking was cancelled or blocked
       }
       this.traffic.update(dt, this.camera.focusPoint);
       this.lights.update();
@@ -584,7 +587,7 @@ export class Game {
     this.ui.update(dt);
     this.tutorial?.update(dt);
     this.cafeBoard?.update(dt);
-    this.kitchenUI?.update(dt);
+    this.miniGameUI?.update(dt);
     this.sm.render();
     this.fps.n++; this.fps.t += dt;
     if (this.fps.t >= 1) { this.fps.v = this.fps.n / this.fps.t; this.fps.n = 0; this.fps.t = 0; }
@@ -607,6 +610,7 @@ export class Game {
       goals: this.goals.serialize(),
       hub: this.hub.serialize(),
       cafe: this.cafe.serialize(),
+      cafeMiniGame: this.cafeMiniGame.serialize(),
       contracts: this.contracts.serialize(),
       offline: this.offline.serialize(),
       login: this.dailyReward.serialize(),
@@ -625,8 +629,11 @@ export class Game {
     return this.saver.save(this.collect());
   }
 
-  /** Open the café kitchen (cooking screen). */
-  openKitchen() { return this.kitchenUI?.open() ?? false; }
+  /** The café menu: play the optional mini-game or manage the business. */
+  openCafeMenu() { if (this.cafe.built) this.ui.open('cafemenu'); }
+
+  /** Start a café mini-game session (from the café menu). */
+  startMiniGame(mode) { return this.miniGameUI?.open(mode) ?? false; }
 
   /** Turn the player's character towards a point (same maths as employees use). */
   facePlayer(f) {
@@ -654,9 +661,9 @@ export class Game {
     this.player.route = pts.slice(1).map((q) => ({ x: q.x, z: q.z }));
     this.moveMarker.position.set(best.x, 0.4, best.z);
     this.moveMarker.visible = true;
-    this.kitchenWhenThere = true;
+    this.cafeMenuWhenThere = true;
     this.ownerWork.drop('kitchen'); this.ownerWork.suspended = true; // walking in must not start the counter auto-work: the kitchen screen is next
-    this.bus.emit('toast', { text: 'Heading into the café kitchen…', kind: 'info' });
+    this.bus.emit('toast', { text: 'Heading into the café…', kind: 'info' });
     return true;
   }
 

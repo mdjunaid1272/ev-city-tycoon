@@ -39,6 +39,7 @@ export class CafeView {
     this.dirty = true;
     this.built = false;
     this.playerPos = null; // set by Game every frame
+    this.suppressGuests = false; // the café mini-game shows its own customers: the real ones step out of the picture
     this.inMgmt = false;
     this.inside = false;
     this.labelTimer = 0;
@@ -395,6 +396,7 @@ export class CafeView {
         }
       }
       f.model.position.set(f.x, FLOOR + (f.seat ? -0.3 : 0), f.z);
+      f.model.visible = !this.suppressGuests;
       this.animateGuest(f, moving, dt);
     }
     for (const id of gone) this.figures.delete(id);

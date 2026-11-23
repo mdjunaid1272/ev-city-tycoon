@@ -20,7 +20,7 @@ export { money };
 // panels that show continuously changing values (progress, timers) refresh a few times a second; the others refresh from events,
 // with a slow safety net for values that depend only on the clock
 const LIVE_MODALS = new Set(['station', 'wash', 'garage', 'cafe']);
-const SLOW_MODALS = new Set(['finance', 'staff', 'business', 'map', 'missions', 'stats', 'profile']);
+const SLOW_MODALS = new Set(['finance', 'staff', 'business', 'map', 'missions', 'stats', 'profile', 'cafemenu']);
 
 /** HTML/CSS overlay: HUD, prompts, panels, pause menu. Reads state, never owns it. */
 export class UIManager {
@@ -329,7 +329,7 @@ export class UIManager {
       station: () => this.tplStation(), staff: () => this.tplStaff(), finance: () => this.tplFinance(),
       business: () => this.tplBusinessTabs(), cafe: () => this.tplCafe(), wash: () => this.tplWash(), garage: () => this.tplGarage(),
       offline: () => this.tplOffline(), login: () => this.tplLogin(), stageup: () => this.tplStageUp(), map: () => this.tplMap(), missions: () => this.tplMissionsTabs(),
-      pause: () => this.tplPause(), report: () => this.tplReport(),
+      pause: () => this.tplPause(), report: () => this.tplReport(), cafemenu: () => this.tplCafeMenu(),
     }[m] || (() => (String(m).startsWith('hub_') ? this.tplHub(m.slice(4)) : '')))();
     // the system uses SVG icons in navigation and controls: decorative emoji are dropped from board titles
     const html = (`<button class="x" data-close title="Close" aria-label="Close">${icon('close', 16)}</button>` + body).replace(/(<h2[^>]*>)(?:\p{Extended_Pictographic}️?\s*)+/u, '$1');

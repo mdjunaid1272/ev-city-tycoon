@@ -87,3 +87,12 @@ Procedural, no new assets or dependencies. Everything repeated is instanced or m
 - `src/world/Streetscape.js` sidewalk planters / phone booths and the park (fountain, playground, beds, hedges, lights)
 - `src/world/Props.js` lamp bases, bollards, bus shelters, barriers, clock towers, rooftop signs, lamp light pools, distant skyline
 - Quality: `low` skips balconies, fins, bollards, light pools, skyline and park flowers; park layers are frustum-culled.
+## Café mini-game (optional)
+The café is an ordinary city business (staff, upgrades, costs, passive revenue: `Cafe.js`, `CafePanel.js`). On top of it there is an
+optional serving game: tap the ☕ Café button -> café menu -> play a short shift (Quick 90 s / Rush 150 s / Marathon 240 s) or manage the business.
+- `src/businesses/CafeMiniGame.js` session logic (customers, tickets, workbench, scoring, combos, strikes, difficulty, rewards); independent of `Cafe.js`
+- `src/businesses/CafeRecipeManager.js` ingredients, machines, assemblies, recipes (data in `public/data/cafe.json` > `miniGame`)
+- `src/businesses/CafeMiniGameView.js` the 3D customers, order bubbles and pickup counter inside the café
+- `src/ui/CafeMiniGameUI.js` the screen (tickets, ingredients, machines, tray, results)
+- Rewards: ONE payout at the end of a shift through `EconomyManager.grant` (not revenue: it never counts towards stage goals), capped per shift, per day,
+  by rewarded shifts per day and by a cooldown; beyond the limits a shift is a practice run. Only small stats are saved (`cafeMiniGame`).
