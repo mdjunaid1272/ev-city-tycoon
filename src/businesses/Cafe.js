@@ -324,6 +324,39 @@ export class Cafe {
     return { ok: true, order };
   }
 
+  // ---------- kitchen mini-game (see CafeKitchen.js) ----------
+  /** The player takes this order into the kitchen: no barista may touch it now. */
+  claimKitchen(order) {
+    if (!this.orders.includes(order) || order.state === 'done' || order.state === 'cancelled') return { ok: false, reason: 'That customer has left' };
+    if (order.kitchen) return { ok: true };
+    const task = this.tasks?.byKey?.get?.(`cafe:${order.id}`);
+    if (order.state !== 'queued' || order.manual || (task && task.reservedBy)) return { ok: false, reason: 'A barista is already on this order' };
+    if (task) this.tasks.cancel(task, 'kitchen'); // an open task would otherwise be picked up by staff
+    order.kitchen = true; order.state = 'preparing'; order.by = 'owner'; order.progress = 0;
+    this.bus.emit('cafe:changed');
+    return { ok: true };
+  }
+
+  /** Give an unfinished kitchen order back to the queue (the kitchen was closed). */
+  releaseKitchen(order) {
+    if (!order || !order.kitchen) return;
+    order.kitchen = false;
+    if (order.state === 'preparing') { order.state = 'queued'; order.by = null; order.progress = 0; }
+    this.bus.emit('cafe:changed');
+  }
+
+  /** Serve a kitchen order: the normal payment, plus a quality tip that grows with the combo. Returns { ok, bonus }. */
+  serveKitchen(order, { quality = 0.65, mult = 1 } = {}) {
+    if (!order.kitchen) return { ok: false, bonus: 0 };
+    order.kitchen = false;
+    const price = order.price * (order.customer.def.spend || 1);
+    if (!this.finishOrder(order)) return { ok: false, bonus: 0 };
+    const bonus = round2(price * this.cfg.kitchen.tipFactor * clamp(quality, 0, 1) * mult);
+    if (bonus > 0 && this.economy.earn(bonus, 'tips', `kitchen-tip:${order.id}`)) this.stats.tips = round2(this.stats.tips + bonus);
+    this.bus.emit('cafe:changed');
+    return { ok: true, bonus };
+  }
+
   satisfactionFor(order, wait) {
     const c = order.customer, p = this.cfg.products[order.pid];
     const patience = Math.max(1, c.maxPatience);
@@ -409,13 +442,13 @@ export class Cafe {
   /** Every waiting order is a task on the shared board: baristas pick the oldest / most patient-limited first. */
   publishTasks() {
     this.orders.forEach((o, i) => {
-      if (o.state !== 'queued' || o.manual) return;
+      if (o.state !== 'queued' || o.manual || o.kitchen) return;
       const stand = CAFE_LAYOUT.stand[i % CAFE_LAYOUT.stand.length];
       this.tasks.publish({
         key: `cafe:${o.id}`, type: 'cafe-order', dept: 'cafe', label: `Preparing ${this.cfg.products[o.pid].label}`,
         priority: 10 + Math.round(30 * (1 - clamp(o.customer.patience / o.customer.maxPatience, 0, 1))), // the most impatient first
         pos: stand, face: { x: CAFE_LAYOUT.counter.x, z: CAFE_LAYOUT.counter.z }, base: o.base,
-        valid: () => this.orders.includes(o) && !o.manual && (o.state === 'queued' || o.state === 'preparing'),
+        valid: () => this.orders.includes(o) && !o.manual && !o.kitchen && (o.state === 'queued' || o.state === 'preparing'),
         onStart: () => { o.state = 'preparing'; o.by = 'staff'; },
         onProgress: (p) => { o.progress = p; },
         run: () => { this.finishOrder(o); },
@@ -437,7 +470,7 @@ export class Cafe {
   serialize() {
     // ingredients reserved by orders that were not started go back into the stock: nothing is lost by saving mid-service
     const stock = { ...this.stock };
-    for (const o of this.orders) if (o.state === 'queued') for (const [ing, n] of Object.entries(this.cfg.products[o.pid].ingredients)) stock[ing] = (stock[ing] || 0) + n;
+    for (const o of this.orders) if (o.state === 'queued' || o.kitchen) for (const [ing, n] of Object.entries(this.cfg.products[o.pid].ingredients)) stock[ing] = (stock[ing] || 0) + n;
     return { v: 1, levels: { ...this.levels }, prices: { ...this.prices }, enabled: { ...this.enabled }, stock, autoRestock: this.autoRestock, stats: { ...this.stats, lostBy: { ...this.stats.lostBy } }, today: { ...this.today } };
   }
 

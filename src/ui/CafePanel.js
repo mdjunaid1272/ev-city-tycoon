@@ -19,25 +19,6 @@ export const CafePanel = {
     return `<h2>☕ Café</h2>${this.tabs('cafe', TABS)}${body}`;
   },
 
-  /** What the Café button opens: the optional mini-game, or the business board. The café earns on its own either way. */
-  tplCafeMenu() {
-    const mg = this.game.cafeMiniGame, st = mg.status(), k = mg.k;
-    const modes = Object.entries(k.modes).map(([id, m]) => {
-      const best = mg.meta.best[id];
-      return `<button class="btn ${id === 'quick' ? 'blue' : 'ghost'}" data-cafe="mg:${id}"><b>${esc(m.label)}</b> <small>${esc(m.blurb)}${best ? ` · best ${best.score} ${'★'.repeat(best.stars)}` : ''}</small></button>`;
-    }).join('');
-    const reward = st.rewarded
-      ? `Coins are paid at the end of a shift. Today: ${money(k.rewards.dayCoinCap - st.coinsLeft, 2)} of ${money(k.rewards.dayCoinCap)} · ${st.playsLeft} paid shifts left.`
-      : `Practice only right now: ${esc(st.why)}. Coins are capped per shift and per day.`;
-    return `<h2>☕ Café</h2><div class="sub">Your café keeps earning with its staff. Playing the mini-game is optional and never needed to grow your city.</div>
-      <div class="sect">Café mini-game</div>
-      <div class="sub">Take orders, make drinks and snacks, serve the right customer. 1–3 minutes.</div>
-      ${modes}
-      <div class="sub" style="margin-top:6px">${reward}</div>
-      <div class="sect">Business</div>
-      <button class="btn ghost" data-cafe="manage">Manage the café (menu, stock, staff, upgrades)</button>`;
-  },
-
   cafeOverview() {
     const c = this.cafe, rep = c.report(), t = rep.today;
     const baristas = this.employees.employees.filter((e) => !e.leaving && e.dept === 'cafe');
@@ -145,8 +126,6 @@ export const CafePanel = {
   cafeAction(a) {
     const c = this.cafe, [act, id, arg] = a.split(':');
     const say = (r) => { if (r && r.ok === false && r.reason) this.toast(r.reason, 'warn'); };
-    if (act === 'mg') { this.closeModal(); this.game.startMiniGame(id); return; }
-    if (act === 'manage') { this.open('cafe'); return; }
     if (act === 'price') {
       const p = c.products().find((x) => x.id === id);
       if (p) c.setPrice(id, p.price + (arg === '+' ? 0.25 : -0.25));

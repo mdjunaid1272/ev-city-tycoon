@@ -41,12 +41,12 @@ for (const q of ['low', 'medium', 'high']) {
     const after = await frameInfo(p);
     const scene1 = await p.evaluate(() => { let n = 0; __game.sm.scene.traverse(() => n++); return n; });
     const run = await p.evaluate(() => ({ served: __game.cafe.stats.served, figs: __game.cafeView.figures.size, pool: __game.cafeView.pool.length, orders: __game.cafe.orders.length, customers: __game.cafe.customers.size }));
-    // a geometry is uploaded to the GPU the first time it is drawn, so the first run may add one-off uploads (the café room has several separate meshes: walls, glass, roof, floor, windows); a SECOND run must add nothing
+    // a geometry is uploaded to the GPU the first time it is drawn, so the first run may add a couple of one-off uploads; a SECOND run must add nothing
     await p.evaluate(() => { const G = __game; for (let i = 0; i < 12000; i++) { G.cafe.update(0.1); G.employees.update(0.1); G.cafeView.update(0.1); } });
     await p.waitForTimeout(500);
     const after2 = await frameInfo(p);
     const scene2 = await p.evaluate(() => { let n = 0; __game.sm.scene.traverse(() => n++); return n; });
-    check('40 simulated minutes of café service: no new scene objects, textures, or (after the first upload) geometries', scene1 === scene0 && scene2 === scene0 && after.tex === before.tex && after2.tex === before.tex && after.geos - before.geos <= 8 && after2.geos === after.geos, `geos ${before.geos}->${after.geos}->${after2.geos} tex ${before.tex}->${after2.tex} nodes ${scene0}->${scene2}`);
+    check('40 simulated minutes of café service: no new scene objects, textures, or (after the first upload) geometries', scene1 === scene0 && scene2 === scene0 && after.tex === before.tex && after2.tex === before.tex && after.geos - before.geos <= 3 && after2.geos === after.geos, `geos ${before.geos}->${after.geos}->${after2.geos} tex ${before.tex}->${after2.tex} nodes ${scene0}->${scene2}`);
     check('the café really served customers meanwhile, with a bounded set of figures', run.served > 100 && run.figs + run.pool <= 8 && run.orders <= 8, JSON.stringify(run));
     // ---- CPU time per frame of the café systems under load
     const cpu = await p.evaluate(() => { const G = __game; const t0 = performance.now(); const n = 3000; for (let i = 0; i < n; i++) { G.cafe.update(0.016); G.cafeView.update(0.016); } return (performance.now() - t0) / n; });

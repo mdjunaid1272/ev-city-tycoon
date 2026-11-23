@@ -269,352 +269,75 @@
       ]
     }
   },
-  "miniGame": {
-    "ingredients": {
+  "kitchen": {
+    "stations": {
       "cup": {
-        "label": "Cup",
+        "label": "Cups",
         "icon": "🥤",
-        "key": "1"
-      },
-      "beans": {
-        "label": "Coffee beans",
-        "icon": "🫘",
-        "key": "2"
-      },
-      "milk": {
-        "label": "Milk",
-        "icon": "🥛",
-        "key": "3"
-      },
-      "ice": {
-        "label": "Ice",
-        "icon": "🧊",
-        "key": "4"
-      },
-      "dough": {
-        "label": "Dough",
-        "icon": "🥖",
-        "key": "5"
-      },
-      "filling": {
-        "label": "Filling",
-        "icon": "🧀",
-        "key": "6"
-      }
-    },
-    "tokens": {
-      "ground": {
-        "label": "Ground coffee",
-        "icon": "🟤"
-      },
-      "shot": {
-        "label": "Espresso shot",
-        "icon": "☕"
-      },
-      "steamed": {
-        "label": "Steamed milk",
-        "icon": "🥛"
-      },
-      "latte": {
-        "label": "Latte",
-        "icon": "🥛"
-      },
-      "iced": {
-        "label": "Iced coffee",
-        "icon": "🧊"
-      },
-      "croissantBaked": {
-        "label": "Croissant",
-        "icon": "🥐"
-      },
-      "sandwichPressed": {
-        "label": "Sandwich",
-        "icon": "🥪"
-      }
-    },
-    "machines": {
-      "grinder": {
-        "label": "Coffee grinder",
-        "icon": "⚙️",
-        "takes": [
-          "beans"
-        ],
-        "makes": "ground",
-        "seconds": 1.4,
+        "seconds": 0.6,
         "key": "Q"
       },
       "espresso": {
         "label": "Espresso machine",
         "icon": "☕",
-        "takes": [
-          "cup",
-          "ground"
-        ],
-        "makes": "shot",
-        "seconds": 2.4,
+        "seconds": 2.6,
         "key": "W"
       },
       "steamer": {
         "label": "Milk steamer",
-        "icon": "♨️",
-        "takes": [
-          "milk"
-        ],
-        "makes": "steamed",
-        "seconds": 2,
+        "icon": "🥛",
+        "seconds": 2.2,
         "key": "E"
+      },
+      "ice": {
+        "label": "Ice",
+        "icon": "🧊",
+        "seconds": 0.9,
+        "key": "A"
       },
       "oven": {
         "label": "Oven",
-        "icon": "🔥",
-        "takes": [
-          "dough"
-        ],
-        "makes": "croissantBaked",
-        "seconds": 3.2,
+        "icon": "🥐",
+        "seconds": 3.4,
         "burn": 7,
-        "key": "A"
+        "key": "S"
       },
       "press": {
         "label": "Sandwich press",
         "icon": "🥪",
-        "takes": [
-          "dough",
-          "filling"
-        ],
-        "makes": "sandwichPressed",
         "seconds": 3,
         "burn": 7,
-        "key": "S"
+        "key": "D"
       }
     },
-    "assemblies": [
-      {
-        "in": [
-          "shot",
-          "steamed"
-        ],
-        "out": "latte"
-      },
-      {
-        "in": [
-          "shot",
-          "ice"
-        ],
-        "out": "iced"
-      }
-    ],
-    "products": {
-      "espresso": {
-        "token": "shot",
-        "needs": {
-          "cup": 1,
-          "beans": 1
-        },
-        "machines": [
-          "grinder",
-          "espresso"
-        ],
-        "tier": 1
-      },
-      "croissant": {
-        "token": "croissantBaked",
-        "needs": {
-          "dough": 1
-        },
-        "machines": [
-          "oven"
-        ],
-        "tier": 1
-      },
-      "latte": {
-        "token": "latte",
-        "needs": {
-          "cup": 1,
-          "beans": 1,
-          "milk": 1
-        },
-        "machines": [
-          "grinder",
-          "espresso",
-          "steamer"
-        ],
-        "tier": 2
-      },
-      "sandwich": {
-        "token": "sandwichPressed",
-        "needs": {
-          "dough": 1,
-          "filling": 1
-        },
-        "machines": [
-          "press"
-        ],
-        "tier": 2
-      },
-      "iced": {
-        "token": "iced",
-        "needs": {
-          "cup": 1,
-          "beans": 1,
-          "ice": 1
-        },
-        "machines": [
-          "grinder",
-          "espresso"
-        ],
-        "tier": 3
-      }
-    },
-    "customers": {
-      "regular": {
-        "label": "Regular",
-        "icon": "🙂",
-        "patience": 40,
-        "weight": 6,
-        "grow": 0,
-        "mult": 1,
-        "count": 1,
-        "pool": [
-          "espresso",
-          "croissant",
-          "latte"
-        ],
-        "fromLevel": 1,
-        "color": "#2f8cff"
-      },
-      "rusher": {
-        "label": "Rusher",
-        "icon": "🏃",
-        "patience": 22,
-        "weight": 2,
-        "grow": 0.5,
-        "mult": 1.25,
-        "count": 1,
-        "pool": [
-          "espresso",
-          "croissant"
-        ],
-        "fromLevel": 1,
-        "color": "#e8483f"
-      },
-      "vip": {
-        "label": "VIP",
-        "icon": "👑",
-        "patience": 45,
-        "weight": 0.5,
-        "grow": 0.6,
-        "mult": 2.5,
-        "count": 1,
-        "pool": [
-          "latte",
-          "sandwich",
-          "iced"
-        ],
-        "fromLevel": 2,
-        "color": "#ffc43d"
-      },
-      "tourist": {
-        "label": "Tourist",
-        "icon": "🧳",
-        "patience": 70,
-        "weight": 1,
-        "grow": 0.5,
-        "mult": 1.5,
-        "count": 2,
-        "pool": [
-          "espresso",
-          "croissant",
-          "latte",
-          "sandwich",
-          "iced"
-        ],
-        "fromLevel": 2,
-        "color": "#35c28a"
-      }
-    },
-    "modes": {
-      "quick": {
-        "label": "Quick shift",
-        "blurb": "90 seconds",
-        "seconds": 90,
-        "spawn": 6,
-        "minSpawn": 3,
-        "maxQueue": 4,
-        "strikes": 3,
-        "coinCap": 40,
-        "coinMult": 1,
-        "stars": [
-          250,
-          600,
-          1000
-        ]
-      },
-      "rush": {
-        "label": "Rush hour",
-        "blurb": "150 seconds · faster customers",
-        "seconds": 150,
-        "spawn": 4.5,
-        "minSpawn": 2.2,
-        "maxQueue": 5,
-        "strikes": 4,
-        "coinCap": 90,
-        "coinMult": 1.4,
-        "stars": [
-          450,
-          1000,
-          1700
-        ]
-      },
-      "marathon": {
-        "label": "Marathon",
-        "blurb": "240 seconds · hardest",
-        "seconds": 240,
-        "spawn": 4,
-        "minSpawn": 2,
-        "maxQueue": 5,
-        "strikes": 5,
-        "coinCap": 160,
-        "coinMult": 1.8,
-        "stars": [
-          800,
-          1800,
-          3000
-        ]
-      }
-    },
-    "scoring": {
-      "base": 100,
-      "speedBonus": 0.5,
-      "perfectBonus": 50,
-      "wrongServe": -25,
-      "strike": -50,
-      "comboStep": 0.1,
-      "comboMax": 2,
-      "servedPerLevel": 4,
-      "maxLevel": 6
-    },
-    "timing": {
-      "sweetSeconds": 2,
-      "okSeconds": 5,
-      "speedPerMachineLevel": 0.12,
-      "perfectQuality": 0.95,
-      "trayMax": 5,
-      "pickupMax": 3
-    },
-    "rewards": {
-      "coinPerPrice": 0.5,
-      "perfectCoins": 0.5,
-      "comboCoins": 0.1,
-      "starBonus": [
-        0,
-        2,
-        6,
-        12
+    "recipes": {
+      "espresso": [
+        "cup",
+        "espresso"
       ],
-      "dayCoinCap": 250,
-      "maxSessionsPerDay": 10,
-      "cooldownSeconds": 12
-    }
+      "latte": [
+        "cup",
+        "espresso",
+        "steamer"
+      ],
+      "iced": [
+        "cup",
+        "espresso",
+        "ice"
+      ],
+      "croissant": [
+        "oven"
+      ],
+      "sandwich": [
+        "press"
+      ]
+    },
+    "sweetSeconds": 2,
+    "okSeconds": 5,
+    "speedPerMachineLevel": 0.12,
+    "tipFactor": 0.6,
+    "comboMax": 5,
+    "comboStep": 0.25,
+    "goodQuality": 0.65
   }
 }

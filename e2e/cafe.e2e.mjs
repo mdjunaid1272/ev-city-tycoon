@@ -48,12 +48,12 @@ check('tapping the Café button sends the player on a route inside, ending at a 
 // the route goes through the DOOR (x 16.4 .. 18.6 at z -7.5) and never through a wall or the counter
 const routeOk = await p.evaluate(() => { const G = __game, pts = [{ x: G.player.pos.x, z: G.player.pos.z }, G.player.target, ...G.player.route]; let ok = true; for (let i = 0; i < pts.length - 1; i++) { const a = pts[i], b = pts[i + 1]; for (let k = 0; k <= 40; k++) { const x = a.x + ((b.x - a.x) * k) / 40, z = a.z + ((b.z - a.z) * k) / 40; if (G.colliders.boxes.some((bx) => bx.h >= 1 && x > bx.minX && x < bx.maxX && z > bx.minZ && z < bx.maxZ && bx.maxZ - bx.minZ < 15 && bx.maxX - bx.minX < 15 && z < -7 && z > -20 && x > 13.5 && x < 21.5)) ok = false; } } return ok; });
 check('the route passes only through free space (door, aisle, around the counter)', routeOk);
-await p.evaluate(() => { const G = __game; G.cafeMenuWhenThere = false; G.ui.closeModal(); G.ownerWork.suspended = false; G.player.target = null; G.player.pos.set(16.4, 0.34, -17.8); G.camera.tp.smooth.set(16.4, 1.6, -17.8); });
+await p.evaluate(() => { const G = __game; G.kitchenWhenThere = false; G.kitchenUI.close(); G.ownerWork.suspended = false; G.player.target = null; G.player.pos.set(16.4, 0.34, -17.8); G.camera.tp.smooth.set(16.4, 1.6, -17.8); });
 await p.waitForTimeout(1000);
 await p.locator('#cafe-open').click({ force: true }); await p.waitForTimeout(500);
-check('already at the counter, the same button opens the café menu (mini-game or manage)', await p.evaluate(() => __game.ui.modal === 'cafemenu'));
-await p.locator('#modal-card [data-cafe="manage"]').click({ force: true }); await p.waitForTimeout(400);
-check('"Manage the café" opens the café manager board', await p.evaluate(() => __game.ui.modal === 'cafe'));
+check('already at the counter, the same button opens the kitchen (cooking screen)', await p.evaluate(() => __game.kitchenUI.isOpen && !__game.ui.modal));
+await p.locator('#kitchen [data-k="manage"]').click({ force: true }); await p.waitForTimeout(400);
+check('the kitchen gear opens the café manager board', await p.evaluate(() => !__game.kitchenUI.isOpen && __game.ui.modal === 'cafe'));
 for (const tab of ['menu', 'stock', 'upgrades', 'stats', 'overview']) {
   await p.click(`#modal-card [data-tab="cafe:${tab}"]`); await p.waitForTimeout(250);
 }
