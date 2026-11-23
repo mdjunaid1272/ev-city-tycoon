@@ -43,7 +43,12 @@ await p.waitForTimeout(1200);
 const btn = await p.evaluate(() => { const b = document.getElementById('cafe-open'); return b ? { shown: b.style.display, text: b.textContent } : null; });
 check('a floating Café button appears next to the counter', btn && btn.shown === 'block', JSON.stringify(btn));
 await p.locator('#cafe-open').click({ force: true }); await p.waitForTimeout(500);
-check('the button opens the café board', await p.evaluate(() => __game.ui.modal === 'cafe'));
+const walk = await p.evaluate(() => { const G = __game, t = G.player.target; return { modal: G.ui.modal, target: t && { x: t.x, z: t.z } }; });
+check('tapping the Café button sends the player inside, to a barista spot behind the counter (no board yet)', walk.modal === null && walk.target && Math.abs(walk.target.z + 12.6) < 0.01 && (Math.abs(walk.target.x - 16.3) < 0.01 || Math.abs(walk.target.x - 18.7) < 0.01), JSON.stringify(walk));
+await p.evaluate(() => { const G = __game; G.player.target = null; G.player.pos.set(16.3, 0.34, -12.6); G.camera.tp.smooth.set(16.3, 1.6, -12.6); });
+await p.waitForTimeout(1000);
+await p.locator('#cafe-open').click({ force: true }); await p.waitForTimeout(500);
+check('already at the counter, the same button opens the café board', await p.evaluate(() => __game.ui.modal === 'cafe'));
 for (const tab of ['menu', 'stock', 'upgrades', 'stats', 'overview']) {
   await p.click(`#modal-card [data-tab="cafe:${tab}"]`); await p.waitForTimeout(250);
 }
@@ -56,6 +61,8 @@ const cashBefore = await p.evaluate(() => __game.economy.cash);
 await p.click('#modal-card [data-cafe="up:machine"]'); await p.waitForTimeout(300);
 check('the Upgrades tab buys an upgrade with cash', await p.evaluate((c) => __game.cafe.levels.machine === 1 && __game.economy.cash === c - 2500, cashBefore));
 await p.evaluate(() => __game.ui.closeModal());
+// the owner would otherwise keep taking orders at the counter: step away so the baristas' own work is what the next checks measure
+await p.evaluate(() => { __game.player.pos.set(-8, 0.34, 17); __game.player.target = null; }); await p.waitForTimeout(600);
 
 // ---- selecting the café building in management view
 await p.evaluate(() => __game.camera.setMode('management'));

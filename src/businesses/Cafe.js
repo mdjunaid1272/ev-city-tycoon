@@ -408,7 +408,7 @@ export class Cafe {
       if (o.state !== 'queued' || o.manual) return;
       const stand = CAFE_LAYOUT.stand[i % CAFE_LAYOUT.stand.length];
       this.tasks.publish({
-        key: `cafe:${o.id}`, type: 'cafe-order', dept: 'cafe',
+        key: `cafe:${o.id}`, type: 'cafe-order', dept: 'cafe', label: `Preparing ${this.cfg.products[o.pid].label}`,
         priority: 10 + Math.round(30 * (1 - clamp(o.customer.patience / o.customer.maxPatience, 0, 1))), // the most impatient first
         pos: stand, face: { x: CAFE_LAYOUT.counter.x, z: CAFE_LAYOUT.counter.z }, base: o.base,
         valid: () => this.orders.includes(o) && !o.manual && (o.state === 'queued' || o.state === 'preparing'),

@@ -225,7 +225,7 @@ export class Game {
       biz.decorBonus = () => this.placement.effects(biz.id).comfort;
       biz.decorDemand = () => this.placement.demandFactor(biz.id, this.day?.hour ?? 12);
     }
-    this.ownerWork = new OwnerWork({ bus: this.bus, tasks: this.tasks, employees: this.employees, getPos: () => this.player.pos });
+    this.ownerWork = new OwnerWork({ bus: this.bus, tasks: this.tasks, employees: this.employees, getPos: () => this.player.pos, faceTo: (f) => this.facePlayer(f) });
     this.chargingTasks = new ChargingTasks({ bus: this.bus, station: this.station, customers: this.customers, tasks: this.tasks, employees: this.employees, cfg: empCfg });
     this.employeeView = new EmployeeView({ scene: this.sm.scene, assets: this.assets, manager: this.employees, economy: this.economy, bus: this.bus });
     this.interaction = new InteractionSystem(this.bus, this.sm.scene);
@@ -608,6 +608,32 @@ export class Game {
     if (this.resetting) return Promise.resolve();
     this.lastSaved = Date.now();
     return this.saver.save(this.collect());
+  }
+
+  /** Turn the player's character towards a point (same maths as employees use). */
+  facePlayer(f) {
+    const p = this.player;
+    p.yaw = Math.atan2(-(f.x - p.pos.x), -(f.z - p.pos.z));
+    p.model.rotation.y = p.yaw;
+  }
+
+  /**
+   * Tap on the floating Café button: walk to the barista's spot behind the counter, where the owner takes orders
+   * (OwnerWork prepares them automatically while standing there). Returns false when already there (the caller then opens the board).
+   */
+  goToCafe() {
+    const pp = this.player.pos, stands = CAFE_LAYOUT.stand;
+    if (stands.some((s) => Math.hypot(s.x - pp.x, s.z - pp.z) <= 2.2)) return false;
+    const crew = this.employees.employees.filter((e) => e.dept === 'cafe' && e.pos);
+    // prefer the stand no barista is using; otherwise simply the nearest one
+    const isFree = (s) => !crew.some((e) => Math.hypot(e.pos.x - s.x, e.pos.z - s.z) < 1.4);
+    const list = stands.filter(isFree).length ? stands.filter(isFree) : stands;
+    const best = list.reduce((a, b) => (Math.hypot(a.x - pp.x, a.z - pp.z) <= Math.hypot(b.x - pp.x, b.z - pp.z) ? a : b));
+    this.player.target = { x: best.x, z: best.z };
+    this.moveMarker.position.set(best.x, 0.4, best.z);
+    this.moveMarker.visible = true;
+    this.bus.emit('toast', { text: 'Heading into the café: stand at the counter and orders are prepared for you.', kind: 'info' });
+    return true;
   }
 
   /** Fast travel from the city map: put the player at a spot and snap the camera there. */

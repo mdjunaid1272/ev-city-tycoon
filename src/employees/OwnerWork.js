@@ -8,18 +8,18 @@
  * - Leaving the bay hands the job back with its progress kept; an employee may pick it up.
  * - A throttled toast explains the situation when cars wait and nobody works there.
  */
-const DEPTS = ['wash', 'garage'];
+const DEPTS = ['wash', 'garage', 'cafe'];
 const REACH = 2.6;        // metres from the bay's stand point
 const SKILL = 2;          // the owner's skill for quality / minSkill checks
 const SPEED = 0.9;        // slightly slower than a trained employee
 const NUDGE_EVERY = 90;   // seconds between "cars are waiting" reminders
 const WAIT_BEFORE_NUDGE = 8;
-const LABELS = { wash: 'Washing the car', 'wash-start': 'Starting the tunnel', diagnose: 'Diagnosing', repair: 'Repairing' };
-const FACILITY = { wash: ['Car Wash', 'washer'], garage: ['Garage', 'mechanic'] };
+const LABELS = { wash: 'Washing the car', 'wash-start': 'Starting the tunnel', diagnose: 'Diagnosing', repair: 'Repairing', 'cafe-order': 'Preparing the order' };
+const FACILITY = { wash: ['Car Wash', 'washer'], garage: ['Garage', 'mechanic'], cafe: ['Caf\u00e9', 'barista'] };
 
 export class OwnerWork {
-  constructor({ bus, tasks, employees, getPos, doc = typeof document !== 'undefined' ? document : null }) {
-    Object.assign(this, { bus, tasks, employees, getPos });
+  constructor({ bus, tasks, employees, getPos, faceTo = null, doc = typeof document !== 'undefined' ? document : null }) {
+    Object.assign(this, { bus, tasks, employees, getPos, faceTo });
     this.task = null;
     this.timer = 0;
     this.duration = 1;
@@ -61,7 +61,7 @@ export class OwnerWork {
       if (!near || !t.valid() || t.state !== 'active' || t.reservedBy !== 'player') { this.drop(near ? 'invalid' : 'left'); return; }
       this.timer += dt * SPEED;
       t.onProgress?.(Math.min(1, this.timer / this.duration));
-      this.show(`${LABELS[t.type] || 'Working'} · ${Math.round(this.progress * 100)}%`, this.progress);
+      this.show(`${t.label || LABELS[t.type] || 'Working'} · ${Math.round(this.progress * 100)}%`, this.progress);
       if (this.timer >= this.duration) {
         this.task = null;
         t.run();
@@ -83,7 +83,8 @@ export class OwnerWork {
       this.tasks.start(best);
       best.onStart?.(this.me);
       this.task = best; this.timer = 0; this.duration = Math.max(0.5, best.base || 1);
-      this.show(`${LABELS[best.type] || 'Working'} · 0%`, 0);
+      this.show(`${best.label || LABELS[best.type] || 'Working'} · 0%`, 0);
+      if (best.face) this.faceTo?.(best.face);
     }
     this.remind(dt, pos);
   }
@@ -101,7 +102,10 @@ export class OwnerWork {
     if (this.nudge < NUDGE_EVERY) return;
     this.nudge = 0;
     const [name, role] = FACILITY[hint];
-    this.bus.emit('toast', { text: `A car is waiting at the ${name}. Stand beside its bay to work on it yourself, or hire a ${role} in Staff.`, kind: 'info' });
+    const text = hint === 'cafe'
+      ? `Customers are waiting for their order at the ${name}. Tap the ${name} button to go inside and take orders, or hire a ${role} in Staff.`
+      : `A car is waiting at the ${name}. Stand beside its bay to work on it yourself, or hire a ${role} in Staff.`;
+    this.bus.emit('toast', { text, kind: 'info' });
   }
 
   show(text, frac = 0) {

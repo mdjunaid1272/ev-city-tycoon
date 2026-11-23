@@ -58,9 +58,9 @@ describe('owner works wash / garage jobs', () => {
     expect(w.working).toBe(false);
   });
 
-  it('ignores charging and cafe jobs', () => {
+  it('ignores charging jobs (the attendants and the station handle those)', () => {
     const { w, pos, publish } = setup();
-    publish({ key: 'connect:1', dept: 'charging', type: 'connect' }); publish({ key: 'cafe:1', dept: 'cafe', type: 'cafe-order' });
+    publish({ key: 'connect:1', dept: 'charging', type: 'connect' });
     pos.x = 10; pos.z = 10; run(w, 2);
     expect(w.working).toBe(false);
   });
@@ -82,5 +82,26 @@ describe('owner works wash / garage jobs', () => {
     run(a.w, 40); expect(toast).toHaveBeenCalledTimes(2);
     const b = setup({ staff: 1 }); const t2 = vi.fn(); b.bus.on('toast', t2);
     b.publish(); run(b.w, 200); expect(t2).not.toHaveBeenCalled();
+  });
+});
+describe('owner takes café orders', () => {
+  it('prepares a café order from either barista spot, shows its product name, and faces the counter', () => {
+    const { bus, tasks, w, pos, log } = setup();
+    const faced = vi.fn(); w.faceTo = faced;
+    tasks.publish({ key: 'cafe:o1', type: 'cafe-order', dept: 'cafe', label: 'Preparing Latte', priority: 15, pos: { x: 18.7, z: -12.6 }, face: { x: 17.5, z: -14.2 }, base: 3, valid: () => true, onStart: () => { log.start++; }, onProgress: () => {}, run: () => { log.ran++; } });
+    pos.x = 16.3; pos.z = -12.6; // the other stand, 2.4 m away: still within reach
+    w.update(0.1);
+    expect(w.working).toBe(true); expect(faced).toHaveBeenCalledWith({ x: 17.5, z: -14.2 });
+    expect(document.getElementById('work-bar').textContent).toMatch(/Preparing Latte/);
+    run(w, 4);
+    expect(log.ran).toBe(1); expect(tasks.tasks.size).toBe(0);
+    void bus;
+  });
+
+  it('the café reminder tells the owner to tap the Café button', () => {
+    const { bus, tasks, w } = setup(); const toast = vi.fn(); bus.on('toast', toast);
+    tasks.publish({ key: 'cafe:o2', type: 'cafe-order', dept: 'cafe', priority: 15, pos: { x: 18.7, z: -12.6 }, base: 3, valid: () => true, run: () => {} });
+    run(w, 20);
+    expect(toast.mock.calls[0][0].text).toMatch(/Café button.*hire a barista/);
   });
 });
