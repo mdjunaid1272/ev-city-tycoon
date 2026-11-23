@@ -29,7 +29,7 @@ export class CafeOrderBoard {
 
   get open() {
     const g = this.g;
-    return !!(g.cafe?.built && g.cafeView?.inside && !g.ui?.modal && !g.paused && !g.camera?.inManagement && !g.kitchenUI?.isOpen);
+    return !!(g.cafe?.built && g.cafeView?.inside && !g.ui?.modal && !g.paused && !g.camera?.inManagement && !g.cozyUI?.isOpen);
   }
 
   onClick(e) {

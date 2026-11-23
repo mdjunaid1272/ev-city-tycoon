@@ -38,6 +38,7 @@ export class CafeView {
     this.t = 0;
     this.dirty = true;
     this.built = false;
+    this.suppressGuests = false; // the cozy café shows its own customers while it is open
     this.playerPos = null; // set by Game every frame
     this.inMgmt = false;
     this.inside = false;
@@ -395,6 +396,7 @@ export class CafeView {
         }
       }
       f.model.position.set(f.x, FLOOR + (f.seat ? -0.3 : 0), f.z);
+      f.model.visible = !this.suppressGuests;
       this.animateGuest(f, moving, dt);
     }
     for (const id of gone) this.figures.delete(id);

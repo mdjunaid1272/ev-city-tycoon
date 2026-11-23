@@ -87,3 +87,13 @@ Procedural, no new assets or dependencies. Everything repeated is instanced or m
 - `src/world/Streetscape.js` sidewalk planters / phone booths and the park (fountain, playground, beds, hedges, lights)
 - `src/world/Props.js` lamp bases, bollards, bus shelters, barriers, clock towers, rooftop signs, lamp light pools, distant skyline
 - Quality: `low` skips balconies, fins, bollards, light pools, skyline and park flowers; park layers are frustum-culled.
+## Cozy café (optional)
+The café stays an ordinary city business (staff, upgrades, costs, passive income: `Cafe.js`, `CafePanel.js`). On top of it there is an optional, relaxed
+café game: tap the ☕ Café button -> the café hub (open the café, recipe book, guest collection, decoration, progress, or manage the business).
+- `public/data/cafe-cozy.json` all content: 19 drinks and desserts, machines, 13 customers with stories, 36 decoration items, 6 themes, levels, reward limits
+- `src/businesses/CafeCozy.js` shifts, orders, workbench, satisfaction, coins / XP / levels, pantry, limits and the (capped) city grants
+- `src/businesses/CafeRecipeBook.js` ingredients, machines, recipes; `CafeRoster.js` guests, friendship and stories; `CafeDecor.js` themes and furniture on fixed spots
+- `src/businesses/CafeCozyView.js` the 3D side (machines, decoration, theme, customers with order bubbles); `src/ui/CafeCozyUI.js` play screen; `src/ui/CafeHub.js` hub board
+- Rewards: café coins are a separate soft currency (decoration only). The city only receives a small capped cash grant + a little reputation per rewarded shift
+  through `EconomyManager.grant` / `changeReputation` (never revenue), limited per day and by a cooldown; the café business gets a tiny capped arrival boost
+  (`cafeBonus`). Only long-term data is saved (`cafeCozy`); a shift in progress never is.

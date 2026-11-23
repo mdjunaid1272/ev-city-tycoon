@@ -37,7 +37,7 @@ export const HUDManager = {
     const g = this.game;
     this.floatingButton('term', { id: 'term-open', html: '<span>🖥️</span> Open', pos: g.stationView.terminalPos, y: 2.6, onClick: () => this.open('station') });
     if (this.cafe && g.cafeView) {
-      this.floatingButton('cafe', { id: 'cafe-open', html: '<span>☕</span> Caf\u00e9', pos: g.cafeView.buttonPos(), y: g.cafeView.inside ? 0.9 : 3.4, show: this.cafe.built, onClick: () => { if (!this.game.goToCafe()) this.game.openKitchen(); } }); // from outside: walk in, the kitchen opens on arrival; already inside: open it now
+      this.floatingButton('cafe', { id: 'cafe-open', html: '<span>☕</span> Caf\u00e9', pos: g.cafeView.buttonPos(), y: g.cafeView.inside ? 0.9 : 3.4, show: this.cafe.built, onClick: () => { if (!this.game.goToCafe()) this.game.openCafeHub(); } }); // from outside: walk in, the café hub opens on arrival; already inside: open it now
     }
   },
 

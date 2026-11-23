@@ -18,7 +18,9 @@ import { PlayerController } from '../player/PlayerController.js';
 import { PlayerProfile } from '../player/PlayerProfile.js';
 import { OwnerWork } from '../employees/OwnerWork.js';
 import { CafeOrderBoard } from '../ui/CafeOrderBoard.js';
-import { CafeKitchenUI } from '../ui/CafeKitchenUI.js';
+import { CafeCozy } from '../businesses/CafeCozy.js';
+import { CafeCozyView } from '../businesses/CafeCozyView.js';
+import { CafeCozyUI } from '../ui/CafeCozyUI.js';
 import { InteractionSystem } from '../player/InteractionSystem.js';
 import { CameraManager } from '../camera/CameraManager.js';
 import { EconomyManager } from '../economy/EconomyManager.js';
@@ -82,7 +84,7 @@ export class Game {
     const tick = () => new Promise((r) => requestAnimationFrame(() => r()));
 
     step(0.05, 'Loading game data…');
-    const [econCfg, vehicles, custCfg, empCfg, svcCfg, progCfg, missCfg, decorCfg, cafeCfg] = await Promise.all([
+    const [econCfg, vehicles, custCfg, empCfg, svcCfg, progCfg, missCfg, decorCfg, cafeCfg, cozyCfg] = await Promise.all([
       loadJson('./data/economy.json', null),
       loadJson('./data/vehicles.json', null),
       loadJson('./data/customers.json', null),
@@ -92,8 +94,9 @@ export class Game {
       loadJson('./data/missions.json', null),
       loadJson('./data/decor.json', null),
       loadJson('./data/cafe.json', null),
+      loadJson('./data/cafe-cozy.json', null),
     ]);
-    if (!econCfg || !vehicles || !custCfg || !empCfg || !svcCfg || !progCfg || !missCfg || !decorCfg || !cafeCfg) throw new Error('Game data failed to load (public/data/*.json)');
+    if (!econCfg || !vehicles || !custCfg || !empCfg || !svcCfg || !progCfg || !missCfg || !decorCfg || !cafeCfg || !cozyCfg) throw new Error('Game data failed to load (public/data/*.json)');
     const saved = await this.saver.load();
 
     step(0.15, 'Preparing renderer…');
@@ -172,6 +175,10 @@ export class Game {
     this.cafe = new Cafe({ bus: this.bus, economy: this.economy, cfg: cafeCfg, hub: this.hub, tasks: this.tasks, getHour: () => this.day?.hour ?? 12, getReputation: () => this.economy.reputation, getStage: () => this.progression.stage, saved: saved?.cafe });
     this.cafe.hubCashierBoost = () => (this.employees.satisfactionBonus > 0 ? 1.25 : 1);
     this.cafeView = new CafeView({ scene: this.sm.scene, assets: this.assets, colliders: this.colliders, nav: this.nav, bus: this.bus, cafe: this.cafe, employees: this.employees, settings: this.settings });
+    // the optional cozy café (recipes, guests and stories, decoration, progression): its only links to the city are small, capped grants
+    this.cafeCozy = new CafeCozy({ economy: this.economy, bus: this.bus, cfg: cozyCfg, saved: saved?.cafeCozy, getDay: () => this.day?.day ?? 1, getHour: () => this.day?.hour ?? 12, getMachineLevel: () => this.cafe.levels.machine });
+    this.cafe.cozyBonus = () => this.cafeCozy.cafeBonus();
+    this.cozyView = new CafeCozyView({ cafeView: this.cafeView, cozy: this.cafeCozy, settings: this.settings });
     this.employees.registerFacility('cafe', {
       nav: this.nav, label: 'Caf\u00e9', built: () => this.cafe.built, posts: CAFE_LAYOUT.stand,
       door: { x: CAFE_LAYOUT.entry.x, z: CAFE_LAYOUT.entry.z }, breakSpot: { x: 21.5, z: -5.2 },
@@ -302,7 +309,7 @@ export class Game {
     setTimeout(() => $('loading').remove(), 700);
     playerYield.pos = this.player.pos;
     this.cafeBoard = new CafeOrderBoard({ game: this });
-    this.kitchenUI = new CafeKitchenUI({ game: this });
+    this.cozyUI = new CafeCozyUI({ game: this });
     this.tutorial = new TutorialManager({ game: this, bus: this.bus, scene: this.sm.scene, saved: saved?.tutorial, isNew: !saved });
     // welcome back: offline earnings first, then the daily login reward
     this.pendingOffline = saved?.lastSeen ? this.offline.compute((Date.now() - saved.lastSeen) / 1000) : null;
@@ -334,7 +341,8 @@ export class Game {
     this._offProfile?.();
     this.ownerWork?.dispose();
     this.cafeBoard?.dispose();
-    this.kitchenUI?.dispose();
+    this.cozyUI?.dispose();
+    this.cozyView?.dispose();
     this.tutorial?.dispose();
     this.cafe?.dispose();
     this.cafeView?.dispose();
@@ -537,6 +545,7 @@ export class Game {
       this.cafeView.playerPos = this.player.pos;
       this.cafeView.inMgmt = this.camera.inManagement;
       this.cafeView.update(dt);
+      this.cozyView?.update(dt);
       for (const v of [this.washView, this.garageView, ...Object.values(this.hubViews)]) {
         v.mgFactor = this.camera.mg.dist / 120;
         v.playerPos = this.player.pos;
@@ -548,10 +557,10 @@ export class Game {
       this.stationView.update(dt, this.player.pos);
       this.dragMove();
       this.player.update(dt, this.camera.moveYaw);
-      if (this.kitchenWhenThere) { // tapped the Café button from outside: the kitchen opens when the player has walked in
+      if (this.cafeHubWhenThere) { // tapped the Café button from outside: the kitchen opens when the player has walked in
         const pp = this.player.pos;
-        if (CAFE_LAYOUT.stand.some((s) => Math.hypot(s.x - pp.x, s.z - pp.z) <= 2.2)) { this.kitchenWhenThere = false; this.openKitchen(); }
-        else if (!this.player.target) { this.kitchenWhenThere = false; this.ownerWork.suspended = false; } // walking was cancelled or blocked
+        if (CAFE_LAYOUT.stand.some((s) => Math.hypot(s.x - pp.x, s.z - pp.z) <= 2.2)) { this.cafeHubWhenThere = false; this.openCafeHub(); }
+        else if (!this.player.target) { this.cafeHubWhenThere = false; this.ownerWork.suspended = false; } // walking was cancelled or blocked
       }
       this.traffic.update(dt, this.camera.focusPoint);
       this.lights.update();
@@ -584,7 +593,7 @@ export class Game {
     this.ui.update(dt);
     this.tutorial?.update(dt);
     this.cafeBoard?.update(dt);
-    this.kitchenUI?.update(dt);
+    this.cozyUI?.update(dt);
     this.sm.render();
     this.fps.n++; this.fps.t += dt;
     if (this.fps.t >= 1) { this.fps.v = this.fps.n / this.fps.t; this.fps.n = 0; this.fps.t = 0; }
@@ -607,6 +616,7 @@ export class Game {
       goals: this.goals.serialize(),
       hub: this.hub.serialize(),
       cafe: this.cafe.serialize(),
+      cafeCozy: this.cafeCozy.serialize(),
       contracts: this.contracts.serialize(),
       offline: this.offline.serialize(),
       login: this.dailyReward.serialize(),
@@ -625,8 +635,11 @@ export class Game {
     return this.saver.save(this.collect());
   }
 
-  /** Open the café kitchen (cooking screen). */
-  openKitchen() { return this.kitchenUI?.open() ?? false; }
+  /** The café hub: open the café for a cozy shift, recipes, guests, decoration, progress, or manage the business. */
+  openCafeHub() { if (this.cafe.built) this.ui.open('cafehub'); }
+
+  /** Open the café for a shift (the play screen). */
+  startCafeShift() { return this.cozyUI?.open() ?? false; }
 
   /** Turn the player's character towards a point (same maths as employees use). */
   facePlayer(f) {
@@ -654,9 +667,9 @@ export class Game {
     this.player.route = pts.slice(1).map((q) => ({ x: q.x, z: q.z }));
     this.moveMarker.position.set(best.x, 0.4, best.z);
     this.moveMarker.visible = true;
-    this.kitchenWhenThere = true;
+    this.cafeHubWhenThere = true;
     this.ownerWork.drop('kitchen'); this.ownerWork.suspended = true; // walking in must not start the counter auto-work: the kitchen screen is next
-    this.bus.emit('toast', { text: 'Heading into the café kitchen…', kind: 'info' });
+    this.bus.emit('toast', { text: 'Heading into the café…', kind: 'info' });
     return true;
   }
 

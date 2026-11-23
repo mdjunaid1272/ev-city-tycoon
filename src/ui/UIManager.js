@@ -13,6 +13,7 @@ import { BusinessPanel } from './BusinessPanel.js';
 import { BuildPanel } from './BuildPanel.js';
 import { SystemPanels } from './SystemPanels.js';
 import { CafePanel } from './CafePanel.js';
+import { CafeHub } from './CafeHub.js';
 import { ProfilePanel } from './ProfilePanel.js';
 
 export { money };
@@ -329,7 +330,7 @@ export class UIManager {
       station: () => this.tplStation(), staff: () => this.tplStaff(), finance: () => this.tplFinance(),
       business: () => this.tplBusinessTabs(), cafe: () => this.tplCafe(), wash: () => this.tplWash(), garage: () => this.tplGarage(),
       offline: () => this.tplOffline(), login: () => this.tplLogin(), stageup: () => this.tplStageUp(), map: () => this.tplMap(), missions: () => this.tplMissionsTabs(),
-      pause: () => this.tplPause(), report: () => this.tplReport(),
+      pause: () => this.tplPause(), report: () => this.tplReport(), cafehub: () => this.tplCafeHub(),
     }[m] || (() => (String(m).startsWith('hub_') ? this.tplHub(m.slice(4)) : '')))();
     // the system uses SVG icons in navigation and controls: decorative emoji are dropped from board titles
     const html = (`<button class="x" data-close title="Close" aria-label="Close">${icon('close', 16)}</button>` + body).replace(/(<h2[^>]*>)(?:\p{Extended_Pictographic}️?\s*)+/u, '$1');
@@ -380,6 +381,8 @@ export class UIManager {
     const ar = card.querySelector('#set-autorestock');
     if (ar) ar.onchange = () => { this.garage.autoRestock = ar.checked; };
     card.querySelectorAll('[data-pause]').forEach((b) => (b.onclick = () => this.pauseAction(b.dataset.pause)));
+    card.querySelectorAll('[data-cz]').forEach((b) => (b.onclick = () => this.cozyAction(b.dataset.cz)));
+    card.querySelectorAll('[data-czslot]').forEach((s) => (s.onchange = () => this.cozyPlace(s.dataset.czslot, s.value)));
     this.bindProfile(card);
     void eco;
   }
@@ -405,6 +408,6 @@ export class UIManager {
 }
 
 // the panel modules own their methods; copy them (getters included) onto the UIManager prototype
-for (const mixin of [NotificationManager, ModalManager, HUDManager, StaffPanel, FinancePanel, MissionPanel, BusinessPanel, BuildPanel, SystemPanels, CafePanel, ProfilePanel]) {
+for (const mixin of [NotificationManager, ModalManager, HUDManager, StaffPanel, FinancePanel, MissionPanel, BusinessPanel, BuildPanel, SystemPanels, CafePanel, ProfilePanel, CafeHub]) {
   Object.defineProperties(UIManager.prototype, Object.getOwnPropertyDescriptors(mixin));
 }

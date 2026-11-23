@@ -1,0 +1,2856 @@
+{
+  "ingredients": {
+    "cup": {
+      "label": "Cup",
+      "icon": "🥤",
+      "tab": "drinks",
+      "key": "1",
+      "cost": 0.1
+    },
+    "beans": {
+      "label": "Coffee beans",
+      "icon": "🫘",
+      "tab": "drinks",
+      "key": "2",
+      "cost": 0.3
+    },
+    "milk": {
+      "label": "Milk",
+      "icon": "🥛",
+      "tab": "drinks",
+      "key": "3",
+      "cost": 0.25
+    },
+    "ice": {
+      "label": "Ice",
+      "icon": "🧊",
+      "tab": "drinks",
+      "key": "4",
+      "cost": 0.05
+    },
+    "water": {
+      "label": "Hot water",
+      "icon": "💧",
+      "tab": "drinks",
+      "key": "5",
+      "cost": 0.02
+    },
+    "tea": {
+      "label": "Tea leaves",
+      "icon": "🍃",
+      "tab": "drinks",
+      "key": "6",
+      "cost": 0.2
+    },
+    "chocolate": {
+      "label": "Chocolate",
+      "icon": "🍫",
+      "tab": "drinks",
+      "also": [
+        "bakery"
+      ],
+      "key": "7",
+      "cost": 0.35
+    },
+    "vanilla": {
+      "label": "Vanilla syrup",
+      "icon": "🍦",
+      "tab": "drinks",
+      "key": "8",
+      "cost": 0.25
+    },
+    "caramel": {
+      "label": "Caramel syrup",
+      "icon": "🍯",
+      "tab": "drinks",
+      "key": "9",
+      "cost": 0.25
+    },
+    "flour": {
+      "label": "Flour",
+      "icon": "🌾",
+      "tab": "bakery",
+      "key": "1",
+      "cost": 0.2
+    },
+    "butter": {
+      "label": "Butter",
+      "icon": "🧈",
+      "tab": "bakery",
+      "key": "2",
+      "cost": 0.3
+    },
+    "egg": {
+      "label": "Eggs",
+      "icon": "🥚",
+      "tab": "bakery",
+      "key": "3",
+      "cost": 0.25
+    },
+    "sugar": {
+      "label": "Sugar",
+      "icon": "🍬",
+      "tab": "bakery",
+      "key": "4",
+      "cost": 0.1
+    },
+    "cream": {
+      "label": "Cream",
+      "icon": "🍶",
+      "tab": "bakery",
+      "key": "5",
+      "cost": 0.35
+    },
+    "fruit": {
+      "label": "Berries",
+      "icon": "🫐",
+      "tab": "bakery",
+      "key": "6",
+      "cost": 0.4
+    },
+    "cheese": {
+      "label": "Cream cheese",
+      "icon": "🧀",
+      "tab": "bakery",
+      "key": "7",
+      "cost": 0.4
+    },
+    "whipped": {
+      "label": "Whipped cream",
+      "icon": "☁️",
+      "tab": "extras",
+      "key": "1",
+      "cost": 0.2,
+      "addon": true
+    },
+    "cinnamon": {
+      "label": "Cinnamon",
+      "icon": "🌰",
+      "tab": "extras",
+      "key": "2",
+      "cost": 0.1,
+      "addon": true
+    },
+    "sugarcube": {
+      "label": "Sugar cubes",
+      "icon": "🧂",
+      "tab": "extras",
+      "key": "3",
+      "cost": 0.05,
+      "addon": true
+    },
+    "sprinkles": {
+      "label": "Sprinkles",
+      "icon": "🎉",
+      "tab": "extras",
+      "key": "4",
+      "cost": 0.1,
+      "addon": true
+    }
+  },
+  "tokens": {
+    "ground": {
+      "label": "Ground coffee",
+      "icon": "🟤"
+    },
+    "shot": {
+      "label": "Espresso shot",
+      "icon": "☕"
+    },
+    "steamed": {
+      "label": "Steamed milk",
+      "icon": "🥛"
+    },
+    "coldbase": {
+      "label": "Cold brew base",
+      "icon": "🧊"
+    },
+    "americano": {
+      "label": "Americano",
+      "icon": "🫖"
+    },
+    "latte": {
+      "label": "Latte",
+      "icon": "🥛"
+    },
+    "cappuccino": {
+      "label": "Cappuccino",
+      "icon": "🍼"
+    },
+    "mocha": {
+      "label": "Mocha",
+      "icon": "🤎"
+    },
+    "vanillaLatte": {
+      "label": "Vanilla latte",
+      "icon": "🍦"
+    },
+    "caramelLatte": {
+      "label": "Caramel latte",
+      "icon": "🍯"
+    },
+    "icedCoffee": {
+      "label": "Iced coffee",
+      "icon": "🧋"
+    },
+    "coldBrew": {
+      "label": "Cold brew",
+      "icon": "🧊"
+    },
+    "hotChocolate": {
+      "label": "Hot chocolate",
+      "icon": "🍫"
+    },
+    "teaCup": {
+      "label": "Tea",
+      "icon": "🍵"
+    },
+    "donut": {
+      "label": "Donut",
+      "icon": "🍩"
+    },
+    "croissant": {
+      "label": "Croissant",
+      "icon": "🥐"
+    },
+    "cookie": {
+      "label": "Cookie",
+      "icon": "🍪"
+    },
+    "cheesecake": {
+      "label": "Cheesecake",
+      "icon": "🍰"
+    },
+    "chocolateCake": {
+      "label": "Chocolate cake",
+      "icon": "🎂"
+    },
+    "muffin": {
+      "label": "Muffin",
+      "icon": "🫐"
+    },
+    "brownie": {
+      "label": "Brownie",
+      "icon": "🟫"
+    },
+    "cupcake": {
+      "label": "Cupcake",
+      "icon": "🧁"
+    },
+    "batterCookie": {
+      "label": "Cookie dough",
+      "icon": "🥣"
+    },
+    "batterBrownie": {
+      "label": "Brownie batter",
+      "icon": "🥣"
+    },
+    "batterMuffin": {
+      "label": "Muffin batter",
+      "icon": "🥣"
+    },
+    "batterCupcake": {
+      "label": "Cupcake batter",
+      "icon": "🥣"
+    },
+    "batterCake": {
+      "label": "Cake batter",
+      "icon": "🥣"
+    },
+    "batterCheese": {
+      "label": "Cheesecake filling",
+      "icon": "🥣"
+    }
+  },
+  "machines": {
+    "grinder": {
+      "label": "Coffee grinder",
+      "icon": "⚙️",
+      "tab": "drinks",
+      "key": "Q",
+      "level": 1,
+      "recipes": [
+        {
+          "takes": [
+            "beans"
+          ],
+          "makes": "ground",
+          "seconds": 1.4
+        }
+      ]
+    },
+    "espresso": {
+      "label": "Espresso machine",
+      "icon": "☕",
+      "tab": "drinks",
+      "key": "W",
+      "level": 1,
+      "recipes": [
+        {
+          "takes": [
+            "cup",
+            "ground"
+          ],
+          "makes": "shot",
+          "seconds": 2.4
+        }
+      ]
+    },
+    "steamer": {
+      "label": "Milk steamer",
+      "icon": "♨️",
+      "tab": "drinks",
+      "key": "E",
+      "level": 1,
+      "recipes": [
+        {
+          "takes": [
+            "milk"
+          ],
+          "makes": "steamed",
+          "seconds": 2
+        }
+      ]
+    },
+    "drip": {
+      "label": "Drip & tea machine",
+      "icon": "🫖",
+      "tab": "drinks",
+      "key": "R",
+      "level": 1,
+      "recipes": [
+        {
+          "takes": [
+            "cup",
+            "tea",
+            "water"
+          ],
+          "makes": "teaCup",
+          "seconds": 2.6
+        },
+        {
+          "takes": [
+            "cup",
+            "ground",
+            "water"
+          ],
+          "makes": "coldbase",
+          "seconds": 3.4
+        }
+      ]
+    },
+    "blender": {
+      "label": "Blender",
+      "icon": "🌀",
+      "tab": "drinks",
+      "key": "T",
+      "level": 3,
+      "recipes": [
+        {
+          "takes": [
+            "cup",
+            "milk",
+            "chocolate"
+          ],
+          "makes": "hotChocolate",
+          "seconds": 3
+        }
+      ]
+    },
+    "mixer": {
+      "label": "Mixer",
+      "icon": "🥄",
+      "tab": "bakery",
+      "key": "Q",
+      "level": 2,
+      "recipes": [
+        {
+          "takes": [
+            "flour",
+            "butter",
+            "chocolate"
+          ],
+          "makes": "batterCookie",
+          "seconds": 2
+        },
+        {
+          "takes": [
+            "flour",
+            "chocolate",
+            "egg"
+          ],
+          "makes": "batterBrownie",
+          "seconds": 2
+        },
+        {
+          "takes": [
+            "flour",
+            "egg",
+            "fruit"
+          ],
+          "makes": "batterMuffin",
+          "seconds": 2
+        },
+        {
+          "takes": [
+            "flour",
+            "sugar",
+            "cream"
+          ],
+          "makes": "batterCupcake",
+          "seconds": 2
+        },
+        {
+          "takes": [
+            "flour",
+            "chocolate",
+            "cream"
+          ],
+          "makes": "batterCake",
+          "seconds": 2.4
+        },
+        {
+          "takes": [
+            "cheese",
+            "cream",
+            "sugar"
+          ],
+          "makes": "batterCheese",
+          "seconds": 2.4
+        }
+      ]
+    },
+    "oven": {
+      "label": "Oven",
+      "icon": "🔥",
+      "tab": "bakery",
+      "key": "W",
+      "level": 2,
+      "burn": 8,
+      "recipes": [
+        {
+          "takes": [
+            "batterCookie"
+          ],
+          "makes": "cookie",
+          "seconds": 3
+        },
+        {
+          "takes": [
+            "batterBrownie"
+          ],
+          "makes": "brownie",
+          "seconds": 3.2
+        },
+        {
+          "takes": [
+            "batterMuffin"
+          ],
+          "makes": "muffin",
+          "seconds": 3.2
+        },
+        {
+          "takes": [
+            "batterCupcake"
+          ],
+          "makes": "cupcake",
+          "seconds": 3.2
+        },
+        {
+          "takes": [
+            "batterCake"
+          ],
+          "makes": "chocolateCake",
+          "seconds": 3.8
+        },
+        {
+          "takes": [
+            "batterCheese"
+          ],
+          "makes": "cheesecake",
+          "seconds": 3.8
+        }
+      ]
+    }
+  },
+  "products": {
+    "espresso": {
+      "label": "Espresso",
+      "icon": "☕",
+      "price": 3,
+      "level": 1,
+      "final": "shot",
+      "needs": {
+        "cup": 1,
+        "beans": 1
+      },
+      "machines": [
+        "grinder",
+        "espresso"
+      ],
+      "hot": true,
+      "kind": "drink"
+    },
+    "americano": {
+      "label": "Americano",
+      "icon": "🫖",
+      "price": 3.5,
+      "level": 1,
+      "final": "americano",
+      "combine": [
+        "shot",
+        "water"
+      ],
+      "needs": {
+        "cup": 1,
+        "beans": 1,
+        "water": 1
+      },
+      "machines": [
+        "grinder",
+        "espresso"
+      ],
+      "hot": true,
+      "kind": "drink"
+    },
+    "latte": {
+      "label": "Latte",
+      "icon": "🥛",
+      "price": 4.5,
+      "level": 1,
+      "final": "latte",
+      "combine": [
+        "shot",
+        "steamed"
+      ],
+      "needs": {
+        "cup": 1,
+        "beans": 1,
+        "milk": 1
+      },
+      "machines": [
+        "grinder",
+        "espresso",
+        "steamer"
+      ],
+      "hot": true,
+      "kind": "drink"
+    },
+    "tea": {
+      "label": "Tea",
+      "icon": "🍵",
+      "price": 3,
+      "level": 1,
+      "final": "teaCup",
+      "needs": {
+        "cup": 1,
+        "tea": 1,
+        "water": 1
+      },
+      "machines": [
+        "drip"
+      ],
+      "hot": true,
+      "kind": "drink"
+    },
+    "cappuccino": {
+      "label": "Cappuccino",
+      "icon": "🍼",
+      "price": 5,
+      "level": 2,
+      "final": "cappuccino",
+      "combine": [
+        "shot",
+        "steamed",
+        "steamed"
+      ],
+      "needs": {
+        "cup": 1,
+        "beans": 1,
+        "milk": 2
+      },
+      "machines": [
+        "grinder",
+        "espresso",
+        "steamer"
+      ],
+      "hot": true,
+      "kind": "drink"
+    },
+    "icedCoffee": {
+      "label": "Iced coffee",
+      "icon": "🧋",
+      "price": 5,
+      "level": 2,
+      "final": "icedCoffee",
+      "combine": [
+        "shot",
+        "ice"
+      ],
+      "needs": {
+        "cup": 1,
+        "beans": 1,
+        "ice": 1
+      },
+      "machines": [
+        "grinder",
+        "espresso"
+      ],
+      "kind": "drink"
+    },
+    "mocha": {
+      "label": "Mocha",
+      "icon": "🤎",
+      "price": 5.5,
+      "level": 3,
+      "final": "mocha",
+      "combine": [
+        "shot",
+        "steamed",
+        "chocolate"
+      ],
+      "needs": {
+        "cup": 1,
+        "beans": 1,
+        "milk": 1,
+        "chocolate": 1
+      },
+      "machines": [
+        "grinder",
+        "espresso",
+        "steamer"
+      ],
+      "hot": true,
+      "kind": "drink"
+    },
+    "hotChocolate": {
+      "label": "Hot chocolate",
+      "icon": "🍫",
+      "price": 5,
+      "level": 3,
+      "final": "hotChocolate",
+      "needs": {
+        "cup": 1,
+        "milk": 1,
+        "chocolate": 1
+      },
+      "machines": [
+        "blender"
+      ],
+      "hot": true,
+      "kind": "drink"
+    },
+    "vanillaLatte": {
+      "label": "Vanilla latte",
+      "icon": "🍦",
+      "price": 6,
+      "level": 4,
+      "final": "vanillaLatte",
+      "combine": [
+        "shot",
+        "steamed",
+        "vanilla"
+      ],
+      "needs": {
+        "cup": 1,
+        "beans": 1,
+        "milk": 1,
+        "vanilla": 1
+      },
+      "machines": [
+        "grinder",
+        "espresso",
+        "steamer"
+      ],
+      "hot": true,
+      "kind": "drink"
+    },
+    "coldBrew": {
+      "label": "Cold brew",
+      "icon": "🧊",
+      "price": 6,
+      "level": 4,
+      "final": "coldBrew",
+      "combine": [
+        "coldbase",
+        "ice"
+      ],
+      "needs": {
+        "cup": 1,
+        "beans": 1,
+        "water": 1,
+        "ice": 1
+      },
+      "machines": [
+        "grinder",
+        "drip"
+      ],
+      "kind": "drink"
+    },
+    "caramelLatte": {
+      "label": "Caramel latte",
+      "icon": "🍯",
+      "price": 6.5,
+      "level": 5,
+      "final": "caramelLatte",
+      "combine": [
+        "shot",
+        "steamed",
+        "caramel"
+      ],
+      "needs": {
+        "cup": 1,
+        "beans": 1,
+        "milk": 1,
+        "caramel": 1
+      },
+      "machines": [
+        "grinder",
+        "espresso",
+        "steamer"
+      ],
+      "hot": true,
+      "kind": "drink"
+    },
+    "donut": {
+      "label": "Donut",
+      "icon": "🍩",
+      "price": 3,
+      "level": 1,
+      "final": "donut",
+      "display": true,
+      "needs": {},
+      "machines": [],
+      "stock": 8,
+      "restock": 0.9,
+      "kind": "dessert"
+    },
+    "croissant": {
+      "label": "Croissant",
+      "icon": "🥐",
+      "price": 3.5,
+      "level": 1,
+      "final": "croissant",
+      "display": true,
+      "needs": {},
+      "machines": [],
+      "stock": 8,
+      "restock": 1,
+      "kind": "dessert"
+    },
+    "cookie": {
+      "label": "Cookie",
+      "icon": "🍪",
+      "price": 3,
+      "level": 2,
+      "final": "cookie",
+      "needs": {
+        "flour": 1,
+        "butter": 1,
+        "chocolate": 1
+      },
+      "machines": [
+        "mixer",
+        "oven"
+      ],
+      "kind": "dessert"
+    },
+    "muffin": {
+      "label": "Muffin",
+      "icon": "🫐",
+      "price": 4,
+      "level": 3,
+      "final": "muffin",
+      "needs": {
+        "flour": 1,
+        "egg": 1,
+        "fruit": 1
+      },
+      "machines": [
+        "mixer",
+        "oven"
+      ],
+      "kind": "dessert"
+    },
+    "brownie": {
+      "label": "Brownie",
+      "icon": "🟫",
+      "price": 4,
+      "level": 4,
+      "final": "brownie",
+      "needs": {
+        "flour": 1,
+        "chocolate": 1,
+        "egg": 1
+      },
+      "machines": [
+        "mixer",
+        "oven"
+      ],
+      "kind": "dessert"
+    },
+    "cupcake": {
+      "label": "Cupcake",
+      "icon": "🧁",
+      "price": 4.5,
+      "level": 5,
+      "final": "cupcake",
+      "needs": {
+        "flour": 1,
+        "sugar": 1,
+        "cream": 1
+      },
+      "machines": [
+        "mixer",
+        "oven"
+      ],
+      "kind": "dessert"
+    },
+    "cheesecake": {
+      "label": "Cheesecake",
+      "icon": "🍰",
+      "price": 6,
+      "level": 6,
+      "final": "cheesecake",
+      "needs": {
+        "cheese": 1,
+        "cream": 1,
+        "sugar": 1
+      },
+      "machines": [
+        "mixer",
+        "oven"
+      ],
+      "kind": "dessert"
+    },
+    "chocolateCake": {
+      "label": "Chocolate cake",
+      "icon": "🎂",
+      "price": 6.5,
+      "level": 7,
+      "final": "chocolateCake",
+      "needs": {
+        "flour": 1,
+        "chocolate": 1,
+        "cream": 1
+      },
+      "machines": [
+        "mixer",
+        "oven"
+      ],
+      "kind": "dessert"
+    }
+  },
+  "requests": {
+    "extraIce": {
+      "label": "Extra ice",
+      "text": "extra ice, please",
+      "addon": "ice",
+      "only": [
+        "icedCoffee",
+        "coldBrew"
+      ],
+      "level": 2
+    },
+    "whipped": {
+      "label": "Whipped cream",
+      "text": "with whipped cream on top",
+      "addon": "whipped",
+      "only": [
+        "mocha",
+        "hotChocolate",
+        "vanillaLatte",
+        "caramelLatte",
+        "latte",
+        "cappuccino"
+      ],
+      "level": 2
+    },
+    "cinnamon": {
+      "label": "Cinnamon",
+      "text": "a sprinkle of cinnamon",
+      "addon": "cinnamon",
+      "only": [
+        "latte",
+        "cappuccino",
+        "mocha",
+        "hotChocolate",
+        "tea"
+      ],
+      "level": 2
+    },
+    "sweet": {
+      "label": "Sugar",
+      "text": "a sugar cube or two",
+      "addon": "sugarcube",
+      "only": [
+        "espresso",
+        "americano",
+        "tea",
+        "icedCoffee"
+      ],
+      "level": 2
+    },
+    "noSugar": {
+      "label": "No sugar",
+      "text": "no sugar at all, thanks",
+      "forbid": "sugarcube",
+      "only": [
+        "espresso",
+        "americano",
+        "tea",
+        "latte",
+        "icedCoffee"
+      ],
+      "level": 3
+    },
+    "sprinkles": {
+      "label": "Sprinkles",
+      "text": "sprinkles on it, please",
+      "addon": "sprinkles",
+      "only": [
+        "donut",
+        "cupcake",
+        "muffin",
+        "cookie",
+        "cheesecake"
+      ],
+      "level": 3
+    }
+  },
+  "customers": {
+    "mina": {
+      "name": "Mina",
+      "category": "student",
+      "icon": "🎒",
+      "shirt": "#ff8fb1",
+      "hat": "#35c28a",
+      "skin": "#f2c9a0",
+      "hours": [
+        6,
+        11
+      ],
+      "level": 1,
+      "vip": false,
+      "personality": "Sleepy, polite, always studying",
+      "bio": "A design student who stops by every morning before her first lecture.",
+      "likes": {
+        "drinks": [
+          "latte",
+          "tea"
+        ],
+        "desserts": [
+          "croissant",
+          "cookie"
+        ]
+      },
+      "story": [
+        {
+          "at": 0,
+          "title": "Early bird",
+          "lines": [
+            {
+              "who": "Mina",
+              "text": "Morning! Sorry, I am only half awake. Exams soon."
+            },
+            {
+              "who": "Mina",
+              "text": "Your café is the only place that smells like a good day."
+            }
+          ]
+        },
+        {
+          "at": 2,
+          "title": "The portfolio",
+          "lines": [
+            {
+              "who": "Mina",
+              "text": "I am building a portfolio for a design internship."
+            },
+            {
+              "who": "Mina",
+              "text": "Would you mind if I sketch your counter lamp one day?"
+            }
+          ],
+          "choices": [
+            {
+              "text": "Of course, it is yours.",
+              "friend": 2,
+              "reply": "Thank you! I will draw it tonight."
+            },
+            {
+              "text": "Only if I get a copy!",
+              "friend": 1,
+              "reply": "Deal! Two copies, then."
+            }
+          ]
+        },
+        {
+          "at": 4,
+          "title": "Good news",
+          "lines": [
+            {
+              "who": "Mina",
+              "text": "I got the internship! I wanted you to be the first to know."
+            },
+            {
+              "who": "Mina",
+              "text": "This café helped me through every late night. Here, a little thank-you."
+            }
+          ],
+          "reward": {
+            "coins": 40,
+            "unlock": {
+              "decor": "wallSketch"
+            }
+          }
+        }
+      ]
+    },
+    "priya": {
+      "name": "Priya",
+      "category": "office",
+      "icon": "💼",
+      "shirt": "#2f6fe0",
+      "hat": "#2a2f36",
+      "skin": "#d9a273",
+      "hours": [
+        17,
+        22
+      ],
+      "level": 1,
+      "vip": false,
+      "personality": "Brisk, funny, tired after work",
+      "bio": "An engineer who needs a good drink after long days at the city grid office.",
+      "likes": {
+        "drinks": [
+          "americano",
+          "espresso",
+          "mocha"
+        ],
+        "desserts": [
+          "brownie",
+          "donut"
+        ]
+      },
+      "story": [
+        {
+          "at": 0,
+          "title": "Long day",
+          "lines": [
+            {
+              "who": "Priya",
+              "text": "Strong, please. Today the whole grid went blinking at once."
+            },
+            {
+              "who": "Priya",
+              "text": "I fix power for a living. Coffee is my own power source."
+            }
+          ]
+        },
+        {
+          "at": 2,
+          "title": "Charging city",
+          "lines": [
+            {
+              "who": "Priya",
+              "text": "Funny thing: your EV station is on my commute map."
+            },
+            {
+              "who": "Priya",
+              "text": "I have been asked to plan more chargers around the park district."
+            }
+          ],
+          "choices": [
+            {
+              "text": "I would love more chargers!",
+              "friend": 2,
+              "reply": "Then we both win. I will remember that."
+            },
+            {
+              "text": "Park chargers need shade.",
+              "friend": 1,
+              "reply": "Shade, noted. Practical!"
+            }
+          ]
+        },
+        {
+          "at": 4,
+          "title": "Grid blessing",
+          "lines": [
+            {
+              "who": "Priya",
+              "text": "The new charger plan is approved. Your corner got a mention."
+            },
+            {
+              "who": "Priya",
+              "text": "Take this: a small lamp from my old desk. Make the café glow."
+            }
+          ],
+          "reward": {
+            "coins": 40,
+            "unlock": {
+              "decor": "deskLamp"
+            }
+          }
+        }
+      ]
+    },
+    "okafor": {
+      "name": "Mr. Okafor",
+      "category": "regular",
+      "icon": "📖",
+      "shirt": "#8a5a35",
+      "hat": "#f4f7fa",
+      "skin": "#8d5a3b",
+      "hours": [
+        6,
+        22
+      ],
+      "level": 1,
+      "vip": false,
+      "personality": "Gentle storyteller, retired teacher",
+      "bio": "A retired teacher who reads the paper at the same table every week.",
+      "likes": {
+        "drinks": [
+          "tea",
+          "americano",
+          "hotChocolate"
+        ],
+        "desserts": [
+          "croissant",
+          "cookie",
+          "cheesecake"
+        ]
+      },
+      "story": [
+        {
+          "at": 0,
+          "title": "The same table",
+          "lines": [
+            {
+              "who": "Mr. Okafor",
+              "text": "Tea, if you please. And no rush, I have all the time in the world now."
+            },
+            {
+              "who": "Mr. Okafor",
+              "text": "Forty years of teaching. The quiet suits me."
+            }
+          ]
+        },
+        {
+          "at": 2,
+          "title": "First chalk",
+          "lines": [
+            {
+              "who": "Mr. Okafor",
+              "text": "I kept one piece of chalk from my last classroom."
+            },
+            {
+              "who": "Mr. Okafor",
+              "text": "Every pupil I had learned one thing from it: patience."
+            }
+          ],
+          "choices": [
+            {
+              "text": "Patience is what makes a good drink.",
+              "friend": 2,
+              "reply": "Ha! You understand, young one."
+            },
+            {
+              "text": "Which pupil surprised you most?",
+              "friend": 2,
+              "reply": "A shy girl who now runs a bakery."
+            }
+          ]
+        },
+        {
+          "at": 4,
+          "title": "The reading corner",
+          "lines": [
+            {
+              "who": "Mr. Okafor",
+              "text": "I donated some of my old books to a reading corner for your shelf."
+            },
+            {
+              "who": "Mr. Okafor",
+              "text": "A café should have something to read besides the menu."
+            }
+          ],
+          "reward": {
+            "coins": 50,
+            "unlock": {
+              "decor": "bookShelf"
+            }
+          }
+        }
+      ]
+    },
+    "lena": {
+      "name": "Lena",
+      "category": "tourist",
+      "icon": "🧳",
+      "shirt": "#35c28a",
+      "hat": "#ffc43d",
+      "skin": "#f7d9bd",
+      "hours": [
+        11,
+        17
+      ],
+      "level": 1,
+      "vip": false,
+      "personality": "Curious backpacker, loves local food",
+      "bio": "A traveller collecting postcards from every café she visits.",
+      "likes": {
+        "drinks": [
+          "latte",
+          "icedCoffee",
+          "tea"
+        ],
+        "desserts": [
+          "donut",
+          "croissant"
+        ]
+      },
+      "story": [
+        {
+          "at": 0,
+          "title": "Postcards",
+          "lines": [
+            {
+              "who": "Lena",
+              "text": "Hello! I am collecting a postcard from every café. Yours has a charging station next door, how modern!"
+            },
+            {
+              "who": "Lena",
+              "text": "What do locals order?"
+            }
+          ]
+        },
+        {
+          "at": 2,
+          "title": "Stories from the road",
+          "lines": [
+            {
+              "who": "Lena",
+              "text": "In the mountains I once drank tea brewed on a camp stove. Best cup ever."
+            },
+            {
+              "who": "Lena",
+              "text": "Funny, it tasted a bit like yours."
+            }
+          ],
+          "choices": [
+            {
+              "text": "I will take that as a compliment.",
+              "friend": 2,
+              "reply": "It is the highest one I know!"
+            },
+            {
+              "text": "Tell me about the camp.",
+              "friend": 2,
+              "reply": "Gladly. It had a view you would not believe."
+            }
+          ]
+        },
+        {
+          "at": 4,
+          "title": "A postcard for you",
+          "lines": [
+            {
+              "who": "Lena",
+              "text": "I wrote a postcard for you this time. It is from the café that made my trip."
+            },
+            {
+              "who": "Lena",
+              "text": "Hang it somewhere sunny."
+            }
+          ],
+          "reward": {
+            "coins": 40,
+            "unlock": {
+              "decor": "postcards"
+            }
+          }
+        }
+      ]
+    },
+    "theo": {
+      "name": "Theo",
+      "category": "student",
+      "icon": "🎮",
+      "shirt": "#b06cff",
+      "hat": "#2a2f36",
+      "skin": "#f2c9a0",
+      "hours": [
+        11,
+        22
+      ],
+      "level": 2,
+      "vip": false,
+      "personality": "Chatty gamer, sweet tooth",
+      "bio": "A student who codes tiny games between classes and lives on desserts.",
+      "likes": {
+        "drinks": [
+          "hotChocolate",
+          "icedCoffee",
+          "mocha"
+        ],
+        "desserts": [
+          "cookie",
+          "brownie",
+          "cupcake"
+        ]
+      },
+      "story": [
+        {
+          "at": 0,
+          "title": "Level one",
+          "lines": [
+            {
+              "who": "Theo",
+              "text": "Hi! Something sweet. Debugging is hungry work."
+            },
+            {
+              "who": "Theo",
+              "text": "I am making a tiny game about a coffee shop. Totally original, promise."
+            }
+          ]
+        },
+        {
+          "at": 2,
+          "title": "Playtest",
+          "lines": [
+            {
+              "who": "Theo",
+              "text": "Can I playtest it on you? Only two minutes."
+            },
+            {
+              "who": "Theo",
+              "text": "In my game the barista never sleeps. Relatable?"
+            }
+          ],
+          "choices": [
+            {
+              "text": "Sure, hand it over!",
+              "friend": 2,
+              "reply": "Yes! Bug reports are paid in cookies."
+            },
+            {
+              "text": "Add a nap button.",
+              "friend": 1,
+              "reply": "A nap button. Genius. Adding it now."
+            }
+          ]
+        },
+        {
+          "at": 4,
+          "title": "Credits",
+          "lines": [
+            {
+              "who": "Theo",
+              "text": "I put the café in my game credits. You are the \"friendly barista\"."
+            },
+            {
+              "who": "Theo",
+              "text": "Here is a pixel poster of the title screen for your wall."
+            }
+          ],
+          "reward": {
+            "coins": 45,
+            "unlock": {
+              "decor": "pixelPoster"
+            }
+          }
+        }
+      ]
+    },
+    "juno": {
+      "name": "Juno",
+      "category": "artist",
+      "icon": "📷",
+      "shirt": "#e8483f",
+      "hat": "#f4f7fa",
+      "skin": "#d9a273",
+      "hours": [
+        12,
+        17
+      ],
+      "level": 2,
+      "vip": false,
+      "personality": "Dreamy photographer, loves golden light",
+      "bio": "A photographer who comes in the afternoon, when the café catches the best light.",
+      "likes": {
+        "drinks": [
+          "cappuccino",
+          "latte",
+          "vanillaLatte"
+        ],
+        "desserts": [
+          "cupcake",
+          "muffin",
+          "cookie"
+        ]
+      },
+      "story": [
+        {
+          "at": 0,
+          "title": "Golden hour",
+          "lines": [
+            {
+              "who": "Juno",
+              "text": "Your window at four o'clock is the best light in the city."
+            },
+            {
+              "who": "Juno",
+              "text": "A cappuccino, and I will try not to photograph the foam."
+            }
+          ]
+        },
+        {
+          "at": 2,
+          "title": "A shot of the city",
+          "lines": [
+            {
+              "who": "Juno",
+              "text": "I am preparing an exhibition: \"People Who Keep Cities Warm\"."
+            },
+            {
+              "who": "Juno",
+              "text": "Baristas, drivers, grid engineers. May I take your portrait?"
+            }
+          ],
+          "choices": [
+            {
+              "text": "Only if the foam is in it.",
+              "friend": 2,
+              "reply": "The foam stays. It is the star."
+            },
+            {
+              "text": "I am camera shy, but yes.",
+              "friend": 2,
+              "reply": "Shy is perfect. I will be gentle."
+            }
+          ]
+        },
+        {
+          "at": 4,
+          "title": "Exhibition",
+          "lines": [
+            {
+              "who": "Juno",
+              "text": "The exhibition opened and your portrait was the favourite."
+            },
+            {
+              "who": "Juno",
+              "text": "I framed a print for the café."
+            }
+          ],
+          "reward": {
+            "coins": 50,
+            "unlock": {
+              "decor": "framedPhoto"
+            }
+          }
+        }
+      ]
+    },
+    "hector": {
+      "name": "Hector",
+      "category": "office",
+      "icon": "🧮",
+      "shirt": "#6f86a8",
+      "hat": "#3a4a6b",
+      "skin": "#f7d9bd",
+      "hours": [
+        6,
+        11
+      ],
+      "level": 3,
+      "vip": false,
+      "personality": "Neat, serious, secretly kind",
+      "bio": "An accountant who counts everything, including the sugar cubes.",
+      "likes": {
+        "drinks": [
+          "espresso",
+          "americano",
+          "coldBrew"
+        ],
+        "desserts": [
+          "muffin",
+          "croissant"
+        ]
+      },
+      "story": [
+        {
+          "at": 0,
+          "title": "Numbers",
+          "lines": [
+            {
+              "who": "Hector",
+              "text": "Espresso, no sugar. I have counted: it saves nine dollars a year."
+            },
+            {
+              "who": "Hector",
+              "text": "I do the books for half the shops on this street."
+            }
+          ]
+        },
+        {
+          "at": 2,
+          "title": "The ledger",
+          "lines": [
+            {
+              "who": "Hector",
+              "text": "Your café has a fine ledger. Honest. That is rare."
+            },
+            {
+              "who": "Hector",
+              "text": "I may have optimised it a little. Free of charge."
+            }
+          ],
+          "choices": [
+            {
+              "text": "You are a lifesaver.",
+              "friend": 2,
+              "reply": "I know. But thank you for saying it."
+            },
+            {
+              "text": "Please leave my doodles in it.",
+              "friend": 2,
+              "reply": "They are the best-kept part of the ledger."
+            }
+          ]
+        },
+        {
+          "at": 4,
+          "title": "A rare smile",
+          "lines": [
+            {
+              "who": "Hector",
+              "text": "I have never told anyone: I bake on Sundays."
+            },
+            {
+              "who": "Hector",
+              "text": "This clock was my grandmother's. It suits a place that ticks warmly."
+            }
+          ],
+          "reward": {
+            "coins": 50,
+            "unlock": {
+              "decor": "wallClock"
+            }
+          }
+        }
+      ]
+    },
+    "kenji": {
+      "name": "Kenji",
+      "category": "tourist",
+      "icon": "🍜",
+      "shirt": "#ff7a59",
+      "hat": "#f4f7fa",
+      "skin": "#f7d9bd",
+      "hours": [
+        11,
+        17
+      ],
+      "level": 3,
+      "vip": false,
+      "personality": "Cheerful food blogger, honest reviewer",
+      "bio": "A food blogger travelling by train, rating every café he finds.",
+      "likes": {
+        "drinks": [
+          "cappuccino",
+          "mocha",
+          "icedCoffee"
+        ],
+        "desserts": [
+          "cheesecake",
+          "cupcake",
+          "donut"
+        ]
+      },
+      "story": [
+        {
+          "at": 0,
+          "title": "First review",
+          "lines": [
+            {
+              "who": "Kenji",
+              "text": "I review cafés for my blog. Do not worry, I only judge the cake. And the cups. And the mood."
+            },
+            {
+              "who": "Kenji",
+              "text": "Surprise me!"
+            }
+          ]
+        },
+        {
+          "at": 2,
+          "title": "Honest notes",
+          "lines": [
+            {
+              "who": "Kenji",
+              "text": "My notes say: \"friendly, warm, a little crowded at noon\"."
+            },
+            {
+              "who": "Kenji",
+              "text": "Crowded is good. Crowded means loved."
+            }
+          ],
+          "choices": [
+            {
+              "text": "Write that I make the best foam.",
+              "friend": 1,
+              "reply": "I will write that you ASKED me to."
+            },
+            {
+              "text": "Tell your readers to come early.",
+              "friend": 2,
+              "reply": "Mean and clever. I like you."
+            }
+          ]
+        },
+        {
+          "at": 4,
+          "title": "Five stars",
+          "lines": [
+            {
+              "who": "Kenji",
+              "text": "The review is live: five stars, one smiley."
+            },
+            {
+              "who": "Kenji",
+              "text": "And a gift from my travels, a cute lantern for the window."
+            }
+          ],
+          "reward": {
+            "coins": 55,
+            "unlock": {
+              "decor": "paperLantern"
+            }
+          }
+        }
+      ]
+    },
+    "rosa": {
+      "name": "Rosa",
+      "category": "regular",
+      "icon": "🥖",
+      "shirt": "#f08a7a",
+      "hat": "#ffffff",
+      "skin": "#d9a273",
+      "hours": [
+        6,
+        22
+      ],
+      "level": 4,
+      "vip": false,
+      "personality": "Warm baker from next door",
+      "bio": "The baker from the shop next door, who trades recipes for company.",
+      "likes": {
+        "drinks": [
+          "latte",
+          "hotChocolate",
+          "caramelLatte"
+        ],
+        "desserts": [
+          "muffin",
+          "brownie",
+          "cheesecake"
+        ]
+      },
+      "story": [
+        {
+          "at": 0,
+          "title": "Neighbours",
+          "lines": [
+            {
+              "who": "Rosa",
+              "text": "Neighbour! I smelled your coffee over my sourdough and had to come."
+            },
+            {
+              "who": "Rosa",
+              "text": "Latte, please. I will pay in gossip."
+            }
+          ]
+        },
+        {
+          "at": 2,
+          "title": "Secret recipe",
+          "lines": [
+            {
+              "who": "Rosa",
+              "text": "My grandmother's brownie recipe has a secret ingredient."
+            },
+            {
+              "who": "Rosa",
+              "text": "I will only tell someone who does not rush the oven."
+            }
+          ],
+          "choices": [
+            {
+              "text": "I never rush the oven.",
+              "friend": 2,
+              "reply": "Then I trust you. A pinch of sea salt."
+            },
+            {
+              "text": "I will keep it secret.",
+              "friend": 2,
+              "reply": "Cross your heart. Alright, sea salt!"
+            }
+          ]
+        },
+        {
+          "at": 4,
+          "title": "Fresh from next door",
+          "lines": [
+            {
+              "who": "Rosa",
+              "text": "My bakery display case is being replaced. The old one is lovely."
+            },
+            {
+              "who": "Rosa",
+              "text": "It should sit in a café that cares."
+            }
+          ],
+          "reward": {
+            "coins": 60,
+            "unlock": {
+              "decor": "bakeryCase"
+            }
+          }
+        }
+      ]
+    },
+    "bram": {
+      "name": "Bram",
+      "category": "artist",
+      "icon": "🎨",
+      "shirt": "#4cc9f0",
+      "hat": "#e8483f",
+      "skin": "#8d5a3b",
+      "hours": [
+        12,
+        22
+      ],
+      "level": 4,
+      "vip": false,
+      "personality": "Loud, generous street muralist",
+      "bio": "A muralist who paints the walls of the city and keeps drinks warm by talking too much.",
+      "likes": {
+        "drinks": [
+          "vanillaLatte",
+          "coldBrew",
+          "mocha"
+        ],
+        "desserts": [
+          "donut",
+          "cupcake",
+          "brownie"
+        ]
+      },
+      "story": [
+        {
+          "at": 0,
+          "title": "Paint on his hands",
+          "lines": [
+            {
+              "who": "Bram",
+              "text": "Forgive the paint! I did the wall behind the station this morning."
+            },
+            {
+              "who": "Bram",
+              "text": "Something sweet and something cold, I am melting."
+            }
+          ]
+        },
+        {
+          "at": 2,
+          "title": "A blank wall",
+          "lines": [
+            {
+              "who": "Bram",
+              "text": "Your café has one wall that is just begging for colour."
+            },
+            {
+              "who": "Bram",
+              "text": "No promises. Artists make promises with their hands."
+            }
+          ],
+          "choices": [
+            {
+              "text": "Paint it!",
+              "friend": 2,
+              "reply": "Oh, you will regret nothing."
+            },
+            {
+              "text": "Something calm, please.",
+              "friend": 2,
+              "reply": "Calm and colourful. My specialty."
+            }
+          ]
+        },
+        {
+          "at": 4,
+          "title": "The mural",
+          "lines": [
+            {
+              "who": "Bram",
+              "text": "Done! A little sunrise over the charging station."
+            },
+            {
+              "who": "Bram",
+              "text": "Every café needs a sunrise. This one is yours."
+            }
+          ],
+          "reward": {
+            "coins": 60,
+            "unlock": {
+              "decor": "muralSunrise"
+            }
+          }
+        }
+      ]
+    },
+    "vale": {
+      "name": "Ms. Vale",
+      "category": "vip",
+      "icon": "👑",
+      "shirt": "#7c4dff",
+      "hat": "#ffc43d",
+      "skin": "#f7d9bd",
+      "hours": [
+        12,
+        22
+      ],
+      "level": 5,
+      "vip": true,
+      "personality": "Elegant critic, hard to please, tips well",
+      "bio": "The city's most feared food critic. She tips handsomely when she is impressed.",
+      "likes": {
+        "drinks": [
+          "caramelLatte",
+          "cappuccino",
+          "vanillaLatte"
+        ],
+        "desserts": [
+          "cheesecake",
+          "chocolateCake",
+          "cupcake"
+        ]
+      },
+      "story": [
+        {
+          "at": 0,
+          "title": "The critic",
+          "lines": [
+            {
+              "who": "Ms. Vale",
+              "text": "I am told this café is \"cozy\". A dangerous word. Impress me."
+            },
+            {
+              "who": "Ms. Vale",
+              "text": "A caramel latte, and something worth writing about."
+            }
+          ]
+        },
+        {
+          "at": 2,
+          "title": "Small details",
+          "lines": [
+            {
+              "who": "Ms. Vale",
+              "text": "I notice small things. The cup. The saucer. The foam."
+            },
+            {
+              "who": "Ms. Vale",
+              "text": "Yours were... considered."
+            }
+          ],
+          "choices": [
+            {
+              "text": "I care about the small things.",
+              "friend": 3,
+              "reply": "Evidently. Do not stop."
+            },
+            {
+              "text": "Lucky guess.",
+              "friend": 1,
+              "reply": "Luck is not what I smell here."
+            }
+          ]
+        },
+        {
+          "at": 4,
+          "title": "The verdict",
+          "lines": [
+            {
+              "who": "Ms. Vale",
+              "text": "My column runs tomorrow. The headline is \"Warm Without Trying\"."
+            },
+            {
+              "who": "Ms. Vale",
+              "text": "Please accept this chandelier from my last review. It deserves to be seen."
+            }
+          ],
+          "reward": {
+            "coins": 90,
+            "unlock": {
+              "decor": "chandelier"
+            }
+          }
+        }
+      ]
+    },
+    "pip": {
+      "name": "Pip",
+      "category": "story",
+      "icon": "🐈",
+      "shirt": "#ffc43d",
+      "hat": "#b06cff",
+      "skin": "#f2c9a0",
+      "hours": [
+        17,
+        22
+      ],
+      "level": 6,
+      "vip": false,
+      "personality": "Quiet traveller with a talking-sized cat",
+      "bio": "A mysterious traveller who arrives at dusk with a very opinionated cat.",
+      "likes": {
+        "drinks": [
+          "tea",
+          "hotChocolate",
+          "vanillaLatte"
+        ],
+        "desserts": [
+          "chocolateCake",
+          "cookie",
+          "muffin"
+        ]
+      },
+      "story": [
+        {
+          "at": 0,
+          "title": "At dusk",
+          "lines": [
+            {
+              "who": "Pip",
+              "text": "Tea, please. Warm. My cat insists on milk, and she is rarely wrong."
+            },
+            {
+              "who": "Pip",
+              "text": "We just arrived. The city has strange lights."
+            }
+          ]
+        },
+        {
+          "at": 2,
+          "title": "The lights",
+          "lines": [
+            {
+              "who": "Pip",
+              "text": "Where I come from, we have no chargers. We have lanterns."
+            },
+            {
+              "who": "Pip",
+              "text": "Your city lights up like a promise."
+            }
+          ],
+          "choices": [
+            {
+              "text": "Stay a while, then.",
+              "friend": 3,
+              "reply": "Perhaps we will. The cat approves."
+            },
+            {
+              "text": "Which lantern was your favourite?",
+              "friend": 2,
+              "reply": "The one we carried together. It was green."
+            }
+          ]
+        },
+        {
+          "at": 4,
+          "title": "A green lantern",
+          "lines": [
+            {
+              "who": "Pip",
+              "text": "We decided: we stay. At least for the winter."
+            },
+            {
+              "who": "Pip",
+              "text": "Keep this lantern burning for travellers. It is easier to come home when it glows."
+            }
+          ],
+          "reward": {
+            "coins": 80,
+            "unlock": {
+              "decor": "greenLantern"
+            }
+          }
+        }
+      ]
+    },
+    "elias": {
+      "name": "Elias",
+      "category": "story",
+      "icon": "🔋",
+      "shirt": "#38d996",
+      "hat": "#2a2f36",
+      "skin": "#d9a273",
+      "hours": [
+        17,
+        22
+      ],
+      "level": 7,
+      "vip": false,
+      "personality": "Absent-minded inventor, big ideas",
+      "bio": "An inventor of tiny batteries who forgets his coat and his lunch, but never his notebook.",
+      "likes": {
+        "drinks": [
+          "coldBrew",
+          "mocha",
+          "caramelLatte"
+        ],
+        "desserts": [
+          "chocolateCake",
+          "cheesecake",
+          "brownie"
+        ]
+      },
+      "story": [
+        {
+          "at": 0,
+          "title": "A spark",
+          "lines": [
+            {
+              "who": "Elias",
+              "text": "Sorry! Oh, the coffee. Right. Is it Tuesday?"
+            },
+            {
+              "who": "Elias",
+              "text": "I am working on a battery that charges while you drink coffee."
+            }
+          ]
+        },
+        {
+          "at": 2,
+          "title": "Prototype",
+          "lines": [
+            {
+              "who": "Elias",
+              "text": "Look: it is the size of a cookie. Do not eat it."
+            },
+            {
+              "who": "Elias",
+              "text": "It stores one thing: the energy of a very good idea."
+            }
+          ],
+          "choices": [
+            {
+              "text": "Does it work yet?",
+              "friend": 2,
+              "reply": "Almost! A minute ago it made your lamp flicker."
+            },
+            {
+              "text": "Keep it away from the cookies.",
+              "friend": 2,
+              "reply": "I learned that the hard way."
+            }
+          ]
+        },
+        {
+          "at": 4,
+          "title": "It works",
+          "lines": [
+            {
+              "who": "Elias",
+              "text": "It works! The first prototype powers one little lamp, forever."
+            },
+            {
+              "who": "Elias",
+              "text": "I installed one in your window. No wires. Thank you for the coffee that started it."
+            }
+          ],
+          "reward": {
+            "coins": 100,
+            "unlock": {
+              "decor": "glowLamp"
+            }
+          }
+        }
+      ]
+    }
+  },
+  "friendLevels": [
+    0,
+    3,
+    8,
+    16,
+    28
+  ],
+  "decor": {
+    "items": {
+      "tableRound": {
+        "name": "Round table",
+        "icon": "🟤",
+        "kind": "table",
+        "price": 0,
+        "level": 1,
+        "appeal": 1,
+        "color": "#f1e2c8",
+        "leg": "#7a4a28"
+      },
+      "tableSquare": {
+        "name": "Square table",
+        "icon": "🟫",
+        "kind": "table",
+        "price": 30,
+        "level": 2,
+        "appeal": 1,
+        "color": "#e8d3a8",
+        "leg": "#5a3a22"
+      },
+      "tablePastel": {
+        "name": "Pastel table",
+        "icon": "🌸",
+        "kind": "table",
+        "price": 45,
+        "level": 3,
+        "appeal": 2,
+        "color": "#ffd1e0",
+        "leg": "#ff8fb1"
+      },
+      "tableGlass": {
+        "name": "Glass table",
+        "icon": "🔷",
+        "kind": "table",
+        "price": 60,
+        "level": 4,
+        "appeal": 2,
+        "color": "#bfe6ff",
+        "leg": "#4a525d"
+      },
+      "sofaSet": {
+        "name": "Sofa corner",
+        "icon": "🛋️",
+        "kind": "table",
+        "price": 90,
+        "level": 4,
+        "appeal": 3,
+        "color": "#b06cff",
+        "leg": "#5a3a8a",
+        "sofa": true
+      },
+      "plantFern": {
+        "name": "Fern",
+        "icon": "🌿",
+        "kind": "floor",
+        "price": 0,
+        "level": 1,
+        "appeal": 1,
+        "color": "#3fae4a"
+      },
+      "plantPalm": {
+        "name": "Palm",
+        "icon": "🌴",
+        "kind": "floor",
+        "price": 40,
+        "level": 3,
+        "appeal": 2,
+        "color": "#2f9a4f"
+      },
+      "plantBloom": {
+        "name": "Flower pot",
+        "icon": "🌷",
+        "kind": "floor",
+        "price": 35,
+        "level": 2,
+        "appeal": 2,
+        "color": "#ff8fb1"
+      },
+      "floorLamp": {
+        "name": "Floor lamp",
+        "icon": "💡",
+        "kind": "floor",
+        "price": 50,
+        "level": 2,
+        "appeal": 2,
+        "color": "#ffd48a"
+      },
+      "bookShelf": {
+        "name": "Reading corner",
+        "icon": "📚",
+        "kind": "floor",
+        "price": 999,
+        "level": 1,
+        "appeal": 3,
+        "color": "#8a5a35",
+        "gift": true
+      },
+      "bakeryCase": {
+        "name": "Bakery case",
+        "icon": "🧁",
+        "kind": "floor",
+        "price": 999,
+        "level": 1,
+        "appeal": 3,
+        "color": "#dfe5ec",
+        "gift": true
+      },
+      "deskLamp": {
+        "name": "Desk lamp",
+        "icon": "🔦",
+        "kind": "floor",
+        "price": 999,
+        "level": 1,
+        "appeal": 2,
+        "color": "#ffc43d",
+        "gift": true
+      },
+      "greenLantern": {
+        "name": "Green lantern",
+        "icon": "🏮",
+        "kind": "floor",
+        "price": 999,
+        "level": 1,
+        "appeal": 3,
+        "color": "#38d996",
+        "gift": true
+      },
+      "glowLamp": {
+        "name": "Glow lamp",
+        "icon": "✨",
+        "kind": "floor",
+        "price": 999,
+        "level": 1,
+        "appeal": 4,
+        "color": "#9fffe0",
+        "gift": true
+      },
+      "wallSketch": {
+        "name": "Lamp sketch",
+        "icon": "✏️",
+        "kind": "wall",
+        "price": 999,
+        "level": 1,
+        "appeal": 2,
+        "color": "#f4f7fa",
+        "gift": true
+      },
+      "postcards": {
+        "name": "Postcards",
+        "icon": "✉️",
+        "kind": "wall",
+        "price": 999,
+        "level": 1,
+        "appeal": 2,
+        "color": "#ffe8b0",
+        "gift": true
+      },
+      "pixelPoster": {
+        "name": "Pixel poster",
+        "icon": "👾",
+        "kind": "wall",
+        "price": 999,
+        "level": 1,
+        "appeal": 2,
+        "color": "#b06cff",
+        "gift": true
+      },
+      "framedPhoto": {
+        "name": "Framed photo",
+        "icon": "🖼️",
+        "kind": "wall",
+        "price": 999,
+        "level": 1,
+        "appeal": 3,
+        "color": "#8a5a35",
+        "gift": true
+      },
+      "wallClock": {
+        "name": "Wall clock",
+        "icon": "🕰️",
+        "kind": "wall",
+        "price": 999,
+        "level": 1,
+        "appeal": 2,
+        "color": "#f2e2b8",
+        "gift": true
+      },
+      "muralSunrise": {
+        "name": "Sunrise mural",
+        "icon": "🌅",
+        "kind": "wall",
+        "price": 999,
+        "level": 1,
+        "appeal": 4,
+        "color": "#ff9a3d",
+        "gift": true
+      },
+      "artFrame": {
+        "name": "Art print",
+        "icon": "🎨",
+        "kind": "wall",
+        "price": 25,
+        "level": 1,
+        "appeal": 1,
+        "color": "#4cc9f0"
+      },
+      "shelfWood": {
+        "name": "Wall shelf",
+        "icon": "🪵",
+        "kind": "wall",
+        "price": 30,
+        "level": 2,
+        "appeal": 1,
+        "color": "#8a5a35"
+      },
+      "mirror": {
+        "name": "Round mirror",
+        "icon": "🪞",
+        "kind": "wall",
+        "price": 45,
+        "level": 3,
+        "appeal": 2,
+        "color": "#cfe8ff"
+      },
+      "paperLantern": {
+        "name": "Paper lantern",
+        "icon": "🏮",
+        "kind": "wall",
+        "price": 999,
+        "level": 1,
+        "appeal": 3,
+        "color": "#ff7a59",
+        "gift": true
+      },
+      "curtainCream": {
+        "name": "Cream curtains",
+        "icon": "🪟",
+        "kind": "window",
+        "price": 20,
+        "level": 1,
+        "appeal": 1,
+        "color": "#f4e9d0"
+      },
+      "curtainPink": {
+        "name": "Pink curtains",
+        "icon": "🌸",
+        "kind": "window",
+        "price": 35,
+        "level": 3,
+        "appeal": 2,
+        "color": "#ffb6cf"
+      },
+      "curtainBlue": {
+        "name": "Sea curtains",
+        "icon": "🌊",
+        "kind": "window",
+        "price": 35,
+        "level": 4,
+        "appeal": 2,
+        "color": "#8ed8f2"
+      },
+      "rugRed": {
+        "name": "Red runner",
+        "icon": "🟥",
+        "kind": "rug",
+        "price": 0,
+        "level": 1,
+        "appeal": 1,
+        "color": "#b23a48"
+      },
+      "rugCream": {
+        "name": "Cream rug",
+        "icon": "⬜",
+        "kind": "rug",
+        "price": 30,
+        "level": 2,
+        "appeal": 2,
+        "color": "#f1e2c8"
+      },
+      "rugSea": {
+        "name": "Sea rug",
+        "icon": "🟦",
+        "kind": "rug",
+        "price": 40,
+        "level": 4,
+        "appeal": 2,
+        "color": "#4cc9f0"
+      },
+      "cakeStand": {
+        "name": "Cake stand",
+        "icon": "🎂",
+        "kind": "counter",
+        "price": 40,
+        "level": 2,
+        "appeal": 2,
+        "color": "#fff3d6"
+      },
+      "cupStack": {
+        "name": "Cup stack",
+        "icon": "☕",
+        "kind": "counter",
+        "price": 0,
+        "level": 1,
+        "appeal": 1,
+        "color": "#f4f7fa"
+      },
+      "counterPlant": {
+        "name": "Counter plant",
+        "icon": "🪴",
+        "kind": "counter",
+        "price": 25,
+        "level": 1,
+        "appeal": 1,
+        "color": "#3fae4a"
+      },
+      "lampPendant": {
+        "name": "Pendant lamp",
+        "icon": "💡",
+        "kind": "ceiling",
+        "price": 0,
+        "level": 1,
+        "appeal": 1,
+        "color": "#fff2c8"
+      },
+      "lampGlobe": {
+        "name": "Globe lamp",
+        "icon": "🔮",
+        "kind": "ceiling",
+        "price": 40,
+        "level": 3,
+        "appeal": 2,
+        "color": "#ffe9a6"
+      },
+      "chandelier": {
+        "name": "Chandelier",
+        "icon": "👑",
+        "kind": "ceiling",
+        "price": 999,
+        "level": 1,
+        "appeal": 5,
+        "color": "#ffd966",
+        "gift": true
+      }
+    },
+    "slots": {
+      "table1": {
+        "kind": "table",
+        "x": 15.2,
+        "z": -9.4,
+        "rot": [
+          0
+        ],
+        "seats": 2,
+        "default": "tableRound"
+      },
+      "table2": {
+        "kind": "table",
+        "x": 19.9,
+        "z": -9.4,
+        "rot": [
+          0
+        ],
+        "seats": 2,
+        "default": "tableRound"
+      },
+      "table3": {
+        "kind": "table",
+        "x": 15.2,
+        "z": -11.6,
+        "rot": [
+          0
+        ],
+        "seats": 2,
+        "default": "tableRound"
+      },
+      "table4": {
+        "kind": "table",
+        "x": 19.9,
+        "z": -11.6,
+        "rot": [
+          0
+        ],
+        "seats": 2,
+        "default": "tableRound"
+      },
+      "table5": {
+        "kind": "table",
+        "x": 19.9,
+        "z": -13.8,
+        "rot": [
+          0
+        ],
+        "seats": 2,
+        "default": "tableRound"
+      },
+      "plantL": {
+        "kind": "floor",
+        "x": 14.55,
+        "z": -8.2,
+        "rot": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "default": "plantFern"
+      },
+      "plantR": {
+        "kind": "floor",
+        "x": 20.45,
+        "z": -8.2,
+        "rot": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "default": "plantFern"
+      },
+      "cornerL": {
+        "kind": "floor",
+        "x": 14.55,
+        "z": -14.4,
+        "rot": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "default": null
+      },
+      "cornerR": {
+        "kind": "floor",
+        "x": 20.45,
+        "z": -17,
+        "rot": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "default": null
+      },
+      "wallW1": {
+        "kind": "wall",
+        "x": 14.2,
+        "z": -10.5,
+        "rot": [
+          0
+        ],
+        "face": "east",
+        "default": null
+      },
+      "wallW2": {
+        "kind": "wall",
+        "x": 14.2,
+        "z": -13,
+        "rot": [
+          0
+        ],
+        "face": "east",
+        "default": null
+      },
+      "wallE1": {
+        "kind": "wall",
+        "x": 20.6,
+        "z": -10.5,
+        "rot": [
+          0
+        ],
+        "face": "west",
+        "default": null
+      },
+      "wallE2": {
+        "kind": "wall",
+        "x": 20.6,
+        "z": -13,
+        "rot": [
+          0
+        ],
+        "face": "west",
+        "default": null
+      },
+      "wallBack": {
+        "kind": "wall",
+        "x": 15.7,
+        "z": -19.1,
+        "rot": [
+          0
+        ],
+        "face": "south",
+        "default": null
+      },
+      "winL": {
+        "kind": "window",
+        "x": 15.1,
+        "z": -7.7,
+        "rot": [
+          0
+        ],
+        "default": "curtainCream"
+      },
+      "winR": {
+        "kind": "window",
+        "x": 19.9,
+        "z": -7.7,
+        "rot": [
+          0
+        ],
+        "default": "curtainCream"
+      },
+      "rug": {
+        "kind": "rug",
+        "x": 17.5,
+        "z": -11.2,
+        "rot": [
+          0
+        ],
+        "default": "rugRed"
+      },
+      "counterA": {
+        "kind": "counter",
+        "x": 20.2,
+        "z": -16,
+        "rot": [
+          0
+        ],
+        "default": "cupStack"
+      },
+      "counterB": {
+        "kind": "counter",
+        "x": 18,
+        "z": -16,
+        "rot": [
+          0
+        ],
+        "default": null
+      },
+      "ceil1": {
+        "kind": "ceiling",
+        "x": 15.2,
+        "z": -10.5,
+        "rot": [
+          0
+        ],
+        "default": "lampPendant"
+      },
+      "ceil2": {
+        "kind": "ceiling",
+        "x": 19.9,
+        "z": -10.5,
+        "rot": [
+          0
+        ],
+        "default": "lampPendant"
+      },
+      "ceil3": {
+        "kind": "ceiling",
+        "x": 19.1,
+        "z": -14.3,
+        "rot": [
+          0
+        ],
+        "default": "lampPendant"
+      }
+    },
+    "themes": {
+      "wooden": {
+        "name": "Cozy wooden",
+        "icon": "🪵",
+        "level": 1,
+        "price": 0,
+        "wall": "#b8793e",
+        "trim": "#f2dfc0",
+        "dark": "#5a3a22",
+        "floor": [
+          "#e8d3a8",
+          "#c9a56a"
+        ],
+        "accent": "#b23a48",
+        "appeal": 2,
+        "giveItems": []
+      },
+      "minimal": {
+        "name": "Modern minimal",
+        "icon": "⬜",
+        "level": 2,
+        "price": 60,
+        "wall": "#d9dde3",
+        "trim": "#ffffff",
+        "dark": "#59616c",
+        "floor": [
+          "#cfd6df",
+          "#b9c2ce"
+        ],
+        "accent": "#2f8cff",
+        "appeal": 2
+      },
+      "pastel": {
+        "name": "Pastel",
+        "icon": "🌸",
+        "level": 3,
+        "price": 80,
+        "wall": "#ffd1e0",
+        "trim": "#fff3f8",
+        "dark": "#c46a8a",
+        "floor": [
+          "#fff0f5",
+          "#ffd9e6"
+        ],
+        "accent": "#7ad7c2",
+        "appeal": 3
+      },
+      "vintage": {
+        "name": "Vintage",
+        "icon": "🕰️",
+        "level": 4,
+        "price": 100,
+        "wall": "#7d4a34",
+        "trim": "#e6c88e",
+        "dark": "#3a2418",
+        "floor": [
+          "#c9a56a",
+          "#8a6a3c"
+        ],
+        "accent": "#2f6f5a",
+        "appeal": 3
+      },
+      "garden": {
+        "name": "Garden",
+        "icon": "🌿",
+        "level": 5,
+        "price": 120,
+        "wall": "#9bc28a",
+        "trim": "#f4f1d8",
+        "dark": "#3f6a3a",
+        "floor": [
+          "#d9e8b8",
+          "#b9d198"
+        ],
+        "accent": "#ffc43d",
+        "appeal": 4
+      },
+      "beach": {
+        "name": "Beach",
+        "icon": "🏖️",
+        "level": 6,
+        "price": 140,
+        "wall": "#8ed8f2",
+        "trim": "#fff8e0",
+        "dark": "#2f6f9a",
+        "floor": [
+          "#f2e2b8",
+          "#e0c98a"
+        ],
+        "accent": "#ff7a59",
+        "appeal": 4
+      }
+    },
+    "floors": {
+      "default": {
+        "name": "Theme floor",
+        "price": 0,
+        "level": 1
+      },
+      "checker": {
+        "name": "Checker tiles",
+        "price": 25,
+        "level": 2,
+        "colors": [
+          "#f1e2c8",
+          "#c9a56a"
+        ]
+      },
+      "planks": {
+        "name": "Wood planks",
+        "price": 35,
+        "level": 3,
+        "colors": [
+          "#c9a56a",
+          "#b38a50"
+        ]
+      },
+      "mint": {
+        "name": "Mint tiles",
+        "price": 40,
+        "level": 4,
+        "colors": [
+          "#d4f1e4",
+          "#a9dcc8"
+        ]
+      }
+    },
+    "defaultTheme": "wooden"
+  },
+  "progress": {
+    "levels": [
+      0,
+      60,
+      160,
+      320,
+      540,
+      820,
+      1180,
+      1620
+    ],
+    "xp": {
+      "served": 8,
+      "perfect": 6,
+      "happy": 4,
+      "friend": 10,
+      "beat": 15,
+      "dessert": 2,
+      "discover": 20
+    },
+    "starterCoins": 60
+  },
+  "service": {
+    "maxQueue": 3,
+    "arrivalSeconds": [
+      9,
+      15
+    ],
+    "patienceSeconds": 100,
+    "shiftCustomers": 10,
+    "entrySlots": 6
+  },
+  "quality": {
+    "sweetSeconds": 2.5,
+    "okSeconds": 6,
+    "perfect": 0.92,
+    "good": 0.6,
+    "speedPerMachineLevel": 0.12,
+    "trayMax": 6,
+    "pickupMax": 4
+  },
+  "pantry": {
+    "cap": 30,
+    "regenPerShift": 8,
+    "displayCap": 8
+  },
+  "rewards": {
+    "coinsPerPrice": 1,
+    "perfectBonus": 0.5,
+    "happyBonus": 0.25,
+    "likedBonus": 0.35,
+    "vipMult": 1.8,
+    "comboBonus": 0.05,
+    "comboMax": 6,
+    "city": {
+      "cashPerCoin": 0.2,
+      "dayCashCap": 120,
+      "reputationPerShift": 1,
+      "dayReputationCap": 4,
+      "shiftsPerDay": 8,
+      "dayCoinCap": 500,
+      "cooldownSeconds": 10
+    }
+  }
+}
